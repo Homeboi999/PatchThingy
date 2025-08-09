@@ -9,9 +9,7 @@ using CodeChicken.DiffPatch;
 DataFile vanilla = new("data-vanilla.win");
 DataFile modded = new("data.win");
 
-Console.WriteLine(vanilla.Data.GeneralInfo?.DisplayName?.Content.ToLower());
-Console.WriteLine(modded.Data.GeneralInfo?.DisplayName?.Content.ToLower());
-
+Directory.CreateDirectory("./Patches/Code");
 foreach (UndertaleCode modCode in modded.Data.Code)
 {
     if (modCode.ParentEntry is not null)
@@ -21,10 +19,17 @@ foreach (UndertaleCode modCode in modded.Data.Code)
 
     if (vanillaCode is not null && vanillaCode.ParentEntry is null)
     {
-        LineMatchedDiffer differ = new();
         PatchFile modChanges = new();
-
+        modChanges.basePath = $"a/Code/{vanillaCode.Name.Content}.gml";
+        modChanges.patchedPath = $"b/Code/{modCode.Name.Content}.gml";
+            
+        LineMatchedDiffer differ = new();
         modChanges.patches = differ.MakePatches(vanilla.DecompileCode(vanillaCode), modded.DecompileCode(modCode));
-        Console.WriteLine(modChanges.ToString());
+        
+        if (modChanges.patches.Count == 0)
+            continue;
+
+        File.WriteAllText($"./Patches/Code/{modCode.Name.Content}.gml.patch", modChanges.ToString());
+        Console.WriteLine($"Created .patch file for {modCode.Name.Content}.gml");
     }
 }
