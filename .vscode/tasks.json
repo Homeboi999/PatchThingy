@@ -10,8 +10,7 @@
                 "${workspaceFolder}/PatchThingy/PatchThingy.csproj",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary;ForceNoAlign"
-            ],
-            "problemMatcher": "$msCompile"
+            ]
         },
         {
             "label": "publish",
@@ -22,8 +21,7 @@
                 "${workspaceFolder}/PatchThingy/PatchThingy.csproj",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary;ForceNoAlign"
-            ],
-            "problemMatcher": "$msCompile"
+            ]
         },
         {
             "label": "watch",
@@ -34,8 +32,7 @@
                 "run",
                 "--project",
                 "${workspaceFolder}/PatchThingy/PatchThingy.csproj"
-            ],
-            "problemMatcher": "$msCompile"
+            ]
         }
     ]
 }
