@@ -28,7 +28,6 @@ class DataHandler
 
                 if (modChanges.patches.Count == 0)
                 {
-                    Console.Write("▯");
                     continue;
                 }
 
@@ -52,11 +51,11 @@ class DataHandler
             if (vanillaScript is null)
             {
                 File.WriteAllText(Path.Combine(Config.current!.OutputPath, $"./Source/Scripts/{modScript.Name.Content}.json"), JsonSerializer.Serialize(new ScriptDefinition(modScript.Name.Content, modScript.Code.Name.Content)));
-                Console.Write("▮");
+                Console.Write("◼");
             }
             else
             {
-                Console.Write("▯");
+                Console.Write("◻");
             }
         }
 
