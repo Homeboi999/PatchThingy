@@ -6,15 +6,15 @@ using Underanalyzer.Decompiler;
 
 class DataFile
 {
-    string filePath = "chapter2_windows";
+    public const string chapterFolder = "chapter2_windows"; // hardcode to only look at ch2 for now
     public UndertaleData Data;
 
         GlobalDecompileContext globalDecompileContext;
         IDecompileSettings decompilerSettings;
 
-    public DataFile(string fileName)
+    public DataFile(string filePath)
     {
-        using (Stream file = File.Open(Path.Combine(Config.current!.GamePath, filePath, fileName), FileMode.Open))
+        using (Stream file = File.Open(filePath, FileMode.Open))
         {
             Data = UndertaleIO.Read(file);
         }

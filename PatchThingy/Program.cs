@@ -7,7 +7,7 @@ using UndertaleModLib.Decompiler;
 using CodeChicken.DiffPatch;
 using System.Text.Json;
 
-Config.current = JsonSerializer.Deserialize<Config>(File.ReadAllText("./PatchThingy.json"));
+Config.current = JsonSerializer.Deserialize<Config>(File.ReadAllText("./PatchThingy.json"))!;
 
 if (Config.current is null)
 {
@@ -58,10 +58,32 @@ while (chosenMode is null)
 
 if (chosenMode == ScriptMode.Generate)
 {
-    DataFile vanilla = new("data-vanilla.win");
-    DataFile modded = new("data.win");
+    DataFile vanilla = new(Path.Combine(Config.current.GamePath, DataFile.chapterFolder, "data-vanilla.win"));
+    DataFile modded = new(Path.Combine(Config.current.GamePath, DataFile.chapterFolder, "data.win"));
 
     DataHandler.GeneratePatches(vanilla, modded);
+}
+
+if (chosenMode == ScriptMode.Apply)
+{
+    string dataPath = Path.Combine(Config.current.GamePath, DataFile.chapterFolder, "data-vanilla.win");
+
+    if (!File.Exists(dataPath)) // check if data-vanilla.win exists
+    {
+        string fallbackPath = Path.Combine(Config.current.GamePath, DataFile.chapterFolder, "data.win");
+
+        if (!File.Exists(fallbackPath)) // double-check that the normal data.win exists too
+        {
+            Console.WriteLine("ERROR: Could not find game data.");
+            Environment.Exit(2); // panic
+            return;
+        }
+
+        File.Move(fallbackPath, dataPath); // rename data.win to data-vanilla.win
+    }
+
+    DataFile data = new(dataPath);
+    DataHandler.ApplyPatches(data);
 }
 
 string PromptUserInput(string[] choices)
