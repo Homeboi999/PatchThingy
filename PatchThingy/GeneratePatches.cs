@@ -28,6 +28,7 @@ class DataHandler
 
                 if (modChanges.patches.Count == 0)
                 {
+                    Console.Write("▯");
                     continue;
                 }
 
