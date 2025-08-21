@@ -12,9 +12,9 @@ class DataFile
         GlobalDecompileContext globalDecompileContext;
         IDecompileSettings decompilerSettings;
 
-    public DataFile(string fileName, Config config)
+    public DataFile(string fileName)
     {
-        using (Stream file = File.Open(Path.Combine(config.GamePath, filePath, fileName), FileMode.Open))
+        using (Stream file = File.Open(Path.Combine(Config.current!.GamePath, filePath, fileName), FileMode.Open))
         {
             Data = UndertaleIO.Read(file);
         }

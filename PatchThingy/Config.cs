@@ -6,5 +6,5 @@ using Underanalyzer.Decompiler;
 
 public record Config (string GamePath, string OutputPath)
 {
-    
+    public static Config? current;
 }

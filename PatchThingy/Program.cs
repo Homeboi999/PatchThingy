@@ -7,15 +7,15 @@ using UndertaleModLib.Decompiler;
 using CodeChicken.DiffPatch;
 using System.Text.Json;
 
-Config? config = JsonSerializer.Deserialize<Config>(File.ReadAllText("./PatchThingy.json"));
+Config.current = JsonSerializer.Deserialize<Config>(File.ReadAllText("./PatchThingy.json"));
 
-if (config is null)
+if (Config.current is null)
 {
     Environment.Exit(2);
     return;
 }
 
-Console.WriteLine(config);
+Console.WriteLine(Config.current);
 
 ScriptMode? chosenMode = null;
 Console.WriteLine("─────────────────────────────────");
@@ -58,8 +58,8 @@ while (chosenMode is null)
 
 if (chosenMode == ScriptMode.Generate)
 {
-    DataFile vanilla = new("data-vanilla.win", config);
-    DataFile modded = new("data.win", config);
+    DataFile vanilla = new("data-vanilla.win");
+    DataFile modded = new("data.win");
 
     DataHandler.GeneratePatches(vanilla, modded);
 }
