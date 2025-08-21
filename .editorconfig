@@ -1,4 +1,6 @@
 [*.cs]
+
+dotnet_analyzer_diagnostic.category-Design.severity = none
 dotnet_analyzer_diagnostic.category-Style.severity = none
 dotnet_analyzer_diagnostic.category-CodeQuality.severity = none
 dotnet_analyzer_diagnostic.category-Performance.severity = none

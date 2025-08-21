@@ -7,6 +7,15 @@ using UndertaleModLib.Decompiler;
 using CodeChicken.DiffPatch;
 using System.Text.Json;
 
+Config? config = JsonSerializer.Deserialize<Config>(File.ReadAllText("./PatchThingy.json"));
+
+if (config is null)
+{
+    Environment.Exit(2);
+    return;
+}
+
+Console.WriteLine(config);
 
 ScriptMode? chosenMode = null;
 Console.WriteLine("─────────────────────────────────");
@@ -47,11 +56,13 @@ while (chosenMode is null)
     }
 }
 
-return;
-DataFile vanilla = new("data-vanilla.win");
-DataFile modded = new("data.win");
+if (chosenMode == ScriptMode.Generate)
+{
+    DataFile vanilla = new("data-vanilla.win", config);
+    DataFile modded = new("data.win", config);
 
-DataHandler.GeneratePatches(vanilla, modded);
+    DataHandler.GeneratePatches(vanilla, modded);
+}
 
 string PromptUserInput(string[] choices)
 {

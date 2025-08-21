@@ -6,15 +6,15 @@ using Underanalyzer.Decompiler;
 
 class DataFile
 {
-    string filePath = "/home/eg/.local/share/Steam/steamapps/common/DELTARUNE/chapter2_windows";
+    string filePath = "chapter2_windows";
     public UndertaleData Data;
 
         GlobalDecompileContext globalDecompileContext;
         IDecompileSettings decompilerSettings;
 
-    public DataFile(string fileName)
+    public DataFile(string fileName, Config config)
     {
-        using (Stream file = File.Open(Path.Combine(filePath, fileName), FileMode.Open))
+        using (Stream file = File.Open(Path.Combine(config.GamePath, filePath, fileName), FileMode.Open))
         {
             Data = UndertaleIO.Read(file);
         }
