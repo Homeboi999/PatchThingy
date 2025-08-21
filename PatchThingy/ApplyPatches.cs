@@ -12,7 +12,7 @@ partial class DataHandler
         CodeImportGroup importGroup = new(vandatailla.Data);
         bool success = true;
 
-        foreach (string fileName in Directory.EnumerateFiles(Path.Combine(Config.current.OutputPath), "Patches/Code"))
+        foreach (string fileName in Directory.EnumerateFiles(Path.Combine(Config.current.OutputPath, "Patches/Code")))
         {
             var patchFile = PatchFile.FromText(File.ReadAllText(fileName));
 
@@ -31,12 +31,16 @@ partial class DataHandler
             }
 
             importGroup.QueueReplace(code, string.Join("\n", patcher.ResultLines));
+            Console.Write("▮");
         }
 
+        Console.WriteLine();
+        
         if (success)
         {
             Console.WriteLine("Successfully applied patches to existing code");
             importGroup.Import();
+            vandatailla.SaveChanges(Path.Combine(Config.current.GamePath, DataFile.chapterFolder, "data.win"));
         }
         else
         {

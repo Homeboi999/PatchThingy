@@ -20,6 +20,8 @@ Console.WriteLine(Config.current);
 ScriptMode? chosenMode = null;
 Console.WriteLine("─────────────────────────────────");
 
+// chosenMode = ScriptMode.Apply;
+
 while (chosenMode is null)
 {
     Console.WriteLine("Please select an option:");

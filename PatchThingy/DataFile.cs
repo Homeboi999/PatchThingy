@@ -31,4 +31,11 @@ class DataFile
             .Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.None)
             .ToList();
     }
+    public void SaveChanges(string filePath)
+    {
+        using (Stream file = File.Open(filePath, FileMode.Create))
+        {
+            UndertaleIO.Write(file, Data);
+        }
+    }
 }
