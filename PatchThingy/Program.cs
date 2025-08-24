@@ -7,13 +7,30 @@ using UndertaleModLib.Decompiler;
 using CodeChicken.DiffPatch;
 using System.Text.Json;
 
+
+// Load the script configs from the .json file next to the .csproj file
 Config.current = JsonSerializer.Deserialize<Config>(File.ReadAllText("./PatchThingy.json"))!;
 
+// if it failed to load for whatever reason, panic.
 if (Config.current is null)
 {
+    Console.WriteLine("ERROR: Failed to load script config.");
     Environment.Exit(2);
-    return;
+    return; // for compiler
 }
+
+// Get the filepath for all 3 versions of data.win
+// Each copy serves a different purpose, making the
+// process of updating much easier.
+
+// Active Data: the data.win that Deltarune loads, and that Steam would replace.
+string activePath = Path.Combine(Config.current.GamePath, DataFile.chapterFolder, "data.win");
+
+// Vanilla Data: the version of data.win that the patches were based on
+string vanillaPath = Path.Combine(Config.current.GamePath, DataFile.chapterFolder, "data-vanilla.win");
+
+// Backup Data: a second copy of the patched data.win, in case of an update.
+string backupPath = Path.Combine(Config.current.GamePath, DataFile.chapterFolder, "data-backup.win");
 
 Console.WriteLine(Config.current);
 
@@ -55,37 +72,59 @@ while (chosenMode is null)
             
             Console.WriteLine("═════════════════════════════════");
             break;
+
+        case "r":
+            Console.WriteLine("─────────────────────────────────");
+            Console.WriteLine("You've chosen to revert to vanilla, creating a backup.");
+
+
+            if (PromptUserInput(["y", "n"]) == "y")
+            {
+                chosenMode = ScriptMode.Apply;
+            }
+            
+            Console.WriteLine("═════════════════════════════════");
+            break;
     }
 }
 
 if (chosenMode == ScriptMode.Generate)
 {
-    DataFile vanilla = new(Path.Combine(Config.current.GamePath, DataFile.chapterFolder, "data-vanilla.win"));
-    DataFile modded = new(Path.Combine(Config.current.GamePath, DataFile.chapterFolder, "data.win"));
+    DataFile vanilla = new(vanillaPath);
+    DataFile modded = new(activePath);
+
+    // mayb in the future, double-check that the versions are the same?
 
     DataHandler.GeneratePatches(vanilla, modded);
 }
 
 if (chosenMode == ScriptMode.Apply)
 {
-    string dataPath = Path.Combine(Config.current.GamePath, DataFile.chapterFolder, "data-vanilla.win");
-
-    if (!File.Exists(dataPath)) // check if data-vanilla.win exists
+    // check if Vanilla Data exists. If not, assume
+    // Active Data is an unmodified version of Deltarune.
+    if (!File.Exists(vanillaPath))
     {
-        string fallbackPath = Path.Combine(Config.current.GamePath, DataFile.chapterFolder, "data.win");
-
-        if (!File.Exists(fallbackPath)) // double-check that the normal data.win exists too
+        // If Active Data ALSO doesn't exist, then panic.
+        if (!File.Exists(activePath))
         {
             Console.WriteLine("ERROR: Could not find game data.");
-            Environment.Exit(2); // panic
-            return;
+            Environment.Exit(2);
+            return; // for compiler
         }
 
-        File.Move(fallbackPath, dataPath); // rename data.win to data-vanilla.win
+        // Rename Active Data to create Vanilla Data.
+        // 
+        // Vanilla Data is used to apply patches so I
+        // don't generate patches for the modified version.
+        File.Move(activePath, vanillaPath);
     }
 
-    DataFile data = new(dataPath);
+    // Apply patches to Vanilla Data, then save changes to Active Data.
+    DataFile data = new(vanillaPath);
     DataHandler.ApplyPatches(data);
+
+    // Create Backup Data by copying the new Active Data
+    File.Copy(activePath, backupPath);
 }
 
 string PromptUserInput(string[] choices)

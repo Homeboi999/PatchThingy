@@ -10,11 +10,16 @@ partial class DataHandler
     {
         Directory.CreateDirectory(Path.Combine(Config.current.OutputPath, "./Patches/Code"));
         Directory.CreateDirectory(Path.Combine(Config.current.OutputPath, "./Source/Code"));
+        Directory.CreateDirectory(Path.Combine(Config.current.OutputPath, "./Source/Scripts"));
+
+        // code files
         foreach (UndertaleCode modCode in modded.Data.Code)
         {
+            // in UMT, these are the greyed out duplicates of a bunch of files.
             if (modCode.ParentEntry is not null)
                 continue;
 
+            // get name from vanilla data.win to check if it's a new file or not
             UndertaleCode vanillaCode = vanilla.Data.Code.ByName(modCode.Name.Content);
 
             if (vanillaCode is not null && vanillaCode.ParentEntry is null)
@@ -28,13 +33,14 @@ partial class DataHandler
 
                 if (modChanges.patches.Count == 0)
                 {
-                    Console.Write("▯");
+                    // if there are no changes, ignore
                     continue;
                 }
 
                 File.WriteAllText(Path.Combine(Config.current.OutputPath, $"Patches/Code/{modCode.Name.Content}.gml.patch"), modChanges.ToString());
                 Console.Write("▮");
             }
+            // if it's a new file, export entire file to the Source folder
             else if (vanillaCode is null)
             {
                 File.WriteAllLines(Path.Combine(Config.current.OutputPath, $"./Source/Code/{modCode.Name.Content}.gml"), modded.DecompileCode(modCode));
@@ -42,21 +48,20 @@ partial class DataHandler
             }
         }
 
+        // separate script definitions and code
+        // TODO: this actually doesnt look that cool i dont think
         Console.WriteLine();
 
-        Directory.CreateDirectory(Path.Combine(Config.current.OutputPath, "./Source/Scripts"));
+        // script definitions
         foreach (UndertaleScript modScript in modded.Data.Scripts)
         {
             UndertaleScript vanillaScript = vanilla.Data.Scripts.ByName(modScript.Name.Content);
 
+            // if the script isnt in vanilla, make a definition for it when applying
             if (vanillaScript is null)
             {
                 File.WriteAllText(Path.Combine(Config.current.OutputPath, $"./Source/Scripts/{modScript.Name.Content}.json"), JsonSerializer.Serialize(new ScriptDefinition(modScript.Name.Content, modScript.Code.Name.Content)));
-                Console.Write("◼");
-            }
-            else
-            {
-                Console.Write("◻");
+                Console.Write("▮");
             }
         }
 
