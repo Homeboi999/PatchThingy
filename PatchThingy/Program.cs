@@ -11,7 +11,7 @@ using System.Text.Json;
 // Load the script configs from the .json file next to the .csproj file
 Config.current = JsonSerializer.Deserialize<Config>(File.ReadAllText("./PatchThingy.json"))!;
 
-// if it failed to load for whatever reason, panic.
+// if it failed to load for whatever reason, panic
 if (Config.current is null)
 {
     Console.WriteLine("ERROR: Failed to load script config.");
@@ -44,9 +44,10 @@ while (chosenMode is null)
     Console.WriteLine("Please select an option:");
     Console.WriteLine("G - Generate new patches");
     Console.WriteLine("A - Apply existing patches");
+    Console.WriteLine("R - Revert to vanilla");
     Console.WriteLine("─────────────────────────────────");
 
-    switch (PromptUserInput(["g", "a"]))
+    switch (PromptUserInput(["g", "a", "r"]))
     {
         case "g":
             Console.WriteLine("─────────────────────────────────");
@@ -75,12 +76,12 @@ while (chosenMode is null)
 
         case "r":
             Console.WriteLine("─────────────────────────────────");
-            Console.WriteLine("You've chosen to revert to vanilla, creating a backup.");
+            Console.WriteLine("You've chosen to revert to vanilla. Are you sure? (Y/N)");
 
 
             if (PromptUserInput(["y", "n"]) == "y")
             {
-                chosenMode = ScriptMode.Apply;
+                chosenMode = ScriptMode.Revert;
             }
             
             Console.WriteLine("═════════════════════════════════");
@@ -124,7 +125,15 @@ if (chosenMode == ScriptMode.Apply)
     DataHandler.ApplyPatches(data);
 
     // Create Backup Data by copying the new Active Data
-    File.Copy(activePath, backupPath);
+    // File.Copy(activePath, backupPath);
+}
+
+if (chosenMode == ScriptMode.Revert)
+{
+    // Copy Vanilla Data to Active Data, reverting to
+    // the version of the game used to generate patches.
+    File.Delete(activePath);
+    File.Copy(vanillaPath, activePath);
 }
 
 string PromptUserInput(string[] choices)
@@ -148,5 +157,6 @@ string PromptUserInput(string[] choices)
 enum ScriptMode
 {
     Generate,
-    Apply
+    Apply,
+    Revert
 }

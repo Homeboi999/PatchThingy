@@ -8,9 +8,11 @@ partial class DataHandler
 {
     public static void GeneratePatches(DataFile vanilla, DataFile modded)
     {
-        Directory.CreateDirectory(Path.Combine(Config.current.OutputPath, "./Patches/Code"));
+        // Create output folder structure if not already present.
         Directory.CreateDirectory(Path.Combine(Config.current.OutputPath, "./Source/Code"));
         Directory.CreateDirectory(Path.Combine(Config.current.OutputPath, "./Source/Scripts"));
+        Directory.CreateDirectory(Path.Combine(Config.current.OutputPath, "./Source/Game Objects"));
+        Directory.CreateDirectory(Path.Combine(Config.current.OutputPath, "./Patches/Code"));
 
         // code files
         foreach (UndertaleCode modCode in modded.Data.Code)
@@ -60,7 +62,23 @@ partial class DataHandler
             // if the script isnt in vanilla, make a definition for it when applying
             if (vanillaScript is null)
             {
-                File.WriteAllText(Path.Combine(Config.current.OutputPath, $"./Source/Scripts/{modScript.Name.Content}.json"), JsonSerializer.Serialize(new ScriptDefinition(modScript.Name.Content, modScript.Code.Name.Content)));
+                string jsonText = JsonSerializer.Serialize(new ScriptDefinition(modScript.Name.Content, modScript.Code.Name.Content));
+                File.WriteAllText(Path.Combine(Config.current.OutputPath, $"./Source/Scripts/{modScript.Name.Content}.json"), jsonText);
+                Console.Write("▮");
+            }
+        }
+
+        // script definitions
+        foreach (UndertaleGameObject modObject in modded.Data.GameObjects)
+        {
+            break; // testing whether this is even needed?
+            UndertaleGameObject vanillaObject = vanilla.Data.GameObjects.ByName(modObject.Name.Content);
+
+            // if the script isnt in vanilla, make a definition for it when applying
+            if (vanillaObject is null)
+            {
+                string jsonText = JsonSerializer.Serialize(new GameObjectDefinition(modObject.Name.Content));
+                File.WriteAllText(Path.Combine(Config.current.OutputPath, $"./Source/Game Objects/{modObject.Name.Content}.json"), jsonText);
                 Console.Write("▮");
             }
         }

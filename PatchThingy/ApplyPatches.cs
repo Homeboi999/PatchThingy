@@ -12,29 +12,44 @@ partial class DataHandler
         CodeImportGroup importGroup = new(vandatailla.Data);
         bool success = true;
 
+        // Patch files for code existing in vanilla
         foreach (string fileName in Directory.EnumerateFiles(Path.Combine(Config.current.OutputPath, "Patches/Code")))
         {
+            // read patches from file
             var patchFile = PatchFile.FromText(File.ReadAllText(fileName));
 
-            string vanillaPath = patchFile.basePath.Substring(7, patchFile.basePath.Length - 11);
-            var code = vandatailla.Data.Code.ByName(vanillaPath);
-            var vanillaCode = vandatailla.DecompileCode(code);
+            // find and decompile the associated code
+            string patchDest = Path.GetFileNameWithoutExtension(patchFile.basePath);
+            var vanillaFile = vandatailla.Data.Code.ByName(patchDest);
+            var vanillaCode = vandatailla.DecompileCode(vanillaFile);
 
+            // apply patches to vanilla code
             var patcher = new Patcher(patchFile.patches, vanillaCode);
             patcher.Patch(Patcher.Mode.FUZZY);
 
+            // in any patches fail to apply here, don't save changes after applying.
             if (patcher.Results.Any(result => !result.success))
             {
-                Console.WriteLine($"ERROR: Failed to apply patches for {vanillaPath}.gml");
+                Console.WriteLine($"ERROR: Failed to apply patches for {patchDest}.gml");
                 success = false;
                 continue; // dont queue if a patch failed to apply
             }
 
-            importGroup.QueueReplace(code, string.Join("\n", patcher.ResultLines));
+            // write patched code to file
+            importGroup.QueueReplace(vanillaFile, string.Join("\n", patcher.ResultLines));
             Console.Write("▮");
         }
 
         Console.WriteLine();
+
+        // Newly added code files
+        foreach (string fileName in Directory.EnumerateFiles(Path.Combine(Config.current.OutputPath, "Source/Code")))
+        {
+            // read code from file
+            var codeFile = File.ReadAllLines(fileName);
+
+            
+        }
         
         if (success)
         {
