@@ -68,21 +68,6 @@ partial class DataHandler
             }
         }
 
-        // script definitions
-        foreach (UndertaleGameObject modObject in modded.Data.GameObjects)
-        {
-            break; // testing whether this is even needed?
-            UndertaleGameObject vanillaObject = vanilla.Data.GameObjects.ByName(modObject.Name.Content);
-
-            // if the script isnt in vanilla, make a definition for it when applying
-            if (vanillaObject is null)
-            {
-                string jsonText = JsonSerializer.Serialize(new GameObjectDefinition(modObject.Name.Content));
-                File.WriteAllText(Path.Combine(Config.current.OutputPath, $"./Source/Game Objects/{modObject.Name.Content}.json"), jsonText);
-                Console.Write("▮");
-            }
-        }
-
         Console.WriteLine();
     }
 }

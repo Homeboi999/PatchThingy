@@ -7,13 +7,14 @@ using Underanalyzer.Decompiler;
 public record ScriptDefinition (string Name, string Code)
 {
     // This is all the necessary data to define a script.
+    
+    public UndertaleScript Import (UndertaleData Data)
+    {
+        return new UndertaleScript() { Name = Data.Strings.MakeString(Name), Code = Data.Code.ByName(Code) };
+    }
 }
 
-public record GameObjectDefinition (string Name)
+public record SpriteDefinition (string Name)
 {
-    // NO ACTUAL DATA DEFINED HERE!
-    //
-    // The only game objects I add are obj_partymenu and obj_configmenu,
-    // both of which use whatever default settings UndertaleGameObject has.
-    // I'll add the necessary definitions as I need them, but only default works for now.
+    // TODO: create the texture atlas
 }

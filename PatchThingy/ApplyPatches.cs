@@ -13,15 +13,14 @@ partial class DataHandler
         bool success = true;
 
         // Patch files for code existing in vanilla
-        foreach (string fileName in Directory.EnumerateFiles(Path.Combine(Config.current.OutputPath, "Patches/Code")))
+        foreach (string filePath in Directory.EnumerateFiles(Path.Combine(Config.current.OutputPath, "Patches/Code")))
         {
             // read patches from file
-            var patchFile = PatchFile.FromText(File.ReadAllText(fileName));
+            var patchFile = PatchFile.FromText(File.ReadAllText(filePath));
 
             // find and decompile the associated code
-            string patchDest = Path.GetFileNameWithoutExtension(patchFile.basePath);
-            var vanillaFile = vandatailla.Data.Code.ByName(patchDest);
-            var vanillaCode = vandatailla.DecompileCode(vanillaFile);
+            var patchDest = vandatailla.Data.Code.ByName(Path.GetFileNameWithoutExtension(patchFile.basePath));
+            var vanillaCode = vandatailla.DecompileCode(patchDest);
 
             // apply patches to vanilla code
             var patcher = new Patcher(patchFile.patches, vanillaCode);
@@ -30,27 +29,53 @@ partial class DataHandler
             // in any patches fail to apply here, don't save changes after applying.
             if (patcher.Results.Any(result => !result.success))
             {
-                Console.WriteLine($"ERROR: Failed to apply patches for {patchDest}.gml");
+                Console.WriteLine($"ERROR: Failed to apply patches for {patchDest.Name.Content}.gml");
                 success = false;
                 continue; // dont queue if a patch failed to apply
             }
 
             // write patched code to file
-            importGroup.QueueReplace(vanillaFile, string.Join("\n", patcher.ResultLines));
+            importGroup.QueueReplace(patchDest, string.Join("\n", patcher.ResultLines));
             Console.Write("▮");
         }
 
         Console.WriteLine();
 
         // Newly added code files
-        foreach (string fileName in Directory.EnumerateFiles(Path.Combine(Config.current.OutputPath, "Source/Code")))
+        foreach (string filePath in Directory.EnumerateFiles(Path.Combine(Config.current.OutputPath, "Source/Code")))
         {
             // read code from file
-            var codeFile = File.ReadAllLines(fileName);
+            var codeFile = File.ReadAllText(filePath);
 
-            
+            // add file to data
+            importGroup.QueueReplace(Path.GetFileNameWithoutExtension(filePath), codeFile);
+            Console.Write("▮");
+        }
+
+        Console.WriteLine();
+
+        // Script Definitions
+        foreach (string filePath in Directory.EnumerateFiles(Path.Combine(Config.current.OutputPath, "Source/Scripts")))
+        {
+            // load the script definition from JSON
+            ScriptDefinition scriptJson = JsonSerializer.Deserialize<ScriptDefinition>(File.ReadAllText(filePath))!;
+
+            // if the definition couldn't be loaded for whatever reason
+            if (scriptJson is null)
+            {
+                Console.WriteLine($"ERROR: Failed to load script definition from {Path.GetFileName(filePath)}");
+                success = false;
+                continue; // dont queue if a patch failed to apply
+
+            }
+
+            // add script definition to data
+            vandatailla.Data.Scripts.Add(scriptJson.Import(vandatailla.Data));
+            Console.Write("▮");
         }
         
+        Console.WriteLine();
+
         if (success)
         {
             Console.WriteLine("Successfully applied patches to existing code");
