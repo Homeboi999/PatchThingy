@@ -6,15 +6,12 @@ using System.Text.Json;
 using System.Diagnostics;
 using ImageMagick;
 
-// One class to manage all changes to the data.win
-//
-// This file contains functions that help format
-// the console output from the apply/generate functions.
 public class ConsoleMenu
 {
-    int pos;
+    int pos; // space from left edge
     public List<MenuLine> lines = [];
 
+    // Constructor
     public ConsoleMenu(int boxWidth, int boxHeight, int offsetCol)
     {
         pos = offsetCol;
@@ -25,12 +22,15 @@ public class ConsoleMenu
         {
             lines.Add(new MenuLine(LineType.Body, boxWidth, offsetCol));
         }
+
         lines.Add(new MenuLine(LineType.Bottom, boxWidth, offsetCol));
     }
 
-    public void Draw()
+    // draw entire new box
+    public void DrawAllLines()
     {
         Console.Clear();
+        Console.CursorVisible = false;
 
         foreach (MenuLine line in lines)
         {
@@ -38,33 +38,84 @@ public class ConsoleMenu
         }
     }
 
+    // redraw specific line
     public void DrawLine(int line)
     {
         Console.SetCursorPosition(0, line);
         lines[line].Draw();
     }
 
+    // clear all lines of content and type
+    // (except for the top/bottom)
+    public void ClearAll()
+    {
+        // for loop intentionally skips
+        // the first and last lines
+        for (int i = 1; i < lines.Count - 1; i++)
+        {
+
+            // reset line to empty
+            lines[i].SetText("");
+            lines[i].SetType(LineType.Body);
+            lines[i].contentSelected = false;
+        }
+    }
+
+    // cursor string shared for all boxes
+    struct MenuHeart
+    {
+        static string sprite = "♥️";
+        static int x = 0;
+        static int y = 0;
+        static bool visible = false;
+
+        public static void MoveTo(int newX, int newY)
+        {
+            // stop if theres no change
+            if (x == newX && y == newY)
+            {
+                return;
+            }
+
+            // clear the heart from the old position
+            if (visible)
+            {
+                Hide();
+            }
+
+            // draw the heart in the new position
+            visible = true;
+            Console.SetCursorPosition(newX, newY);
+            Console.Write(sprite);
+
+            // save new heart position
+            x = newX;
+            y = newY;
+        }
+        
+        public static void Hide()
+        {
+            visible = false;
+            Console.SetCursorPosition(x, y);
+            Console.Write("  ");
+        }
+    }
+
+    // build a list and make the user choose an option
+    // using Deltarune controls (bc why not)
     public int PromptUserInput(int[] choiceLines)
     {
-        string cursor = "♥️";
-        int curPos = 0;    
-        int prevPos = 0;
+        int curPos = 0; // line that the cursor is on
         int output = -1;
 
         while (output < 0)
         {
-            Console.SetCursorPosition(pos + 3, choiceLines[curPos]);
-            Console.Write(cursor);
+            // move cursor to selected option
+            MenuHeart.MoveTo(pos + 3, choiceLines[curPos]);
 
-            if (prevPos != curPos)
-            {
-                Console.SetCursorPosition(pos + 3, choiceLines[prevPos]);
-                Console.Write(" ");
-            }
-
-            prevPos = curPos;
-
-            switch (Console.ReadKey(false).Key)
+            // ONLY 1 READKEY AT A TIME!!!
+            // the program pauses to wait for each input separately
+            switch (Console.ReadKey(true).Key)
             {
                 case ConsoleKey.UpArrow:
                     curPos = WrapCursor(-1, curPos, choiceLines.Length - 1);
@@ -74,45 +125,79 @@ public class ConsoleMenu
                     curPos = WrapCursor(1, curPos, choiceLines.Length - 1);
                     break;
 
-                case ConsoleKey.Z:
+                case ConsoleKey.Enter: // alt scheme
+                case ConsoleKey.Z: // deltarune controls
                     output = curPos;
                     break;
             }
         }
 
+        // select choice in the menu
+        lines[choiceLines[output]].contentSelected = true;
+        DrawLine(choiceLines[output]);
         return output;
     }
 
+    // use the given line for a yes/no choicer
     public bool ConfirmUserInput(int line)
     {
-        string cursor = "♥️";
+        // navigation variables
+        bool curPos = true; // true = left, false = right
         bool output = false;
         bool inputted = false;
 
-        Console.SetCursorPosition(pos + 3, line);
-        Console.Write(cursor);
+        // format line correctly
+        lines[line].SetText(" Confirm                  Cancel", true);
+        DrawLine(line);
 
         while (!inputted)
         {
-            switch (Console.ReadKey(false).Key)
+            if (curPos)
+            { 
+                // draw the cursor on the left
+                MenuHeart.MoveTo(pos + 8, line);
+            }
+            else
             {
+                // draw the cursor on the right
+                MenuHeart.MoveTo(pos + 33, line);
+            }
+
+            // ONLY 1 READKEY AT A TIME!!!
+            // the program pauses to wait for each input separately
+            switch (Console.ReadKey(true).Key)
+            {
+                case ConsoleKey.LeftArrow:
+                    curPos = true; // no wrapping cuz only 2 spots
+                    break;
+
+                case ConsoleKey.RightArrow:
+                    curPos = false; // no wrapping cuz only 2 spots
+                    break;
+
                 case ConsoleKey.Enter: // alt scheme
                 case ConsoleKey.Z: // deltarune controls
+                    // confirm selection
                     inputted = true;
-                    output = true;
+                    output = curPos;
+
                     break;
 
                 case ConsoleKey.Escape: // shift doesnt exist lol
                 case ConsoleKey.X:
+                    // cancel selection
                     inputted = true;
                     output = false;
                     break;
             }
         }
 
+        MenuHeart.Hide();
         return output;
     }
 
+    // + or - a number while keeping it
+    // between 0 and a given maximum.
     int WrapCursor(int amount, int index, int max)
     {
         if (index + amount < 0)
@@ -147,11 +232,11 @@ public class MenuLine
     }
     public string contentText = "";
     public bool contentCentered = false;
+    public bool contentSelected = false;
 
     public void Draw()
     {
         // Left padding
-
         for (int i = 0; i < pos; i++)
             Console.Write(" "); // idk why the int
 
@@ -165,11 +250,18 @@ public class MenuLine
 
         if (contentText.Length > 0)
         {
+            if (contentSelected)
+            {
+                // draw content in yellow when selected
+                Console.ForegroundColor = ConsoleColor.Yellow;
+            }
+
             AlignCursor(contentCentered);
             Console.Write(contentText);
         }
 
-        // New line
+        // New line, reset color
+        Console.ForegroundColor = ConsoleColor.White;
         Console.WriteLine();
     }
 

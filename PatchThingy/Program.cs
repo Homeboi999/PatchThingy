@@ -6,6 +6,7 @@ using UndertaleModLib.Models;
 using UndertaleModLib.Decompiler;
 using CodeChicken.DiffPatch;
 using System.Text.Json;
+using ImageMagick.Drawing;
 
 
 // Load the script configs from the .json file next to the .csproj file
@@ -51,43 +52,53 @@ menu.lines[4].SetText("Restore vanilla data");
 
 // input location
 menu.lines[5].SetType(LineType.Separator);
-menu.lines[6].SetText("Please select a mode from the list above.", true);
-
-menu.Draw();
+menu.DrawAllLines();
 
 while (chosenMode is null)
 {
+    menu.lines[6].SetText("Please select a mode from the list above.", true);
+    menu.DrawLine(6);
+
     switch (menu.PromptUserInput([2, 3, 4]))
     {
         case 0:
-            menu.lines[6].SetText("You've chosen to generate patches. Are you sure? (Y/N)");
-            menu.DrawLine(6);
 
             if (menu.ConfirmUserInput(6))
             {
                 chosenMode = ScriptMode.Generate;
             }
+            else
+            {
+                menu.lines[2].contentSelected = false;
+                menu.DrawLine(2);
+            }
 
             break;
 
         case 1:
-            menu.lines[6].SetText("You've chosen to apply patches. Are you sure? (Y/N)");
-            menu.DrawLine(6);
 
             if (menu.ConfirmUserInput(6))
             {
                 chosenMode = ScriptMode.Apply;
             }
+            else
+            {
+                menu.lines[3].contentSelected = false;
+                menu.DrawLine(3);
+            }
             
             break;
 
         case 2:
-            menu.lines[6].SetText("You've chosen to apply patches. Are you sure? (Y/N)");
-            menu.DrawLine(6);
 
             if (menu.ConfirmUserInput(6))
             {
                 chosenMode = ScriptMode.Revert;
+            }
+            else
+            {
+                menu.lines[4].contentSelected = false;
+                menu.DrawLine(4);
             }
             
             break;
@@ -96,6 +107,10 @@ while (chosenMode is null)
 
 if (chosenMode == ScriptMode.Generate)
 {
+    // reset menu
+    menu.ClearAll();
+
+    // load data files
     DataFile vanilla = new(vanillaPath);
     DataFile modded = new(activePath);
 
