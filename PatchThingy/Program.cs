@@ -32,59 +32,64 @@ string vanillaPath = Path.Combine(Config.current.GamePath, DataFile.chapterFolde
 // Backup Data: a second copy of the patched data.win, in case of an update.
 string backupPath = Path.Combine(Config.current.GamePath, DataFile.chapterFolder, "data-backup.win");
 
-Console.WriteLine(Config.current);
-
 ScriptMode? chosenMode = null;
-Console.WriteLine("─────────────────────────────────");
 
-// chosenMode = ScriptMode.Apply;
+// force scriptmode for test purposes
+//chosenMode = ScriptMode.DecorTest;
+
+// setup for the initial menu
+ConsoleMenu menu = new ConsoleMenu(50, 6, 8);
+
+// title bar
+menu.lines[0].SetText("╾─╴╴╴  Deltarune Patch Script  ╶╶╶─╼", true);
+menu.lines[1].SetType(LineType.Separator);
+
+// mode list
+menu.lines[2].SetText("Generate new patches");
+menu.lines[3].SetText("Apply existing patches");
+menu.lines[4].SetText("Restore vanilla data");
+
+// input location
+menu.lines[5].SetType(LineType.Separator);
+menu.lines[6].SetText("Please select a mode from the list above.", true);
+
+menu.Draw();
 
 while (chosenMode is null)
 {
-    Console.WriteLine("Please select an option:");
-    Console.WriteLine("G - Generate new patches");
-    Console.WriteLine("A - Apply existing patches");
-    Console.WriteLine("R - Revert to vanilla");
-    Console.WriteLine("─────────────────────────────────");
-
-    switch (PromptUserInput(["g", "a", "r"]))
+    switch (menu.PromptUserInput([2, 3, 4]))
     {
-        case "g":
-            Console.WriteLine("─────────────────────────────────");
-            Console.WriteLine("You've chosen to generate patches. Are you sure? (Y/N)");
+        case 0:
+            menu.lines[6].SetText("You've chosen to generate patches. Are you sure? (Y/N)");
+            menu.DrawLine(6);
 
-            if (PromptUserInput(["y", "n"]) == "y")
+            if (menu.ConfirmUserInput(6))
             {
                 chosenMode = ScriptMode.Generate;
             }
-            
-            Console.WriteLine("═════════════════════════════════");
 
             break;
 
-        case "a":
-            Console.WriteLine("─────────────────────────────────");
-            Console.WriteLine("You've chosen to apply patches. Are you sure? (Y/N)");
+        case 1:
+            menu.lines[6].SetText("You've chosen to apply patches. Are you sure? (Y/N)");
+            menu.DrawLine(6);
 
-            if (PromptUserInput(["y", "n"]) == "y")
+            if (menu.ConfirmUserInput(6))
             {
                 chosenMode = ScriptMode.Apply;
             }
             
-            Console.WriteLine("═════════════════════════════════");
             break;
 
-        case "r":
-            Console.WriteLine("─────────────────────────────────");
-            Console.WriteLine("You've chosen to revert to vanilla. Are you sure? (Y/N)");
+        case 2:
+            menu.lines[6].SetText("You've chosen to apply patches. Are you sure? (Y/N)");
+            menu.DrawLine(6);
 
-
-            if (PromptUserInput(["y", "n"]) == "y")
+            if (menu.ConfirmUserInput(6))
             {
                 chosenMode = ScriptMode.Revert;
             }
             
-            Console.WriteLine("═════════════════════════════════");
             break;
     }
 }
@@ -136,27 +141,10 @@ if (chosenMode == ScriptMode.Revert)
     File.Copy(vanillaPath, activePath);
 }
 
-string PromptUserInput(string[] choices)
-{
-    string? output = Console.ReadLine()?.ToLower();
-
-    while (output is null || !choices.Contains(output))
-    {
-        if (output is null)
-        {
-            Console.WriteLine("oh ok, i see how it is.");
-            Environment.Exit(1);
-        }
-
-        Console.WriteLine("Please select a valid option.");
-        output = Console.ReadLine()?.ToLower();
-    }
-
-    return output;
-}
 enum ScriptMode
 {
     Generate,
     Apply,
-    Revert
+    Revert,
+    DecorTest
 }

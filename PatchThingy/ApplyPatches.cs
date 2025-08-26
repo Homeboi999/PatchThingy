@@ -5,12 +5,23 @@ using UndertaleModLib.Compiler;
 using CodeChicken.DiffPatch;
 using System.Text.Json;
 
+// One class to manage all changes to the data.win
+//
+// This file contains the function that applies the
+// patches in the output folder to the Active Data.
 partial class DataHandler
 {
     public static void ApplyPatches(DataFile vandatailla) // typo but it was funny lmao
     {
         CodeImportGroup importGroup = new(vandatailla.Data);
         bool success = true;
+
+        // Don't try to apply patches that don't exist.
+        if (!Path.Exists(Config.current.OutputPath))
+        {
+            Console.WriteLine("ERROR: No output detected. Please generate patches first.");
+            return;
+        }
 
         // Patch files for code existing in vanilla
         foreach (string filePath in Directory.EnumerateFiles(Path.Combine(Config.current.OutputPath, "Patches/Code")))
@@ -34,12 +45,12 @@ partial class DataHandler
                 continue; // dont queue if a patch failed to apply
             }
 
-            // write patched code to file
+            // write patched code to file and show progress
             importGroup.QueueReplace(patchDest, string.Join("\n", patcher.ResultLines));
-            Console.Write("▮");
+            WriteProgress("Code Patches");
         }
 
-        Console.WriteLine();
+        ResetProgress();
 
         // Newly added code files
         foreach (string filePath in Directory.EnumerateFiles(Path.Combine(Config.current.OutputPath, "Source/Code")))
@@ -49,10 +60,10 @@ partial class DataHandler
 
             // add file to data
             importGroup.QueueReplace(Path.GetFileNameWithoutExtension(filePath), codeFile);
-            Console.Write("▮");
+            WriteProgress("Code Additions");
         }
 
-        Console.WriteLine();
+        ResetProgress();
 
         // Script Definitions
         foreach (string filePath in Directory.EnumerateFiles(Path.Combine(Config.current.OutputPath, "Source/Scripts")))
@@ -71,10 +82,10 @@ partial class DataHandler
 
             // add script definition to data
             vandatailla.Data.Scripts.Add(scriptJson.Import(vandatailla.Data));
-            Console.Write("▮");
+            WriteProgress("Script Definitions");
         }
-        
-        Console.WriteLine();
+
+        ResetProgress();
 
         if (success)
         {

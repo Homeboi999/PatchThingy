@@ -4,6 +4,10 @@ using UndertaleModLib.Decompiler;
 using CodeChicken.DiffPatch;
 using System.Text.Json;
 
+// One class to manage all changes to the data.win
+//
+// This file contains the function that generates
+// patches and writes them to the output folder.
 partial class DataHandler
 {
     public static void GeneratePatches(DataFile vanilla, DataFile modded)
