@@ -15,7 +15,7 @@ partial class DataHandler
         // Create output folder structure if not already present.
         Directory.CreateDirectory(Path.Combine(Config.current.OutputPath, "./Source/Code"));
         Directory.CreateDirectory(Path.Combine(Config.current.OutputPath, "./Source/Scripts"));
-        Directory.CreateDirectory(Path.Combine(Config.current.OutputPath, "./Source/Game Objects"));
+        Directory.CreateDirectory(Path.Combine(Config.current.OutputPath, "./Source/Sprites"));
         Directory.CreateDirectory(Path.Combine(Config.current.OutputPath, "./Patches/Code"));
 
         // code files
@@ -68,6 +68,12 @@ partial class DataHandler
                 
                 Console.WriteLine($"Created script definition for {modScript.Name.Content}");
             }
+        }
+
+        // sprite definitions
+        foreach (UndertaleSprite modSprite in modded.Data.Sprites)
+        {
+            
         }
 
         // success popup
