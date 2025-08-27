@@ -10,8 +10,12 @@ using ImageMagick.Drawing;
 
 
 // Load the script configs from the .json file next to the .csproj file
-Config.current = JsonSerializer.Deserialize<Config>(File.ReadAllText("./PatchThingy.json"))!;
-
+string configPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+#if DEBUG
+Config.current = JsonSerializer.Deserialize<Config>(File.ReadAllText(Path.Combine(configPath, "PatchThingy/config-debug.json")))!;
+#else
+Config.current = JsonSerializer.Deserialize<Config>(File.ReadAllText(Path.Combine(configPath, "PatchThingy/config.json")))!;
+#endif
 // if it failed to load for whatever reason, panic
 if (Config.current is null)
 {
@@ -69,7 +73,7 @@ while (chosenMode is null)
             }
             else
             {
-                menu.lines[2].SetColor(ConsoleColor.White);
+                menu.lines[2].SetColor();
                 menu.DrawLine(2);
             }
 
@@ -83,7 +87,7 @@ while (chosenMode is null)
             }
             else
             {
-                menu.lines[3].SetColor(ConsoleColor.White);
+                menu.lines[3].SetColor();
                 menu.DrawLine(3);
             }
             
@@ -97,7 +101,7 @@ while (chosenMode is null)
             }
             else
             {
-                menu.lines[4].SetColor(ConsoleColor.White);
+                menu.lines[4].SetColor();
                 menu.DrawLine(4);
             }
             

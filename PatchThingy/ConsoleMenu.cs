@@ -51,7 +51,7 @@ public class ConsoleMenu
             // reset line to empty
             lines[i].SetText("");
             lines[i].SetType(LineType.Body);
-            lines[i].SetColor(ConsoleColor.White);
+            lines[i].SetColor();
         }
 
         DrawAllLines();
@@ -61,7 +61,7 @@ public class ConsoleMenu
     static class MenuHeart
     {
         static string sprite = "♥️";
-        static int x = 0;
+        static int x = 0;          
         static int y = 0;
         static bool visible = false;
 
@@ -81,9 +81,11 @@ public class ConsoleMenu
 
             // draw the heart in the new position
             visible = true;
+            Console.ForegroundColor = ConsoleColor.Red;
             Console.SetCursorPosition(newX, newY);
             Console.Write(sprite);
-
+            Console.ResetColor();
+            
             // save new heart position
             x = newX;
             y = newY;
@@ -230,7 +232,7 @@ public class MenuLine
     }
     string contentText = "";
     bool contentCentered = false;
-    ConsoleColor contentColor = ConsoleColor.White;
+    ConsoleColor? contentColor = null;
 
     public void Draw()
     {
@@ -238,13 +240,15 @@ public class MenuLine
 
         if (contentText.Length > 0)
         {
-            Console.ForegroundColor = contentColor;
+            if (contentColor is not null)
+                Console.ForegroundColor = contentColor.Value;
+
             AlignCursor(contentCentered);
             Console.Write(contentText);
         }
 
         // New line, reset color
-        Console.ForegroundColor = ConsoleColor.White;
+        Console.ResetColor();
         Console.WriteLine();
     }
 
@@ -274,7 +278,7 @@ public class MenuLine
         return contentText;
     }
 
-    public void SetColor(ConsoleColor color)
+    public void SetColor(ConsoleColor? color = null)
     {
         contentColor = color;
     }

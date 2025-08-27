@@ -54,8 +54,6 @@ partial class DataHandler
             Console.WriteLine($" Patched {Path.GetFileName(patchFile.basePath)}");
         }
 
-        ResetProgress();
-
         // Newly added code files
         foreach (string filePath in Directory.EnumerateFiles(Path.Combine(Config.current.OutputPath, "Source/Code")))
         {
