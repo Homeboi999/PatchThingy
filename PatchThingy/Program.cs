@@ -36,7 +36,7 @@ string backupPath = Path.Combine(Config.current.GamePath, DataFile.chapterFolder
 ScriptMode? chosenMode = null;
 
 // force scriptmode for test purposes
-//chosenMode = ScriptMode.DecorTest;
+// chosenMode = ScriptMode.DecorTest;
 
 // setup for the initial menu
 ConsoleMenu menu = new ConsoleMenu(50, 6, 8);
@@ -46,9 +46,9 @@ menu.lines[0].SetText("╾─╴╴╴  Deltarune Patch Script  ╶╶╶─╼"
 menu.lines[1].SetType(LineType.Separator);
 
 // mode list
-menu.lines[2].SetText("Generate new patches");
-menu.lines[3].SetText("Apply existing patches");
-menu.lines[4].SetText("Restore vanilla data");
+menu.lines[2].SetText("     Generate new patches");
+menu.lines[3].SetText("     Apply existing patches");
+menu.lines[4].SetText("     Restore vanilla data");
 
 // input location
 menu.lines[5].SetType(LineType.Separator);
@@ -56,7 +56,7 @@ menu.DrawAllLines();
 
 while (chosenMode is null)
 {
-    menu.lines[6].SetText("Please select a mode from the list above.", true);
+    menu.lines[6].SetText(" Please select a mode from the list above.", true);
     menu.DrawLine(6);
 
     switch (menu.PromptUserInput([2, 3, 4]))
@@ -69,7 +69,7 @@ while (chosenMode is null)
             }
             else
             {
-                menu.lines[2].contentSelected = false;
+                menu.lines[2].SetColor(ConsoleColor.White);
                 menu.DrawLine(2);
             }
 
@@ -83,7 +83,7 @@ while (chosenMode is null)
             }
             else
             {
-                menu.lines[3].contentSelected = false;
+                menu.lines[3].SetColor(ConsoleColor.White);
                 menu.DrawLine(3);
             }
             
@@ -97,26 +97,38 @@ while (chosenMode is null)
             }
             else
             {
-                menu.lines[4].contentSelected = false;
+                menu.lines[4].SetColor(ConsoleColor.White);
                 menu.DrawLine(4);
             }
             
             break;
+        default:
+            menu.lines[6].SetText(" * i see how it is...");
+            menu.DrawLine(6);
+            ExitMenu();
+            break; // for compiler
     }
 }
 
+// set up the menu layout for any popups
+// or errors that I need
+menu.ClearAll();
+menu.lines[1].SetColor(ConsoleColor.DarkGray);
+menu.lines[2].SetType(LineType.Separator);
+menu.lines[3].SetText("! ERROR !", true); // default to error, successes
+menu.lines[3].SetColor(ConsoleColor.Red); // will set their header
+menu.lines[5].SetType(LineType.Separator);
+menu.lines[6].SetColor(ConsoleColor.DarkGray);
+
 if (chosenMode == ScriptMode.Generate)
 {
-    // reset menu
-    menu.ClearAll();
-
     // load data files
     DataFile vanilla = new(vanillaPath);
     DataFile modded = new(activePath);
 
     // mayb in the future, double-check that the versions are the same?
 
-    DataHandler.GeneratePatches(vanilla, modded);
+    DataHandler.GeneratePatches(menu, vanilla, modded);
 }
 
 if (chosenMode == ScriptMode.Apply)
@@ -128,7 +140,8 @@ if (chosenMode == ScriptMode.Apply)
         // If Active Data ALSO doesn't exist, then panic.
         if (!File.Exists(activePath))
         {
-            Console.WriteLine("ERROR: Could not find game data.");
+            menu.lines[4].SetText("Could not find game data.", true);
+            menu.DrawAllLines();
             Environment.Exit(2);
             return; // for compiler
         }
@@ -142,7 +155,7 @@ if (chosenMode == ScriptMode.Apply)
 
     // Apply patches to Vanilla Data, then save changes to Active Data.
     DataFile data = new(vanillaPath);
-    DataHandler.ApplyPatches(data);
+    DataHandler.ApplyPatches(menu, data);
 
     // Create Backup Data by copying the new Active Data
     // File.Copy(activePath, backupPath);
@@ -154,6 +167,23 @@ if (chosenMode == ScriptMode.Revert)
     // the version of the game used to generate patches.
     File.Delete(activePath);
     File.Copy(vanillaPath, activePath);
+
+    // success popup
+    menu.lines[3].SetText("SUCCESS", true);
+    menu.lines[3].SetColor(ConsoleColor.Yellow);
+    menu.lines[4].SetText("Successfully restored vanilla data!");
+    menu.DrawAllLines();
+}
+
+// after whatever the script does,
+// move cursor out of the box
+ExitMenu();
+
+void ExitMenu()
+{
+    Console.SetCursorPosition(0, menu.lines.Count);
+    Console.CursorVisible = true;
+    Environment.Exit(0);
 }
 
 enum ScriptMode

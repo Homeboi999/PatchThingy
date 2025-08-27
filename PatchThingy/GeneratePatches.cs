@@ -10,7 +10,7 @@ using System.Text.Json;
 // patches and writes them to the output folder.
 partial class DataHandler
 {
-    public static void GeneratePatches(DataFile vanilla, DataFile modded)
+    public static void GeneratePatches(ConsoleMenu menu, DataFile vanilla, DataFile modded)
     {
         // Create output folder structure if not already present.
         Directory.CreateDirectory(Path.Combine(Config.current.OutputPath, "./Source/Code"));
@@ -44,19 +44,16 @@ partial class DataHandler
                 }
 
                 File.WriteAllText(Path.Combine(Config.current.OutputPath, $"Patches/Code/{modCode.Name.Content}.gml.patch"), modChanges.ToString());
-                Console.Write("▮");
+                Console.WriteLine($"Generated patches for {modCode.Name.Content}.gml");
             }
+
             // if it's a new file, export entire file to the Source folder
             else if (vanillaCode is null)
             {
                 File.WriteAllLines(Path.Combine(Config.current.OutputPath, $"./Source/Code/{modCode.Name.Content}.gml"), modded.DecompileCode(modCode));
-                Console.Write("▮");
+                Console.WriteLine($"Created source code for {modCode.Name.Content}.gml");
             }
         }
-
-        // separate script definitions and code
-        // TODO: this actually doesnt look that cool i dont think
-        Console.WriteLine();
 
         // script definitions
         foreach (UndertaleScript modScript in modded.Data.Scripts)
@@ -68,9 +65,16 @@ partial class DataHandler
             {
                 string jsonText = JsonSerializer.Serialize(new ScriptDefinition(modScript.Name.Content, modScript.Code.Name.Content));
                 File.WriteAllText(Path.Combine(Config.current.OutputPath, $"./Source/Scripts/{modScript.Name.Content}.json"), jsonText);
-                Console.Write("▮");
+                
+                Console.WriteLine($"Created script definition for {modScript.Name.Content}");
             }
         }
+
+        // success popup
+        menu.lines[3].SetText("SUCCESS", true);
+        menu.lines[3].SetColor(ConsoleColor.Yellow);
+        menu.lines[4].SetText("Patches applied successfully!", true);
+        menu.DrawAllLines();
 
         Console.WriteLine();
     }

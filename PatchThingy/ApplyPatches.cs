@@ -11,17 +11,20 @@ using System.Text.Json;
 // patches in the output folder to the Active Data.
 partial class DataHandler
 {
-    public static void ApplyPatches(DataFile vandatailla) // typo but it was funny lmao
+    public static void ApplyPatches(ConsoleMenu menu, DataFile vandatailla) // typo but it was funny lmao
     {
-        CodeImportGroup importGroup = new(vandatailla.Data);
-        bool success = true;
+        Console.Clear();
+        menu.lines[1].SetText(" " + vandatailla.Data.GeneralInfo.DisplayName.Content);
 
         // Don't try to apply patches that don't exist.
         if (!Path.Exists(Config.current.OutputPath))
         {
-            Console.WriteLine("ERROR: No output detected. Please generate patches first.");
+            menu.lines[4].SetText("No output found. (Try generating patches)", true);
+            menu.DrawAllLines();
             return;
         }
+
+        CodeImportGroup importGroup = new(vandatailla.Data);
 
         // Patch files for code existing in vanilla
         foreach (string filePath in Directory.EnumerateFiles(Path.Combine(Config.current.OutputPath, "Patches/Code")))
@@ -40,14 +43,15 @@ partial class DataHandler
             // in any patches fail to apply here, don't save changes after applying.
             if (patcher.Results.Any(result => !result.success))
             {
-                Console.WriteLine($"ERROR: Failed to apply patches for {patchDest.Name.Content}.gml");
-                success = false;
-                continue; // dont queue if a patch failed to apply
+                menu.lines[4].SetText($"Failed to apply patches to code", true);
+                menu.lines[6].SetText(Path.GetFileName(patchFile.basePath));
+                menu.DrawAllLines();
+                return; // dont queue if a patch failed to apply
             }
 
             // write patched code to file and show progress
             importGroup.QueueReplace(patchDest, string.Join("\n", patcher.ResultLines));
-            WriteProgress("Code Patches");
+            Console.WriteLine($" Patched {Path.GetFileName(patchFile.basePath)}");
         }
 
         ResetProgress();
@@ -60,10 +64,8 @@ partial class DataHandler
 
             // add file to data
             importGroup.QueueReplace(Path.GetFileNameWithoutExtension(filePath), codeFile);
-            WriteProgress("Code Additions");
+            Console.WriteLine($" Added {Path.GetFileName(filePath)}", 6);
         }
-
-        ResetProgress();
 
         // Script Definitions
         foreach (string filePath in Directory.EnumerateFiles(Path.Combine(Config.current.OutputPath, "Source/Scripts")))
@@ -74,29 +76,25 @@ partial class DataHandler
             // if the definition couldn't be loaded for whatever reason
             if (scriptJson is null)
             {
-                Console.WriteLine($"ERROR: Failed to load script definition from {Path.GetFileName(filePath)}");
-                success = false;
-                continue; // dont queue if a patch failed to apply
+                menu.lines[4].SetText($"Failed to load script definition", true);
+                menu.lines[6].SetText(Path.GetFileName(filePath));
+                menu.DrawAllLines();
+                return; // dont queue if a patch failed to apply
 
             }
 
             // add script definition to data
             vandatailla.Data.Scripts.Add(scriptJson.Import(vandatailla.Data));
-            WriteProgress("Script Definitions");
+            Console.WriteLine($" Defined {scriptJson.Name}");
         }
 
-        ResetProgress();
+        // success popup
+        menu.lines[3].SetText("SUCCESS", true);
+        menu.lines[3].SetColor(ConsoleColor.Yellow);
+        menu.lines[4].SetText("Patches applied successfully!", true);
+        menu.DrawAllLines();
 
-        if (success)
-        {
-            Console.WriteLine("Successfully applied patches to existing code");
-            importGroup.Import();
-            vandatailla.SaveChanges(Path.Combine(Config.current.GamePath, DataFile.chapterFolder, "data.win"));
-        }
-        else
-        {
-            Console.WriteLine("Unable to apply patches, cancelling import.");
-            return;
-        }
+        importGroup.Import();
+        vandatailla.SaveChanges(Path.Combine(Config.current.GamePath, DataFile.chapterFolder, "data.win"));
     }
 }

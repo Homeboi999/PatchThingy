@@ -26,7 +26,7 @@ public class ConsoleMenu
         lines.Add(new MenuLine(LineType.Bottom, boxWidth, offsetCol));
     }
 
-    // draw entire new box
+    // Display lines
     public void DrawAllLines()
     {
         Console.Clear();
@@ -37,32 +37,28 @@ public class ConsoleMenu
             line.Draw();
         }
     }
-
-    // redraw specific line
     public void DrawLine(int line)
     {
         Console.SetCursorPosition(0, line);
         lines[line].Draw();
     }
-
-    // clear all lines of content and type
-    // (except for the top/bottom)
     public void ClearAll()
     {
         // for loop intentionally skips
         // the first and last lines
         for (int i = 1; i < lines.Count - 1; i++)
         {
-
             // reset line to empty
             lines[i].SetText("");
             lines[i].SetType(LineType.Body);
-            lines[i].contentSelected = false;
+            lines[i].SetColor(ConsoleColor.White);
         }
+
+        DrawAllLines();
     }
 
-    // cursor string shared for all boxes
-    struct MenuHeart
+    // cursor variables shared for all boxes
+    static class MenuHeart
     {
         static string sprite = "♥️";
         static int x = 0;
@@ -129,11 +125,14 @@ public class ConsoleMenu
                 case ConsoleKey.Z: // deltarune controls
                     output = curPos;
                     break;
+
+                case ConsoleKey.Escape:
+                    return -1;
             }
         }
 
         // select choice in the menu
-        lines[choiceLines[output]].contentSelected = true;
+        lines[choiceLines[output]].SetColor(ConsoleColor.Yellow);
         DrawLine(choiceLines[output]);
         return output;
     }
@@ -219,43 +218,27 @@ public class ConsoleMenu
 
 public class MenuLine
 {
-    string[] parts = ["", "", ""];
+    string boxPart = "";
     int pos;
     int size;
-    int textOffset = 5;
 
     public MenuLine(LineType type, int width, int margin)
     {
-        SetType(type);
         pos = margin;
         size = width;
+        SetType(type);
     }
-    public string contentText = "";
-    public bool contentCentered = false;
-    public bool contentSelected = false;
+    string contentText = "";
+    bool contentCentered = false;
+    ConsoleColor contentColor = ConsoleColor.White;
 
     public void Draw()
     {
-        // Left padding
-        for (int i = 0; i < pos; i++)
-            Console.Write(" "); // idk why the int
-
-        // Box parts
-        Console.Write(parts[0]); // left box graphic
-
-        for (int i = 0; i < size; i++)
-            Console.Write(parts[1]);
-
-        Console.Write(parts[2]);
+        Console.Write(boxPart);
 
         if (contentText.Length > 0)
         {
-            if (contentSelected)
-            {
-                // draw content in yellow when selected
-                Console.ForegroundColor = ConsoleColor.Yellow;
-            }
-
+            Console.ForegroundColor = contentColor;
             AlignCursor(contentCentered);
             Console.Write(contentText);
         }
@@ -275,7 +258,7 @@ public class MenuLine
         }
         else
         {
-            destX = pos + textOffset + 1;
+            destX = pos + 1;
         }
 
         Console.SetCursorPosition(destX, Console.CursorTop);
@@ -286,9 +269,20 @@ public class MenuLine
         contentText = text;
         contentCentered = centered;
     }
+    public string GetText()
+    {
+        return contentText;
+    }
+
+    public void SetColor(ConsoleColor color)
+    {
+        contentColor = color;
+    }
 
     public void SetType(LineType type)
     {
+        string[] parts = ["L", "", "R"];
+
         switch (type)
         {
             case LineType.Top:
@@ -311,6 +305,20 @@ public class MenuLine
                 parts = ["", "", ""];
                 break;
         }
+
+        boxPart = "";
+
+        // Left padding
+        for (int i = 0; i < pos; i++)
+            boxPart += " ";
+
+        // Box parts
+        boxPart += parts[0];
+        for (int i = 0; i < size; i++)
+        {
+            boxPart += parts[1];
+        }
+        boxPart += parts[2];
     }
 }
 
