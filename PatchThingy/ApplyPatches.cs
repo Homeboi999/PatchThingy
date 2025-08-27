@@ -82,15 +82,21 @@ partial class DataHandler
             }
 
             // add script definition to data
-            vandatailla.Data.Scripts.Add(scriptJson.Import(vandatailla.Data));
+            vandatailla.Data.Scripts.Add(scriptJson.Save(vandatailla.Data));
             Console.WriteLine($" Defined {scriptJson.Name}");
+        }
+
+        // sprites (lazy)
+        foreach (string filePath in Directory.EnumerateFiles(Path.Combine(Config.current.OutputPath, "Source/Sprites")))
+        {
+            
         }
 
         // success popup
         menu.lines[3].SetText("SUCCESS", true);
         menu.lines[3].SetColor(ConsoleColor.Yellow);
         menu.lines[4].SetText("Patches applied successfully!", true);
-        menu.DrawAllLines();
+        menu.DrawAllLines(true);
 
         importGroup.Import();
         vandatailla.SaveChanges(Path.Combine(Config.current.GamePath, DataFile.chapterFolder, "data.win"));

@@ -38,9 +38,12 @@ string vanillaPath = Path.Combine(Config.current.GamePath, DataFile.chapterFolde
 string backupPath = Path.Combine(Config.current.GamePath, DataFile.chapterFolder, "data-backup.win");
 
 ScriptMode? chosenMode = null;
-
-// force scriptmode for test purposes
-// chosenMode = ScriptMode.DecorTest;
+#if DEBUG
+// Console.ReadKey doesnt work in debug console.
+// if attached to the debugger, a breakpoint here
+// should let me change modes manually?
+Console.WriteLine(chosenMode);
+#endif
 
 // setup for the initial menu
 ConsoleMenu menu = new ConsoleMenu(50, 6, 8);
@@ -56,7 +59,9 @@ menu.lines[4].SetText("     Restore vanilla data");
 
 // input location
 menu.lines[5].SetType(LineType.Separator);
+Console.CursorVisible = false;
 menu.DrawAllLines();
+
 
 while (chosenMode is null)
 {

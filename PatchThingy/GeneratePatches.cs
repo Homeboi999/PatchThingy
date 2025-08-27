@@ -59,28 +59,45 @@ partial class DataHandler
         foreach (UndertaleScript modScript in modded.Data.Scripts)
         {
             UndertaleScript vanillaScript = vanilla.Data.Scripts.ByName(modScript.Name.Content);
+            ScriptDefinition scriptDef;
 
             // if the script isnt in vanilla, make a definition for it when applying
             if (vanillaScript is null)
             {
-                string jsonText = JsonSerializer.Serialize(new ScriptDefinition(modScript.Name.Content, modScript.Code.Name.Content));
-                File.WriteAllText(Path.Combine(Config.current.OutputPath, $"./Source/Scripts/{modScript.Name.Content}.json"), jsonText);
+                scriptDef = ScriptDefinition.Load(modScript);
+                string jsonText = JsonSerializer.Serialize(scriptDef);
+
+                string jsonPath = $"./Source/Scripts/{scriptDef.Name}.json";
+                File.WriteAllText(Path.Combine(Config.current.OutputPath, jsonPath), jsonText);
                 
-                Console.WriteLine($"Created script definition for {modScript.Name.Content}");
+                Console.WriteLine($"Created script definition for {scriptDef.Name}");
             }
         }
 
         // sprite definitions
         foreach (UndertaleSprite modSprite in modded.Data.Sprites)
         {
-            
+            UndertaleSprite vanillaSprite = vanilla.Data.Sprites.ByName(modSprite.Name.Content);
+            SpriteDefinition spriteDef;
+
+            if (vanillaSprite is null)
+            {
+                // assemble sprite definition
+                spriteDef = SpriteDefinition.Load(modSprite);
+                string jsonText = JsonSerializer.Serialize(spriteDef);
+
+                string jsonPath = $"./Source/Sprites/{spriteDef.Name}.json";
+                File.WriteAllText(Path.Combine(Config.current.OutputPath, jsonPath), jsonText);
+
+                Console.WriteLine($"Created sprite definition for {spriteDef.Name}");
+            }
         }
 
         // success popup
         menu.lines[3].SetText("SUCCESS", true);
         menu.lines[3].SetColor(ConsoleColor.Yellow);
-        menu.lines[4].SetText("Patches applied successfully!", true);
-        menu.DrawAllLines();
+        menu.lines[4].SetText("Successfuly generated patches!", true);
+        menu.DrawAllLines(true);
 
         Console.WriteLine();
     }

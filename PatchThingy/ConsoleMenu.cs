@@ -27,10 +27,12 @@ public class ConsoleMenu
     }
 
     // Display lines
-    public void DrawAllLines()
+    public void DrawAllLines(bool keepConsoleLog = false)
     {
-        Console.Clear();
-        Console.CursorVisible = false;
+        if (!keepConsoleLog)
+        {
+            Console.Clear();
+        }
 
         foreach (MenuLine line in lines)
         {
