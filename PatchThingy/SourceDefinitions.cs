@@ -60,4 +60,41 @@ public record SpriteDefinition
             sprite.GMS2PlaybackSpeedType
         );
     }
+
+    public UndertaleSprite Save (UndertaleData Data)
+    {
+        // initialize variables
+        UndertaleString spriteUTString = Data.Strings.MakeString(Name);
+        UndertaleSprite newSprite = new UndertaleSprite();
+
+        // set variables
+        newSprite.Name = spriteUTString;
+
+        newSprite.Width = Size[0];
+        newSprite.Height = Size[1];
+
+        newSprite.MarginLeft = Margins[0];
+        newSprite.MarginRight = Margins[1];
+        newSprite.MarginBottom = Margins[2];
+        newSprite.MarginTop = Margins[3];
+
+        newSprite.BBoxMode = BoundingBoxMode;
+        newSprite.OriginX = Origin[0];
+        newSprite.OriginY = Origin[1];
+
+        newSprite.GMS2PlaybackSpeedType = playbackType;
+        newSprite.GMS2PlaybackSpeed = playbackSpeed;
+
+        // hardcoded values
+        newSprite.IsSpecialType = true;
+        newSprite.SVersion = 3;
+
+        // placeholder sprite (funni)
+        // Create TextureEntry object
+        UndertaleSprite.TextureEntry texentry = new UndertaleSprite.TextureEntry();
+        texentry.Texture = Data.TexturePageItems.ByName("PageItem 6334"); // spr_checkers_milk
+        newSprite.Textures.Add(texentry);
+
+        return newSprite;
+    }
 }

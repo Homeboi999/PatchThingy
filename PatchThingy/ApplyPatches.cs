@@ -51,7 +51,7 @@ partial class DataHandler
 
             // write patched code to file and show progress
             importGroup.QueueReplace(patchDest, string.Join("\n", patcher.ResultLines));
-            Console.WriteLine($" Patched {Path.GetFileName(patchFile.basePath)}");
+            Console.WriteLine($" Patched code {Path.GetFileName(patchFile.basePath)}");
         }
 
         // Newly added code files
@@ -62,43 +62,60 @@ partial class DataHandler
 
             // add file to data
             importGroup.QueueReplace(Path.GetFileNameWithoutExtension(filePath), codeFile);
-            Console.WriteLine($" Added {Path.GetFileName(filePath)}", 6);
+            Console.WriteLine($" Added code {Path.GetFileName(filePath)}");
         }
 
         // Script Definitions
         foreach (string filePath in Directory.EnumerateFiles(Path.Combine(Config.current.OutputPath, "Source/Scripts")))
         {
             // load the script definition from JSON
-            ScriptDefinition scriptJson = JsonSerializer.Deserialize<ScriptDefinition>(File.ReadAllText(filePath))!;
+            ScriptDefinition scriptDef = JsonSerializer.Deserialize<ScriptDefinition>(File.ReadAllText(filePath))!;
 
             // if the definition couldn't be loaded for whatever reason
-            if (scriptJson is null)
+            if (scriptDef is null)
             {
                 menu.lines[4].SetText($"Failed to load script definition", true);
                 menu.lines[6].SetText(Path.GetFileName(filePath));
                 menu.DrawAllLines();
                 return; // dont queue if a patch failed to apply
-
             }
 
             // add script definition to data
-            vandatailla.Data.Scripts.Add(scriptJson.Save(vandatailla.Data));
-            Console.WriteLine($" Defined {scriptJson.Name}");
+            vandatailla.Data.Scripts.Add(scriptDef.Save(vandatailla.Data));
+            Console.WriteLine($" Defined script {scriptDef.Name}");
         }
 
-        // sprites (lazy)
+        // sprites (placeholder)
+        // TODO: generate Texture Page
         foreach (string filePath in Directory.EnumerateFiles(Path.Combine(Config.current.OutputPath, "Source/Sprites")))
         {
-            
+            if (!filePath.EndsWith(".json"))
+            {
+                continue; // dont try to load definition from image.
+            }
+
+            SpriteDefinition spriteDef = JsonSerializer.Deserialize<SpriteDefinition>(File.ReadAllText(filePath))!;
+
+            // if the definition couldn't be loaded for whatever reason
+            if (spriteDef is null)
+            {
+                menu.lines[4].SetText($"Failed to load sprite definition", true);
+                menu.lines[6].SetText(Path.GetFileName(filePath));
+                menu.DrawAllLines();
+                return; // dont queue if a patch failed to apply
+            }
+
+            vandatailla.Data.Sprites.Add(spriteDef.Save(vandatailla.Data));
+            Console.WriteLine($" Added placeholder sprite for {spriteDef.Name}");
         }
+
+        importGroup.Import();
+        vandatailla.SaveChanges(Path.Combine(Config.current.GamePath, DataFile.chapterFolder, "data.win"));
 
         // success popup
         menu.lines[3].SetText("SUCCESS", true);
         menu.lines[3].SetColor(ConsoleColor.Yellow);
         menu.lines[4].SetText("Patches applied successfully!", true);
         menu.DrawAllLines(true);
-
-        importGroup.Import();
-        vandatailla.SaveChanges(Path.Combine(Config.current.GamePath, DataFile.chapterFolder, "data.win"));
     }
 }
