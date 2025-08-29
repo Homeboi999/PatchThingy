@@ -50,7 +50,7 @@ partial class DataHandler
                 menu.lines[4].SetText($"Failed to apply patches to code", true);
                 menu.lines[6].SetText(Path.GetFileName(patchFile.basePath));
                 menu.DrawAllLines();
-                return; // dont queue if a patch failed to apply
+                return; // stop trying to import
             }
 
             // write patched code to file and show progress
@@ -83,7 +83,7 @@ partial class DataHandler
                 menu.lines[4].SetText($"Failed to load script definition", true);
                 menu.lines[6].SetText(Path.GetFileName(filePath));
                 menu.DrawAllLines();
-                return; // dont queue if a patch failed to apply
+                return; // stop trying to import
             }
 
             // add script definition to data
@@ -95,7 +95,7 @@ partial class DataHandler
         List<SpriteDefinition> spriteList = [];
         TextureAtlas atlas = new TextureAtlas();
 
-        curFolder = Path.Combine(Config.current.OutputPath, "Source/Scripts");
+        curFolder = Path.Combine(Config.current.OutputPath, "Source/Sprites");
         foreach (string filePath in Directory.EnumerateFiles(curFolder))
         {
             if (!filePath.EndsWith(".json"))
@@ -111,11 +111,23 @@ partial class DataHandler
                 menu.lines[4].SetText($"Failed to load sprite definition", true);
                 menu.lines[6].SetText(Path.GetFileName(filePath));
                 menu.DrawAllLines();
-                return; // dont queue if a patch failed to apply
+                return; // stop trying to import
+            }
+
+            string imagePath = Path.Combine(curFolder, spriteDef.ImageFile);
+
+            // check if the image exists
+            if (!File.Exists(imagePath))
+            {
+                menu.lines[4].SetText($"Failed to load sprite image", true);
+                menu.lines[6].SetText(Path.GetFileName(imagePath));
+                menu.DrawAllLines();
+                return; // stop trying to import
             }
 
             // add sprite definition to atlas
-            atlas.Add(spriteDef, curFolder);
+            atlas.Add(spriteDef, imagePath);
+            spriteList.Add(spriteDef);
         }
 
         // pack sprites to atlas, and add to data

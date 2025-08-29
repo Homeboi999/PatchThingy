@@ -84,7 +84,7 @@ public record SpriteDefinition
         );
     }
 
-    UndertaleSimpleList<UndertaleSprite.TextureEntry> Textures;
+    UndertaleSimpleList<UndertaleSprite.TextureEntry> Textures = [];
 
     public UndertaleSprite Save (UndertaleData data)
     {
@@ -122,27 +122,30 @@ public record SpriteDefinition
 
     public void AddFrames (TextureAtlas atlas, UndertaleData data)
     {
-        // Initalize values of this texture
-        UndertaleTexturePageItem texturePageItem = new UndertaleTexturePageItem();
-
         // should list through atlas sprites where the name is the same
-        foreach (TextureAtlas.AtlasSprite frame in atlas.Content.Where(i => Name == Name))
+        foreach (TextureAtlas.AtlasSprite frame in atlas.Content)
         {
-            int textureIndex = data.TexturePageItems.Count - 1;
-            texturePageItem.Name = new UndertaleString($"PageItem {++textureIndex}");
-            
-            texturePageItem.SourceX = (ushort)frame.Area.X;
-            texturePageItem.SourceY = (ushort)frame.Area.Y;
-            texturePageItem.SourceWidth = (ushort)frame.Area.Width;
-            texturePageItem.SourceHeight = (ushort)frame.Area.Height;
+            if (frame.Name != this.Name)
+            {
+                continue;
+            }
+
+            // Initalize values of this texture
+            UndertaleTexturePageItem texturePageItem = new UndertaleTexturePageItem();
+            texturePageItem.Name = new UndertaleString($"PageItem {data.TexturePageItems.Count}");
+
+            texturePageItem.SourceX = (ushort)frame.Pos[0];
+            texturePageItem.SourceY = (ushort)frame.Pos[1];
+            texturePageItem.SourceWidth = (ushort)frame.Size[0];
+            texturePageItem.SourceHeight = (ushort)frame.Size[1];
 
             texturePageItem.TargetX = 0;
             texturePageItem.TargetY = 0;
-            texturePageItem.TargetWidth = (ushort)frame.Area.Width;
-            texturePageItem.TargetHeight = (ushort)frame.Area.Height;
+            texturePageItem.TargetWidth = (ushort)frame.Size[0];
+            texturePageItem.TargetHeight = (ushort)frame.Size[1];
 
-            texturePageItem.BoundingWidth = (ushort)frame.Area.Width;
-            texturePageItem.BoundingHeight = (ushort)frame.Area.Height;
+            texturePageItem.BoundingWidth = (ushort)frame.Size[0];
+            texturePageItem.BoundingHeight = (ushort)frame.Size[1];
             texturePageItem.TexturePage = atlas.TexturePage;
 
             // Add this texture to UMT
@@ -159,35 +162,34 @@ public record SpriteDefinition
 public record TextureAtlas
 {
     // store extra data to help with importing
-    public struct AtlasSprite
+    public record AtlasSprite
     {
         public string Name;
-        public PackingRectangle Area;
         public MagickImage Texture;
-        
+        public uint[] Size;
+
+        public uint[] Pos = [0, 0];
+
         public AtlasSprite(SpriteDefinition sprite, MagickImage Texture)
         {
             this.Name = sprite.Name; // sprite name for loading
             this.Texture = Texture; // texture data
 
-            // set size of area from sprite definition
-            this.Area = new PackingRectangle();
-            this.Area.Width = sprite.Size[0];
-            this.Area.Height = sprite.Size[1];
+            this.Size = sprite.Size;
         }
     }
 
-    public AtlasSprite[] Content = [];
+    public List<AtlasSprite> Content = [];
     public UndertaleEmbeddedTexture? TexturePage;
 
-    public void Add(SpriteDefinition sprite, string sourceFolder)
+    public void Add(SpriteDefinition sprite, string filePath)
     {
         List<MagickImage> frames = [];
 
         if (sprite.FrameCount > 1)
         {
             // load image and split the frames
-            MagickImage image = new(File.Open(Path.Combine(sourceFolder, sprite.ImageFile), FileMode.Open));
+            MagickImage image = new(File.Open(filePath, FileMode.Open));
 
             for (uint i = 0; i < sprite.FrameCount; i++)
             {
@@ -199,14 +201,14 @@ public record TextureAtlas
         else
         {
             // load image and add to list
-            MagickImage image = new(File.Open(Path.Combine(sourceFolder, sprite.ImageFile), FileMode.Open));
+            MagickImage image = new(File.Open(filePath, FileMode.Open));
             frames.Add(image);
         }
 
         foreach (MagickImage frame in frames)
         {
             // add to TexturePage
-            Content.Append(new TextureAtlas.AtlasSprite(sprite, frame));
+            Content.Add(new TextureAtlas.AtlasSprite(sprite, frame));
         }
     }
 
@@ -218,17 +220,16 @@ public record TextureAtlas
         // Add sprites to the page image
         foreach (AtlasSprite sprite in Content)
         {
-            pageImage.Composite(sprite.Texture, (int)sprite.Area.X, (int)sprite.Area.Y);
+            pageImage.Composite(sprite.Texture, (int)sprite.Pos[0], (int)sprite.Pos[1], CompositeOperator.Replace);
         }
 
         // numbers in the names of TextureEntries
         // mayb these can be changed, but im not
         // gonna bother testing it for now
-        int pageIndex = data.EmbeddedTextures.Count - 1;
 
         // add the texture page to the data
         TexturePage = new UndertaleEmbeddedTexture(); // saved so added frames can use it
-        TexturePage.Name = new UndertaleString($"Texture {++pageIndex}");
+        TexturePage.Name = new UndertaleString($"Texture {data.EmbeddedTextures.Count}");
         TexturePage.TextureData.Image = GMImage.FromMagickImage(pageImage).ConvertToPng(); // TODO: other formats?
         data.EmbeddedTextures.Add(TexturePage);
     }
@@ -237,10 +238,12 @@ public record TextureAtlas
     MagickImage CreatePage()
     {
         // get area from SpriteFrame
-        PackingRectangle[] rectList = new PackingRectangle[Content.Length];
-        for (int i = 0; i < Content.Length; i++)
+        PackingRectangle[] rectList = new PackingRectangle[Content.Count];
+        for (int i = 0; i < Content.Count; i++)
         {
-            rectList[i] = Content[i].Area;
+            rectList[i].Width = Content[i].Size[0];
+            rectList[i].Height = Content[i].Size[1];
+            rectList[i].Id = i;
         }
 
         // pack the frames into a single image,
@@ -248,9 +251,9 @@ public record TextureAtlas
         RectanglePacker.Pack(rectList, out PackingRectangle bounds);
 
         // update X & Y values 
-        for (int i = 0; i < Content.Length; i++)
+        foreach (PackingRectangle rect in rectList)
         {
-            Content[i].Area = rectList[i];
+            Content[rect.Id].Pos = [rect.X, rect.Y];
         }
 
         // Create empty image of the required dimensions
