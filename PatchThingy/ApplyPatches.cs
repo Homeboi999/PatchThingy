@@ -4,6 +4,8 @@ using UndertaleModLib.Decompiler;
 using UndertaleModLib.Compiler;
 using CodeChicken.DiffPatch;
 using System.Text.Json;
+using ImageMagick;
+using RectpackSharp;
 
 // One class to manage all changes to the data.win
 //
@@ -14,7 +16,7 @@ partial class DataHandler
     public static void ApplyPatches(ConsoleMenu menu, DataFile vandatailla) // typo but it was funny lmao
     {
         Console.Clear();
-        menu.lines[1].SetText(" " + vandatailla.Data.GeneralInfo.DisplayName.Content);
+        menu.lines[1].SetText(vandatailla.Data.GeneralInfo.DisplayName.Content);
 
         // Don't try to apply patches that don't exist.
         if (!Path.Exists(Config.current.OutputPath))
@@ -25,9 +27,11 @@ partial class DataHandler
         }
 
         CodeImportGroup importGroup = new(vandatailla.Data);
+        string curFolder;
 
         // Patch files for code existing in vanilla
-        foreach (string filePath in Directory.EnumerateFiles(Path.Combine(Config.current.OutputPath, "Patches/Code")))
+        curFolder = Path.Combine(Config.current.OutputPath, "Patches/Code");
+        foreach (string filePath in Directory.EnumerateFiles(curFolder))
         {
             // read patches from file
             var patchFile = PatchFile.FromText(File.ReadAllText(filePath));
@@ -51,22 +55,24 @@ partial class DataHandler
 
             // write patched code to file and show progress
             importGroup.QueueReplace(patchDest, string.Join("\n", patcher.ResultLines));
-            Console.WriteLine($" Patched code {Path.GetFileName(patchFile.basePath)}");
+            Console.WriteLine($"Patched code {Path.GetFileName(patchFile.basePath)}");
         }
 
         // Newly added code files
-        foreach (string filePath in Directory.EnumerateFiles(Path.Combine(Config.current.OutputPath, "Source/Code")))
+        curFolder = Path.Combine(Config.current.OutputPath, "Source/Code");
+        foreach (string filePath in Directory.EnumerateFiles(curFolder))
         {
             // read code from file
             var codeFile = File.ReadAllText(filePath);
 
             // add file to data
             importGroup.QueueReplace(Path.GetFileNameWithoutExtension(filePath), codeFile);
-            Console.WriteLine($" Added code {Path.GetFileName(filePath)}");
+            Console.WriteLine($"Added code {Path.GetFileName(filePath)}");
         }
 
         // Script Definitions
-        foreach (string filePath in Directory.EnumerateFiles(Path.Combine(Config.current.OutputPath, "Source/Scripts")))
+        curFolder = Path.Combine(Config.current.OutputPath, "Source/Scripts");
+        foreach (string filePath in Directory.EnumerateFiles(curFolder))
         {
             // load the script definition from JSON
             ScriptDefinition scriptDef = JsonSerializer.Deserialize<ScriptDefinition>(File.ReadAllText(filePath))!;
@@ -82,18 +88,21 @@ partial class DataHandler
 
             // add script definition to data
             vandatailla.Data.Scripts.Add(scriptDef.Save(vandatailla.Data));
-            Console.WriteLine($" Defined script {scriptDef.Name}");
+            Console.WriteLine($"Defined script {scriptDef.Name}");
         }
 
-        // sprites (placeholder)
-        // TODO: generate Texture Page
-        foreach (string filePath in Directory.EnumerateFiles(Path.Combine(Config.current.OutputPath, "Source/Sprites")))
+        // sprite loading
+        List<SpriteDefinition> spriteList = [];
+        TextureAtlas atlas = new TextureAtlas();
+
+        curFolder = Path.Combine(Config.current.OutputPath, "Source/Scripts");
+        foreach (string filePath in Directory.EnumerateFiles(curFolder))
         {
             if (!filePath.EndsWith(".json"))
             {
-                continue; // dont try to load definition from image.
+                continue; // images are loaded when saved.
             }
-
+            
             SpriteDefinition spriteDef = JsonSerializer.Deserialize<SpriteDefinition>(File.ReadAllText(filePath))!;
 
             // if the definition couldn't be loaded for whatever reason
@@ -105,8 +114,21 @@ partial class DataHandler
                 return; // dont queue if a patch failed to apply
             }
 
+            // add sprite definition to atlas
+            atlas.Add(spriteDef, curFolder);
+        }
+
+        // pack sprites to atlas, and add to data
+        atlas.Save(vandatailla.Data);
+
+        foreach (SpriteDefinition spriteDef in spriteList)
+        {
+            // add texture entries to data
+            spriteDef.AddFrames(atlas, vandatailla.Data);
+
+            // add sprite definition to data
             vandatailla.Data.Sprites.Add(spriteDef.Save(vandatailla.Data));
-            Console.WriteLine($" Added placeholder sprite for {spriteDef.Name}");
+            Console.WriteLine($"Added sprite {spriteDef.Name}");
         }
 
         importGroup.Import();

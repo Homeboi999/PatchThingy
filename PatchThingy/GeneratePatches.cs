@@ -18,6 +18,10 @@ partial class DataHandler
         Directory.CreateDirectory(Path.Combine(Config.current.OutputPath, "./Source/Sprites"));
         Directory.CreateDirectory(Path.Combine(Config.current.OutputPath, "./Patches/Code"));
 
+        // change output format
+        JsonSerializerOptions defOptions = new JsonSerializerOptions();
+        defOptions.WriteIndented = true;
+
         // code files
         foreach (UndertaleCode modCode in modded.Data.Code)
         {
@@ -65,7 +69,7 @@ partial class DataHandler
             if (vanillaScript is null)
             {
                 scriptDef = ScriptDefinition.Load(modScript);
-                string jsonText = JsonSerializer.Serialize(scriptDef);
+                string jsonText = JsonSerializer.Serialize(scriptDef, defOptions);
 
                 string jsonPath = $"./Source/Scripts/{scriptDef.Name}.json";
                 File.WriteAllText(Path.Combine(Config.current.OutputPath, jsonPath), jsonText);
@@ -84,7 +88,7 @@ partial class DataHandler
             {
                 // assemble sprite definition
                 spriteDef = SpriteDefinition.Load(modSprite);
-                string jsonText = JsonSerializer.Serialize(spriteDef);
+                string jsonText = JsonSerializer.Serialize(spriteDef, defOptions);
 
                 string jsonPath = $"./Source/Sprites/{spriteDef.Name}.json";
                 File.WriteAllText(Path.Combine(Config.current.OutputPath, jsonPath), jsonText);

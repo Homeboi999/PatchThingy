@@ -8,7 +8,6 @@ using CodeChicken.DiffPatch;
 using System.Text.Json;
 using ImageMagick.Drawing;
 
-
 // Load the script configs from the .json file next to the .csproj file
 string configPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
 #if DEBUG
@@ -53,9 +52,9 @@ menu.lines[0].SetText("╾─╴╴╴  Deltarune Patch Script  ╶╶╶─╼"
 menu.lines[1].SetType(LineType.Separator);
 
 // mode list
-menu.lines[2].SetText("     Generate new patches");
-menu.lines[3].SetText("     Apply existing patches");
-menu.lines[4].SetText("     Restore vanilla data");
+menu.lines[2].SetText("    Generate new patches");
+menu.lines[3].SetText("    Apply existing patches");
+menu.lines[4].SetText("    Restore vanilla data");
 
 // input location
 menu.lines[5].SetType(LineType.Separator);
@@ -65,7 +64,7 @@ menu.DrawAllLines();
 
 while (chosenMode is null)
 {
-    menu.lines[6].SetText(" Please select a mode from the list above.", true);
+    menu.lines[6].SetText("Please select a mode from the list above.", true);
     menu.DrawLine(6);
 
     switch (menu.PromptUserInput([2, 3, 4]))
@@ -112,7 +111,7 @@ while (chosenMode is null)
             
             break;
         default:
-            menu.lines[6].SetText(" * i see how it is...");
+            menu.lines[6].SetText("* i see how it is...");
             menu.DrawLine(6);
             ExitMenu();
             break; // for compiler

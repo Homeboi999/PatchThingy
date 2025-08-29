@@ -264,7 +264,7 @@ public class MenuLine
         }
         else
         {
-            destX = pos + 1;
+            destX = pos + 2;
         }
 
         Console.SetCursorPosition(destX, Console.CursorTop);
