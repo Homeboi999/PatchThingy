@@ -12,18 +12,6 @@ partial class DataHandler
 {
     public static void GeneratePatches(ConsoleMenu menu, DataFile vanilla, DataFile modded)
     {
-        // Pre-generate path strings
-        string codeFolder = Path.Combine(Config.current.OutputPath, "./Source/Code");
-        string scriptFolder = Path.Combine(Config.current.OutputPath, "./Source/Scripts");
-        string spriteFolder = Path.Combine(Config.current.OutputPath, "./Source/Sprites");
-        string patchFolder = Path.Combine(Config.current.OutputPath, "./Patches/Code");
-
-        // Create output folder structure if not already present.
-        Directory.CreateDirectory(codeFolder);
-        Directory.CreateDirectory(scriptFolder);
-        Directory.CreateDirectory(spriteFolder);
-        Directory.CreateDirectory(patchFolder);
-
         // change output format
         JsonSerializerOptions defOptions = new JsonSerializerOptions();
         defOptions.WriteIndented = true;
@@ -53,13 +41,14 @@ partial class DataHandler
                     continue;
                 }
 
-                File.WriteAllText(Path.Combine(patchFolder, $"{modCode.Name.Content}.gml.patch"), modChanges.ToString());
+                QueueFile(modCode.Name.Content, modChanges.ToString(), FileType.Patch);
                 Console.WriteLine($"Generated patches for {modCode.Name.Content}.gml");
             }
             // if it's a new file, export entire file to the Source folder
             else if (vanillaCode is null)
             {
-                File.WriteAllLines(Path.Combine(codeFolder, $"{modCode.Name.Content}.gml"), modded.DecompileCode(modCode));
+                string fileText = string.Join("\n", modded.DecompileCode(modCode));
+                QueueFile(modCode.Name.Content, fileText, FileType.Code);
                 Console.WriteLine($"Created source code for {modCode.Name.Content}.gml");
             }
         }
@@ -93,9 +82,7 @@ partial class DataHandler
                 scriptDef = ScriptDefinition.Load(modScript);
                 string jsonText = JsonSerializer.Serialize(scriptDef, defOptions);
 
-                string jsonPath = $"{scriptDef.Name}.json";
-                File.WriteAllText(Path.Combine(scriptFolder, jsonPath), jsonText);
-                
+                QueueFile(scriptDef.Name, jsonText, FileType.Script);
                 Console.WriteLine($"Created script definition for {scriptDef.Name}");
             }
         }
@@ -112,12 +99,15 @@ partial class DataHandler
                 spriteDef = SpriteDefinition.Load(modSprite);
                 string jsonText = JsonSerializer.Serialize(spriteDef, defOptions);
 
-                string jsonPath = $"{spriteDef.Name}.json";
-                File.WriteAllText(Path.Combine(spriteFolder, jsonPath), jsonText);
-
+                QueueFile(spriteDef.Name, jsonText, FileType.Sprite);
                 Console.WriteLine($"Created sprite definition for {spriteDef.Name}");
             }
         }
+
+        // since patches were generated successfully, 
+        // it's safe to overwrite previous patches
+        Console.WriteLine("Writing output files...");
+        SaveModFiles();
 
         // success popup
         menu.lines[3].SetText("SUCCESS", true);

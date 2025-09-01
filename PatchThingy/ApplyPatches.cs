@@ -26,12 +26,6 @@ partial class DataHandler
             return;
         }
 
-        // Pre-generate path strings
-        string codeFolder = Path.Combine(Config.current.OutputPath, "./Source/Code");
-        string scriptFolder = Path.Combine(Config.current.OutputPath, "./Source/Scripts");
-        string spriteFolder = Path.Combine(Config.current.OutputPath, "./Source/Sprites");
-        string patchFolder = Path.Combine(Config.current.OutputPath, "./Patches/Code");
-
         CodeImportGroup importGroup = new(vandatailla.Data);
 
         // Patch files for code existing in vanilla
