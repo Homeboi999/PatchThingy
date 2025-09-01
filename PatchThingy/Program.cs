@@ -189,7 +189,7 @@ ExitMenu();
 
 void ExitMenu()
 {
-    Console.SetCursorPosition(0, menu.lines.Count);
+    Console.SetCursorPosition(0, Console.BufferHeight - 1);
     Console.CursorVisible = true;
     Environment.Exit(0);
 }

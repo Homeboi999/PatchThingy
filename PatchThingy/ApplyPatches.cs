@@ -26,12 +26,16 @@ partial class DataHandler
             return;
         }
 
+        // Pre-generate path strings
+        string codeFolder = Path.Combine(Config.current.OutputPath, "./Source/Code");
+        string scriptFolder = Path.Combine(Config.current.OutputPath, "./Source/Scripts");
+        string spriteFolder = Path.Combine(Config.current.OutputPath, "./Source/Sprites");
+        string patchFolder = Path.Combine(Config.current.OutputPath, "./Patches/Code");
+
         CodeImportGroup importGroup = new(vandatailla.Data);
-        string curFolder;
 
         // Patch files for code existing in vanilla
-        curFolder = Path.Combine(Config.current.OutputPath, "Patches/Code");
-        foreach (string filePath in Directory.EnumerateFiles(curFolder))
+        foreach (string filePath in Directory.EnumerateFiles(patchFolder))
         {
             // read patches from file
             var patchFile = PatchFile.FromText(File.ReadAllText(filePath));
@@ -59,8 +63,7 @@ partial class DataHandler
         }
 
         // Newly added code files
-        curFolder = Path.Combine(Config.current.OutputPath, "Source/Code");
-        foreach (string filePath in Directory.EnumerateFiles(curFolder))
+        foreach (string filePath in Directory.EnumerateFiles(codeFolder))
         {
             // read code from file
             var codeFile = File.ReadAllText(filePath);
@@ -71,8 +74,7 @@ partial class DataHandler
         }
 
         // Script Definitions
-        curFolder = Path.Combine(Config.current.OutputPath, "Source/Scripts");
-        foreach (string filePath in Directory.EnumerateFiles(curFolder))
+        foreach (string filePath in Directory.EnumerateFiles(scriptFolder))
         {
             // load the script definition from JSON
             ScriptDefinition scriptDef = JsonSerializer.Deserialize<ScriptDefinition>(File.ReadAllText(filePath))!;
@@ -95,8 +97,7 @@ partial class DataHandler
         List<SpriteDefinition> spriteList = [];
         TextureAtlas atlas = new TextureAtlas();
 
-        curFolder = Path.Combine(Config.current.OutputPath, "Source/Sprites");
-        foreach (string filePath in Directory.EnumerateFiles(curFolder))
+        foreach (string filePath in Directory.EnumerateFiles(spriteFolder))
         {
             if (!filePath.EndsWith(".json"))
             {
@@ -114,7 +115,7 @@ partial class DataHandler
                 return; // stop trying to import
             }
 
-            string imagePath = Path.Combine(curFolder, spriteDef.ImageFile);
+            string imagePath = Path.Combine(spriteFolder, spriteDef.ImageFile);
 
             // check if the image exists
             if (!File.Exists(imagePath))

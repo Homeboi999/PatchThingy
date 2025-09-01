@@ -12,11 +12,17 @@ partial class DataHandler
 {
     public static void GeneratePatches(ConsoleMenu menu, DataFile vanilla, DataFile modded)
     {
+        // Pre-generate path strings
+        string codeFolder = Path.Combine(Config.current.OutputPath, "./Source/Code");
+        string scriptFolder = Path.Combine(Config.current.OutputPath, "./Source/Scripts");
+        string spriteFolder = Path.Combine(Config.current.OutputPath, "./Source/Sprites");
+        string patchFolder = Path.Combine(Config.current.OutputPath, "./Patches/Code");
+
         // Create output folder structure if not already present.
-        Directory.CreateDirectory(Path.Combine(Config.current.OutputPath, "./Source/Code"));
-        Directory.CreateDirectory(Path.Combine(Config.current.OutputPath, "./Source/Scripts"));
-        Directory.CreateDirectory(Path.Combine(Config.current.OutputPath, "./Source/Sprites"));
-        Directory.CreateDirectory(Path.Combine(Config.current.OutputPath, "./Patches/Code"));
+        Directory.CreateDirectory(codeFolder);
+        Directory.CreateDirectory(scriptFolder);
+        Directory.CreateDirectory(spriteFolder);
+        Directory.CreateDirectory(patchFolder);
 
         // change output format
         JsonSerializerOptions defOptions = new JsonSerializerOptions();
@@ -47,14 +53,13 @@ partial class DataHandler
                     continue;
                 }
 
-                File.WriteAllText(Path.Combine(Config.current.OutputPath, $"Patches/Code/{modCode.Name.Content}.gml.patch"), modChanges.ToString());
+                File.WriteAllText(Path.Combine(patchFolder, $"{modCode.Name.Content}.gml.patch"), modChanges.ToString());
                 Console.WriteLine($"Generated patches for {modCode.Name.Content}.gml");
             }
-
             // if it's a new file, export entire file to the Source folder
             else if (vanillaCode is null)
             {
-                File.WriteAllLines(Path.Combine(Config.current.OutputPath, $"./Source/Code/{modCode.Name.Content}.gml"), modded.DecompileCode(modCode));
+                File.WriteAllLines(Path.Combine(codeFolder, $"{modCode.Name.Content}.gml"), modded.DecompileCode(modCode));
                 Console.WriteLine($"Created source code for {modCode.Name.Content}.gml");
             }
         }
@@ -62,6 +67,23 @@ partial class DataHandler
         // script definitions
         foreach (UndertaleScript modScript in modded.Data.Scripts)
         {
+            // ignore definition if a part is null,
+            // but still print a warning in case so
+            // i can check if it causes problems afterwards
+            if (modScript.Name is null || modScript.Code is null)
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine($"Skipped definition containing a null value");
+                Console.ResetColor();
+                continue;
+            }
+
+            // skip the extra definitions UMT made automatically
+            if (modded.Data.Code.ByName(modScript.Code.Name.Content).ParentEntry is not null)
+            {
+                continue;
+            }
+
             UndertaleScript vanillaScript = vanilla.Data.Scripts.ByName(modScript.Name.Content);
             ScriptDefinition scriptDef;
 
@@ -71,8 +93,8 @@ partial class DataHandler
                 scriptDef = ScriptDefinition.Load(modScript);
                 string jsonText = JsonSerializer.Serialize(scriptDef, defOptions);
 
-                string jsonPath = $"./Source/Scripts/{scriptDef.Name}.json";
-                File.WriteAllText(Path.Combine(Config.current.OutputPath, jsonPath), jsonText);
+                string jsonPath = $"{scriptDef.Name}.json";
+                File.WriteAllText(Path.Combine(scriptFolder, jsonPath), jsonText);
                 
                 Console.WriteLine($"Created script definition for {scriptDef.Name}");
             }
@@ -90,8 +112,8 @@ partial class DataHandler
                 spriteDef = SpriteDefinition.Load(modSprite);
                 string jsonText = JsonSerializer.Serialize(spriteDef, defOptions);
 
-                string jsonPath = $"./Source/Sprites/{spriteDef.Name}.json";
-                File.WriteAllText(Path.Combine(Config.current.OutputPath, jsonPath), jsonText);
+                string jsonPath = $"{spriteDef.Name}.json";
+                File.WriteAllText(Path.Combine(spriteFolder, jsonPath), jsonText);
 
                 Console.WriteLine($"Created sprite definition for {spriteDef.Name}");
             }
@@ -102,7 +124,5 @@ partial class DataHandler
         menu.lines[3].SetColor(ConsoleColor.Yellow);
         menu.lines[4].SetText("Successfuly generated patches!", true);
         menu.DrawAllLines(true);
-
-        Console.WriteLine();
     }
 }
