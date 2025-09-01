@@ -38,7 +38,7 @@ public record SpriteDefinition
     int[] Origin,
 
     float playbackSpeed,
-    AnimSpeedType playbackType
+    AnimSpeedType playbackType = AnimSpeedType.FramesPerGameFrame
 )
 {
     // EVERY SPRITE IN DELTARUNE HAS
@@ -66,6 +66,18 @@ public record SpriteDefinition
             fileName = $"{sprite.Name.Content}.png";
         }
 
+        // override default behavior to be
+        // FramesPerGameFrame
+        AnimSpeedType speedType;
+        if (sprite.IsSpecialType == false)
+        {
+            speedType = AnimSpeedType.FramesPerGameFrame;
+        }
+        else
+        {
+            speedType = sprite.GMS2PlaybackSpeedType;
+        }
+
         // makes it easier to load the required data
         // from an UndertaleSprite bc theres just SO MUCH
         return new SpriteDefinition
@@ -80,7 +92,7 @@ public record SpriteDefinition
             [sprite.OriginX, sprite.OriginY],
             
             sprite.GMS2PlaybackSpeed,
-            sprite.GMS2PlaybackSpeedType
+            speedType
         );
     }
 
