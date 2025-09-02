@@ -1,0 +1,3 @@
+assembly-informational-format: "{CommitsSinceVersionSource}"
+assembly-file-versioning-format: "0.12.25.{CommitsSinceVersionSource}"
+assembly-versioning-format: "0.12.25.{CommitsSinceVersionSource}"

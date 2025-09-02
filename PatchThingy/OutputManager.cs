@@ -87,7 +87,7 @@ partial class DataHandler
         }
     }
 
-    static void ResetDirectory(string folderPath, string toDelete = "")
+    static void ResetDirectory(string folderPath, string toDelete)
     {
         // Create folder if it doesn't already exist
         Directory.CreateDirectory(folderPath);

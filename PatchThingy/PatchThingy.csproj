@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PublishSingleFile>true</PublishSingleFile>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,10 +15,11 @@
 
   <ItemGroup>
     <PackageReference Include="CodeChicken.DiffPatch" Version="1.1.0" />
+    <PackageReference Include="RectpackSharp" Version="1.2.0" />
+    <PackageReference Include="GitVersion.MsBuild" Version="6.0.0">
+      <PrivateAssets>All</PrivateAssets>
+    </PackageReference>
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="RectpackSharp" Version="1.2.0" />
-  </ItemGroup>
 
 </Project>

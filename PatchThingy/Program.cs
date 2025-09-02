@@ -6,7 +6,10 @@ using UndertaleModLib.Models;
 using UndertaleModLib.Decompiler;
 using CodeChicken.DiffPatch;
 using System.Text.Json;
+using System.Reflection;
 using ImageMagick.Drawing;
+
+Console.CancelKeyPress += (sender, eventArgs) => ExitMenu();
 
 // Load the script configs from the .json file next to the .csproj file
 string configPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
@@ -46,9 +49,10 @@ Console.WriteLine(chosenMode);
 
 // setup for the initial menu
 ConsoleMenu menu = new ConsoleMenu(50, 6, 8);
+string versionNum = typeof(Program).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "??";
 
 // title bar
-menu.lines[0].SetText("╾─╴╴╴  Deltarune Patch Script  ╶╶╶─╼", true);
+menu.lines[0].SetText($"╾─╴╴╴  PatchThingy v{versionNum}  ╶╶╶─╼", true);
 menu.lines[1].SetType(LineType.Separator);
 
 // mode list
