@@ -6,333 +6,275 @@ using System.Text.Json;
 using System.Diagnostics;
 using ImageMagick;
 
-public class ConsoleMenu
+// Class responisble for drawing the PatchThingy menus
+public partial class ConsoleMenu
 {
-    int pos; // space from left edge
-    public List<MenuLine> lines = [];
+    public int x;
+    public int y;
+    int width;
+    int height;
+    int margin;
 
     // Constructor
-    public ConsoleMenu(int boxWidth, int boxHeight, int offsetCol)
+    public ConsoleMenu(int boxWidth, int boxHeight, int boxMargins = 1)
     {
-        pos = offsetCol;
-
-        lines.Add(new MenuLine(LineType.Top, boxWidth, offsetCol));
-
-        for (int i = 0; i < boxHeight; i++)
-        {
-            lines.Add(new MenuLine(LineType.Body, boxWidth, offsetCol));
-        }
-
-        lines.Add(new MenuLine(LineType.Bottom, boxWidth, offsetCol));
+        margin = boxMargins;
+        width = boxWidth;
+        height = boxHeight;
     }
 
-    // Display lines
-    public void DrawAllLines(bool keepConsoleLog = false)
+    // menu content setup
+    interface IWidget
     {
-        if (!keepConsoleLog)
+        public int GetLine();
+        public int LineCount();
+        public void Draw(ConsoleMenu menu);
+    }
+
+    List<IWidget> MenuWidgets = [];
+
+    public class MenuText : IWidget
+    {
+        string content;
+        ConsoleColor? color = null;
+        Alignment align;
+
+        int line;
+
+        public MenuText (int line, string content, Alignment align = Alignment.Left)
         {
-            Console.Clear();
+            this.content = content;
+            this.align = align;
+            this.line = line;
         }
 
-        foreach (MenuLine line in lines)
+        public void SetText (string content)
         {
-            line.Draw();
+            this.content = content;
+        }
+
+        public void SetColor(ConsoleColor? color)
+        {
+            this.color = color;
+        }
+
+        public void SetAlignment(Alignment align)
+        {
+            this.align = align;
+        }
+
+        public void Draw(ConsoleMenu menu)
+        {
+            int x = 0;
+            int y = menu.y + 1 + line;
+
+            switch (align)
+            {
+                case Alignment.Left:
+                    x = menu.AlignPosition(align);
+                    break;
+
+                case Alignment.Center:
+                    x = menu.AlignPosition(align) - (content.Length / 2);
+                    break;
+
+                case Alignment.Right:
+                    x = menu.AlignPosition(align) - content.Length;
+                    break;
+            }
+
+            MoveCursor(x, y);
+
+            if (color is not null)
+            {
+                Console.ForegroundColor = color ?? ConsoleColor.White;
+            }
+
+            Console.Write(content);
+            Console.ResetColor();
+        }
+
+        // functions to keep track of space
+        public int GetLine()
+        {
+            return line;
+        }
+        
+        public int LineCount()
+        {
+            return 1;
         }
     }
-    public void DrawLine(int line)
+
+    public class MenuSeparator : IWidget
     {
-        Console.SetCursorPosition(0, line);
-        lines[line].Draw();
+        int line;
+
+        public MenuSeparator (int line)
+        {
+            this.line = line;
+        }
+
+        public void Draw(ConsoleMenu menu)
+        {
+            MoveCursor(0, menu.y + 1 + line);
+
+            string sepString = menu.AssembleRow('┠', '─', '┨');
+
+            Console.Write(sepString);
+        }
+
+        public int GetLine()
+        {
+            return line;
+        }
+        
+        public int LineCount()
+        {
+            return 1;
+        }
     }
+
+    // Remove a specific line from the list.
+    public void ClearLine(int line)
+    {
+        for (int i = 0; i < MenuWidgets.Count; i++)
+        {
+            if (MenuWidgets[i].GetLine() == line)
+            {
+                MenuWidgets.RemoveAt(i);
+            }
+            else if (MenuWidgets[i].GetLine() > line && MenuWidgets[i].GetLine() + MenuWidgets[i].LineCount() <= i)
+            {
+                MenuWidgets.RemoveAt(i);
+            }
+        }
+    }
+
+    // Remove all lines from the list.
     public void ClearAll()
     {
-        // for loop intentionally skips
-        // the first and last lines
-        for (int i = 1; i < lines.Count - 1; i++)
-        {
-            // reset line to empty
-            lines[i].SetText("");
-            lines[i].SetType(LineType.Body);
-            lines[i].SetColor();
-        }
-
-        DrawAllLines();
+        MenuWidgets.Clear();
     }
 
-    // cursor variables shared for all boxes
-    static class MenuHeart
+    // Adds a new text line with the chosen parameters
+    public void AddText (string content, int line, Alignment align = Alignment.Left, ConsoleColor? color = null)
     {
-        static string sprite = "♥️";
-        static int x = 0;          
-        static int y = 0;
-        static bool visible = false;
-
-        public static void MoveTo(int newX, int newY)
-        {
-            // stop if theres no change
-            if (x == newX && y == newY)
-            {
-                return;
-            }
-
-            // clear the heart from the old position
-            if (visible)
-            {
-                Hide();
-            }
-
-            // draw the heart in the new position
-            visible = true;
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.SetCursorPosition(newX, newY);
-            Console.Write(sprite);
-            Console.ResetColor();
-            
-            // save new heart position
-            x = newX;
-            y = newY;
-        }
-        
-        public static void Hide()
-        {
-            visible = false;
-            Console.SetCursorPosition(x, y);
-            Console.Write("  ");
-        }
+        MenuText newText = new(line, content);
+        newText.SetAlignment(align);
+        newText.SetColor(color);
+        MenuWidgets.Add(newText);
     }
-
-    // build a list and make the user choose an option
-    // using Deltarune controls (bc why not)
-    public int PromptUserInput(int[] choiceLines)
+    public void AddText (MenuText newText)
     {
-        int curPos = 0; // line that the cursor is on
-        int output = -1;
-
-        while (output < 0)
-        {
-            // move cursor to selected option
-            MenuHeart.MoveTo(pos + 3, choiceLines[curPos]);
-
-            // ONLY 1 READKEY AT A TIME!!!
-            // the program pauses to wait for each input separately
-            switch (Console.ReadKey(true).Key)
-            {
-                case ConsoleKey.UpArrow:
-                    curPos = WrapCursor(-1, curPos, choiceLines.Length - 1);
-                    break;
-
-                case ConsoleKey.DownArrow:
-                    curPos = WrapCursor(1, curPos, choiceLines.Length - 1);
-                    break;
-
-                case ConsoleKey.Enter: // alt scheme
-                case ConsoleKey.Z: // deltarune controls
-                    output = curPos;
-                    break;
-
-                case ConsoleKey.Escape:
-                    return -1;
-            }
-        }
-
-        // select choice in the menu
-        lines[choiceLines[output]].SetColor(ConsoleColor.Yellow);
-        DrawLine(choiceLines[output]);
-        return output;
+        MenuWidgets.Add(newText);
     }
-
-    // use the given line for a yes/no choicer
-    public bool ConfirmUserInput(int line)
+    
+    // turns the chosen line into a separator
+    public void AddSeparator (int line)
     {
-        // navigation variables
-        bool curPos = true; // true = left, false = right
-        bool output = false;
-        bool inputted = false;
-
-        // format line correctly
-        lines[line].SetText(" Confirm                  Cancel", true);
-        DrawLine(line);
-
-        while (!inputted)
-        {
-            if (curPos)
-            { 
-                // draw the cursor on the left
-                MenuHeart.MoveTo(pos + 8, line);
-            }
-            else
-            {
-                // draw the cursor on the right
-                MenuHeart.MoveTo(pos + 33, line);
-            }
-
-            // ONLY 1 READKEY AT A TIME!!!
-            // the program pauses to wait for each input separately
-            switch (Console.ReadKey(true).Key)
-            {
-                case ConsoleKey.LeftArrow:
-                    curPos = true; // no wrapping cuz only 2 spots
-                    break;
-
-                case ConsoleKey.RightArrow:
-                    curPos = false; // no wrapping cuz only 2 spots
-                    break;
-
-                case ConsoleKey.Enter: // alt scheme
-                case ConsoleKey.Z: // deltarune controls
-                    // confirm selection
-                    inputted = true;
-                    output = curPos;
-
-                    break;
-
-                case ConsoleKey.Escape: // shift doesnt exist lol
-                case ConsoleKey.X:
-                    // cancel selection
-                    inputted = true;
-                    output = false;
-                    break;
-            }
-        }
-
-        MenuHeart.Hide();
-        return output;
+        MenuWidgets.Add(new MenuSeparator(line));
     }
 
-    // + or - a number while keeping it
-    // between 0 and a given maximum.
-    int WrapCursor(int amount, int index, int max)
-    {
-        if (index + amount < 0)
-        {
-            index = max;
-        }
-        else if (index + amount > max)
-        {
-            index = 0;
-        }
-        else
-        {
-            index += amount;
-        }
-
-        return index;
-    }
-}
-
-public class MenuLine
-{
-    string boxPart = "";
-    int pos;
-    int size;
-
-    public MenuLine(LineType type, int width, int margin)
-    {
-        pos = margin;
-        size = width;
-        SetType(type);
-    }
-    string contentText = "";
-    bool contentCentered = false;
-    ConsoleColor? contentColor = null;
-
+    // assembles the entire box, aligned correctly,
+    // as a single string and draws it all at once
     public void Draw()
     {
-        Console.Write(boxPart);
+        Console.Write("\x1b[?2026h"); // stop display
+        Console.Clear();
+        
+        // update box position, without going OoB
+        var boxX = (Console.BufferWidth - width) / 2 - 1;
+        var boxY = (Console.BufferHeight - height) / 2 - 1;
+        x = Math.Clamp(boxX, 0, Console.BufferWidth - 1);
+        y = Math.Max(boxY, 0); // taller is fine
 
-        if (contentText.Length > 0)
+        // assemble box as single string
+        // so it writes instantly
+        MoveCursor(0, y);
+        string boxString = "";
+        boxString += AssembleRow('┏', '━', '┓');
+        for (int i = 0; i < height; i++)
         {
-            if (contentColor is not null)
-                Console.ForegroundColor = contentColor.Value;
-
-            AlignCursor(contentCentered);
-            Console.Write(contentText);
+            boxString += AssembleRow('┃', ' ', '┃');
         }
+        boxString += AssembleRow('┗', '━', '┛');
 
-        // New line, reset color
-        Console.ResetColor();
-        Console.WriteLine();
+        // draw box to screen
+        Console.Write(boxString);
+        Console.Write("\x1b[?2026l"); // start display
+
+        foreach (IWidget widget in MenuWidgets)
+        {
+            widget.Draw(this);
+        }
     }
 
-    public void AlignCursor(bool centered = false)
+    string AssembleRow(char left, char middle, char right)
+    {
+        // init string
+        string row = "";
+
+        // add spacing according to box position
+        for (int i = 0; i < x && x < Console.BufferWidth - 2; i++)
+        {
+            row += " ";
+        }
+
+        // first char in row
+        row += left;
+
+        // fill row with characters until long enough
+        // or the edge of the screen has been reached
+        for (int i = 0; i < width && x + i < Console.BufferWidth - 2; i++)
+        {
+            row += middle;
+        }
+
+        // last char in row, and make a new line
+        row += right + "\n";
+
+        // return string to be added to box
+        return row;
+    }
+
+    // function to align the cursor along the current line
+    // in preparation to write text of a given size
+    public int AlignPosition(Alignment align)
     {
         int destX = 0;
-        
-        if (contentCentered)
+
+        switch (align)
         {
-            destX = pos + (((size + 2) - contentText.Length) / 2);
-        }
-        else
-        {
-            destX = pos + 2;
-        }
-
-        Console.SetCursorPosition(destX, Console.CursorTop);
-    }
-
-    public void SetText(string text, bool centered = false)
-    {
-        contentText = text;
-        contentCentered = centered;
-    }
-    public string GetText()
-    {
-        return contentText;
-    }
-
-    public void SetColor(ConsoleColor? color = null)
-    {
-        contentColor = color;
-    }
-
-    public void SetType(LineType type)
-    {
-        string[] parts = ["L", "", "R"];
-
-        switch (type)
-        {
-            case LineType.Top:
-                parts = ["┏", "━", "┓"];
+            case Alignment.Left:
+                destX = x + 1 + margin;
                 break;
 
-            case LineType.Separator:
-                parts = ["┠", "─", "┨"];
+            case Alignment.Center:
+                destX = x + 1 + (width / 2);
                 break;
 
-            case LineType.Body:
-                parts = ["┃", " ", "┃"];
-                break;
-                
-            case LineType.Bottom:
-                parts = ["┗", "━", "┛"];
-                break;
-                
-            case LineType.Blank:
-                parts = ["", "", ""];
+            case Alignment.Right:
+                destX = x + 1 + width - margin;
                 break;
         }
 
-        boxPart = "";
+        // set cursor position along the current line
+        return destX;
+    }
 
-        // Left padding
-        for (int i = 0; i < pos; i++)
-            boxPart += " ";
-
-        // Box parts
-        boxPart += parts[0];
-        for (int i = 0; i < size; i++)
-        {
-            boxPart += parts[1];
-        }
-        boxPart += parts[2];
+    // set the cursor position without going OoB
+    public static void MoveCursor(int x, int y)
+    {
+        int destX = Math.Clamp(x, 0, Console.BufferWidth - 1);
+        int destY = Math.Clamp(y, 0, Console.BufferHeight - 1);
+        Console.SetCursorPosition(destX, destY);
     }
 }
 
-public enum LineType
+public enum Alignment
 {
-    Top,
-    Body,
-    Bottom,
-    Separator,
-    Blank
+    Left,
+    Center,
+    Right,
 }

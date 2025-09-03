@@ -110,9 +110,9 @@ partial class DataHandler
         SaveModFiles();
 
         // success popup
-        menu.lines[3].SetText("SUCCESS", true);
-        menu.lines[3].SetColor(ConsoleColor.Yellow);
-        menu.lines[4].SetText("Successfuly generated patches!", true);
-        menu.DrawAllLines(true);
+        // menu.lines[3].SetText("SUCCESS", true);
+        // menu.lines[3].SetColor(ConsoleColor.Yellow);
+        // menu.lines[4].SetText("Successfuly generated patches!", true);
+        // menu.DrawAllLines(true);
     }
 }

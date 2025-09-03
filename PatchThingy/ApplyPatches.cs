@@ -16,13 +16,13 @@ partial class DataHandler
     public static void ApplyPatches(ConsoleMenu menu, DataFile vandatailla) // typo but it was funny lmao
     {
         Console.Clear();
-        menu.lines[1].SetText(vandatailla.Data.GeneralInfo.DisplayName.Content);
+        // menu.lines[1].SetText(vandatailla.Data.GeneralInfo.DisplayName.Content);
 
         // Don't try to apply patches that don't exist.
         if (!Path.Exists(Config.current.OutputPath))
         {
-            menu.lines[4].SetText("No output found. (Try generating patches)", true);
-            menu.DrawAllLines();
+            // menu.lines[4].SetText("No output found. (Try generating patches)", true);
+            // menu.DrawAllLines();
             return;
         }
 
@@ -45,9 +45,9 @@ partial class DataHandler
             // in any patches fail to apply here, don't save changes after applying.
             if (patcher.Results.Any(result => !result.success))
             {
-                menu.lines[4].SetText($"Failed to apply patches to code", true);
-                menu.lines[6].SetText(Path.GetFileName(patchFile.basePath));
-                menu.DrawAllLines();
+                // menu.lines[4].SetText($"Failed to apply patches to code", true);
+                // menu.lines[6].SetText(Path.GetFileName(patchFile.basePath));
+                // menu.DrawAllLines();
                 return; // stop trying to import
             }
 
@@ -76,9 +76,9 @@ partial class DataHandler
             // if the definition couldn't be loaded for whatever reason
             if (scriptDef is null)
             {
-                menu.lines[4].SetText($"Failed to load script definition", true);
-                menu.lines[6].SetText(Path.GetFileName(filePath));
-                menu.DrawAllLines();
+                // menu.lines[4].SetText($"Failed to load script definition", true);
+                // menu.lines[6].SetText(Path.GetFileName(filePath));
+                // menu.DrawAllLines();
                 return; // stop trying to import
             }
 
@@ -103,9 +103,9 @@ partial class DataHandler
             // if the definition couldn't be loaded for whatever reason
             if (spriteDef is null)
             {
-                menu.lines[4].SetText($"Failed to load sprite definition", true);
-                menu.lines[6].SetText(Path.GetFileName(filePath));
-                menu.DrawAllLines();
+                // menu.lines[4].SetText($"Failed to load sprite definition", true);
+                // menu.lines[6].SetText(Path.GetFileName(filePath));
+                // menu.DrawAllLines();
                 return; // stop trying to import
             }
 
@@ -114,9 +114,9 @@ partial class DataHandler
             // check if the image exists
             if (!File.Exists(imagePath))
             {
-                menu.lines[4].SetText($"Failed to load sprite image", true);
-                menu.lines[6].SetText(Path.GetFileName(imagePath));
-                menu.DrawAllLines();
+                // menu.lines[4].SetText($"Failed to load sprite image", true);
+                // menu.lines[6].SetText(Path.GetFileName(imagePath));
+                // menu.DrawAllLines();
                 return; // stop trying to import
             }
 
@@ -142,9 +142,9 @@ partial class DataHandler
         vandatailla.SaveChanges(Path.Combine(Config.current.GamePath, DataFile.chapterFolder, "data.win"));
 
         // success popup
-        menu.lines[3].SetText("SUCCESS", true);
-        menu.lines[3].SetColor(ConsoleColor.Yellow);
-        menu.lines[4].SetText("Patches applied successfully!", true);
-        menu.DrawAllLines(true);
+        // menu.lines[3].SetText("SUCCESS", true);
+        // menu.lines[3].SetColor(ConsoleColor.Yellow);
+        // menu.lines[4].SetText("Patches applied successfully!", true);
+        // menu.DrawAllLines(true);
     }
 }

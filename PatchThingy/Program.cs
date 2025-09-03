@@ -8,6 +8,7 @@ using CodeChicken.DiffPatch;
 using System.Text.Json;
 using System.Reflection;
 using ImageMagick.Drawing;
+using System.Runtime.InteropServices;
 
 Console.CancelKeyPress += (sender, eventArgs) => ExitMenu();
 
@@ -46,9 +47,9 @@ ScriptMode? chosenMode = null;
 // should let me change modes manually?
 Console.WriteLine(chosenMode);
 #endif
-
+#if !DEBUG
 // setup for the initial menu
-ConsoleMenu menu = new ConsoleMenu(50, 6, 8);
+ConsoleMenu menu = new ConsoleMenu(64, 6, 16);
 string versionNum = typeof(Program).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "??";
 
 // title bar
@@ -186,14 +187,35 @@ if (chosenMode == ScriptMode.Revert)
     menu.lines[4].SetText("Successfully restored vanilla data!");
     menu.DrawAllLines();
 }
+#else
+Console.CursorVisible = false;
+Console.Write("\x1b[?1049h"); // alt screen
+ConsoleMenu menu = new ConsoleMenu(64, 8, 5);
+// check for resizing
+if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+    PosixSignalRegistration.Create(PosixSignal.SIGWINCH, (context) => { menu.Draw(); });
 
+menu.AddText("  TITLE  ", -1, Alignment.Center);
+menu.AddSeparator(0);
+menu.AddText("Right!", 2, Alignment.Left, ConsoleColor.Blue);
+menu.AddText("Wow!", 4, Alignment.Left);
+menu.AddText("So Cool!", 4, Alignment.Right);
+menu.Draw();
+
+while (true)
+{
+
+}
+
+#endif
 // after whatever the script does,
 // move cursor out of the box
 ExitMenu();
 
 void ExitMenu()
 {
-    Console.SetCursorPosition(0, Console.BufferHeight - 1);
+    Console.Write("\x1b[?1049l"); // main screen
+    // Console.SetCursorPosition(0, Console.BufferHeight);
     Console.CursorVisible = true;
     Environment.Exit(0);
 }
