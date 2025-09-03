@@ -186,7 +186,7 @@ public partial class ConsoleMenu
         // update box position, without going OoB
         var boxX = (Console.BufferWidth - width) / 2 - 1;
         var boxY = (Console.BufferHeight - height) / 2 - 1;
-        x = Math.Clamp(boxX, 0, Console.BufferWidth - 1);
+        x = Math.Clamp(boxX, 0, Math.Max(Console.BufferWidth - 1, 0)); // have to do max so width of 0 doesnt crash
         y = Math.Max(boxY, 0); // taller is fine
 
         // assemble box as single string
@@ -266,8 +266,9 @@ public partial class ConsoleMenu
     // set the cursor position without going OoB
     public static void MoveCursor(int x, int y)
     {
-        int destX = Math.Clamp(x, 0, Console.BufferWidth - 1);
-        int destY = Math.Clamp(y, 0, Console.BufferHeight - 1);
+        // have to do max so debugger doesnt crash
+        int destX = Math.Clamp(x, 0, Math.Max(Console.BufferWidth - 1, 0));
+        int destY = Math.Clamp(y, 0, Math.Max(Console.BufferHeight - 1, 0));
         Console.SetCursorPosition(destX, destY);
     }
 }

@@ -6,12 +6,113 @@ using System.Text.Json;
 using System.Diagnostics;
 using ImageMagick;
 
-#if !DEBUG
 public partial class ConsoleMenu
 {
-    public class Choicer
+    public class MenuChoicer : IWidget
     {
+        ChoicerType type;
+        string[] choices = [];
+        int[] columnPos = [0, 0];
 
+        int line;
+
+        public MenuChoicer (ChoicerType type, int line, string[] choices)
+        {
+            this.type = type;
+            this.line = line;
+            this.choices = choices;
+        }
+
+        public void Draw(ConsoleMenu box)
+        {
+            AlignColumns(box);
+
+            switch (type)
+            {
+                case ChoicerType.List:
+                    for (int i = 0; i < choices.Length; i++)
+                    {
+                        MoveCursor(columnPos[0], box.y + 1 + line + i);
+                        Console.Write(choices[i]);
+                    }
+                    break;
+
+                case ChoicerType.Grid:
+                    for (int i = 0; i < choices.Length; i++)
+                    {
+                        MoveCursor(columnPos[i % 2], (box.y + 1 + line) + i / 2);
+                        Console.Write(choices[i]);
+                    }
+                    break;
+
+                case ChoicerType.InLine:
+                    for (int i = 0; i < choices.Length; i++)
+                    {
+                        MoveCursor(columnPos[i], box.y + 1 + line);
+                        Console.Write(choices[i]);
+                    }
+                    break;
+            }
+        }
+
+        void AlignColumns(ConsoleMenu box)
+        {
+            // array for grid layout
+            int[] wordLengths = [0, 0];
+
+            switch (type)
+            {
+                case ChoicerType.Grid:
+                    for (int i = 0; i < choices.Length; i++)
+                    {
+                        wordLengths[i % 2] = Math.Max(wordLengths[i % 2], choices[i].Length);
+                    }
+
+                    columnPos[0] = box.AlignPosition(Alignment.Left);
+                    columnPos[1] = box.AlignPosition(Alignment.Right) - wordLengths[1];
+                    break;
+
+                case ChoicerType.List:
+                    columnPos[0] = box.AlignPosition(Alignment.Left);
+                    break;
+
+                case ChoicerType.InLine:
+                    for (int i = 0; i < choices.Length; i++)
+                    {
+                        columnPos[i] = box.AlignPosition(Alignment.Center);
+                        columnPos[i] += (i * box.width / choices.Length) - box.width / 2;
+                    }
+                    break;
+
+            }
+        }
+
+
+        public int GetLine()
+        {
+            return line;
+        }
+
+        public int LineCount()
+        {
+            switch(type)
+            {
+                case ChoicerType.List:
+                    return choices.Length;
+
+                case ChoicerType.Grid:
+                    return choices.Length / 2;
+                    
+                case ChoicerType.InLine:
+                default:
+                    return 1;
+            }
+        }
+    }
+
+    public void AddChoicer(ChoicerType type, int line, string[] choices)
+    {
+        MenuWidgets.Add(new MenuChoicer(type, line, choices));
     }
     
     // build a list and make the user choose an option
@@ -174,4 +275,10 @@ public partial class ConsoleMenu
         }
     }
 }
-#endif
+
+public enum ChoicerType
+{
+    Grid,
+    List,
+    InLine,
+}

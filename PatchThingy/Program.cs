@@ -195,11 +195,13 @@ ConsoleMenu menu = new ConsoleMenu(64, 8, 5);
 if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
     PosixSignalRegistration.Create(PosixSignal.SIGWINCH, (context) => { menu.Draw(); });
 
+string[] testChoices = ["WOW", "testing", "lmao", "sugondeez", "ligma balls"];
+
 menu.AddText("  TITLE  ", -1, Alignment.Center);
-menu.AddSeparator(0);
-menu.AddText("Right!", 2, Alignment.Left, ConsoleColor.Blue);
-menu.AddText("Wow!", 4, Alignment.Left);
-menu.AddText("So Cool!", 4, Alignment.Right);
+menu.AddSeparator(1);
+menu.AddChoicer(ChoicerType.Grid, 2, testChoices);
+menu.AddSeparator(5);
+menu.AddText("menu choicer test", 6);
 menu.Draw();
 
 while (true)
