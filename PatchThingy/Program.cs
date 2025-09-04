@@ -197,16 +197,18 @@ if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 
 string[] testChoices = ["WOW", "testing", "lmao", "sugondeez", "ligma balls"];
 
-menu.AddText("  TITLE  ", -1, Alignment.Center);
-menu.AddSeparator(1);
-menu.AddChoicer(ChoicerType.Grid, 2, testChoices);
-menu.AddSeparator(5);
-menu.AddText("menu choicer test", 6);
+menu.AddText("  TITLE2  ", Alignment.Center);
+menu.AddSeparator(false);
+menu.AddSeparator();
+menu.AddChoicer(ChoicerType.Grid, testChoices);
+menu.AddChoicer(ChoicerType.InLine, ["sure ig", "NUH UH"]);
+menu.InsertSeparator(4);
+menu.AddSeparator();
+menu.AddText("menu choicer test");
 menu.Draw();
 
-while (true)
+while (menu.PromptChoicer(3, 5) != -1)
 {
-
 }
 
 #endif
