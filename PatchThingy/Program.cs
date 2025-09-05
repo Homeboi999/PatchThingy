@@ -58,147 +58,167 @@ Console.CursorVisible = false;
 if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
     PosixSignalRegistration.Create(PosixSignal.SIGWINCH, (context) => { menu.Draw(); });
 
-// title bar
-menu.AddText($"╾─╴╴╴  PatchThingy v{versionNum}  ╶╶╶─╼", Alignment.Center);
-menu.AddSeparator();
-
-// mode list
-string[] scriptModes = ["Generate new patches", "Apply existing patches", "Manage data files"];
-menu.AddChoicer(ChoicerType.List, scriptModes);
-
-// input location
-menu.AddSeparator();
-menu.AddText("Please select a mode from the list above.", Alignment.Center);
-menu.Draw();
-
-// confirm options
-string[] confirmChoices = ["Confirm", "Cancel"];
-
-while (chosenMode is null)
+// exit menu when crashing
+try
 {
-    menu.SetText(4, "Please select a mode from the list above.");
+    // title bar
+    menu.AddText($"╾─╴╴╴  PatchThingy v{versionNum}  ╶╶╶─╼", Alignment.Center);
+    menu.AddSeparator();
+
+    // mode list
+    string[] scriptModes = ["Generate new patches", "Apply existing patches", "Manage data files"];
+    menu.AddChoicer(ChoicerType.List, scriptModes);
+
+    // input location
+    menu.AddSeparator();
+    menu.AddText("Please select a mode from the list above.", Alignment.Center);
     menu.Draw();
 
-    switch (menu.PromptChoicer(2))
+    // confirm options
+    string[] confirmChoices = ["Confirm", "Cancel"];
+
+    while (chosenMode is null)
     {
-        case 0:
-            menu.SetText(4, "This will overwrite local patches. Continue?");
-            menu.AddSeparator();
-            menu.AddChoicer(ChoicerType.Grid, confirmChoices);
-            menu.Draw();
+        menu.SetText(4, "Please select a mode from the list above.");
+        menu.Draw();
 
-            if (menu.PromptChoicer(6) == 0)
-            {
-                chosenMode = ScriptMode.Generate;
-            }
-
-            menu.Remove(5, 6);
-            break;
-
-        case 1:
-            menu.SetText(4, "This will discard ALL unsaved changes. Continue?");
-            menu.AddSeparator();
-            menu.AddChoicer(ChoicerType.Grid, confirmChoices);
-            menu.Draw();
-
-            if (menu.PromptChoicer(6) == 0)
-            {
-                chosenMode = ScriptMode.Apply;
-            }
-
-            menu.Remove(5, 6);
-            break;
-
-        case 2:
-            menu.SetText(4, "Currently this just reverts to vanilla. Continue?");
-            menu.AddSeparator();
-            menu.AddChoicer(ChoicerType.Grid, confirmChoices);
-            menu.Draw();
-
-            if (menu.PromptChoicer(6) == 0)
-            {
-                chosenMode = ScriptMode.Revert;
-            }
-
-            menu.Remove(5, 6);
-            break;
-
-        default:
-            menu.SetText(4, "Are you sure you want to exit PatchThingy?");
-            menu.AddSeparator();
-            menu.AddChoicer(ChoicerType.Grid, confirmChoices);
-            menu.Draw();
-
-            if (menu.PromptChoicer(6) == 0)
-            {
-                ExitMenu();
-            }
-
-            menu.Remove(5, 6);
-            break; // for compiler
-    }
-}
-
-// clear the menu and re-add the header
-menu.RemoveAll();
-menu.AddText($"╾─╴╴╴  PatchThingy v{versionNum}  ╶╶╶─╼", Alignment.Center);
-
-if (chosenMode == ScriptMode.Generate)
-{
-    // load data files
-    DataFile vanilla = new(vanillaPath);
-    DataFile modded = new(activePath);
-
-    DataHandler.GeneratePatches(menu, vanilla, modded);
-}
-
-if (chosenMode == ScriptMode.Apply)
-{
-    // check if Vanilla Data exists. If not, assume
-    // Active Data is an unmodified version of Deltarune.
-    if (!File.Exists(vanillaPath))
-    {
-        // If Active Data ALSO doesn't exist, then panic.
-        if (!File.Exists(activePath))
+        switch (menu.PromptChoicer(2))
         {
-            menu.AddText("! ERROR !", Alignment.Center, ConsoleColor.Red);
-            menu.AddText("Could not find game data.", Alignment.Center);
-            menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy"]);
-            menu.Draw();
-            menu.PromptChoicer(3);
-            ExitMenu();
-            return; // for compiler
+            case 0:
+                menu.SetText(4, "This will overwrite local patches. Continue?");
+                menu.AddSeparator();
+                menu.AddChoicer(ChoicerType.Grid, confirmChoices);
+                menu.Draw();
+
+                if (menu.PromptChoicer(6) == 0)
+                {
+                    chosenMode = ScriptMode.Generate;
+                }
+
+                menu.Remove(5, 6);
+                break;
+
+            case 1:
+                menu.SetText(4, "This will discard ALL unsaved changes. Continue?");
+                menu.AddSeparator();
+                menu.AddChoicer(ChoicerType.Grid, confirmChoices);
+                menu.Draw();
+
+                if (menu.PromptChoicer(6) == 0)
+                {
+                    chosenMode = ScriptMode.Apply;
+                }
+
+                menu.Remove(5, 6);
+                break;
+
+            case 2:
+                menu.SetText(4, "Currently this just reverts to vanilla. Continue?");
+                menu.AddSeparator();
+                menu.AddChoicer(ChoicerType.Grid, confirmChoices);
+                menu.Draw();
+
+                if (menu.PromptChoicer(6) == 0)
+                {
+                    chosenMode = ScriptMode.Revert;
+                }
+
+                menu.Remove(5, 6);
+                break;
+
+            default:
+                menu.SetText(4, "Are you sure you want to exit PatchThingy?");
+                menu.AddSeparator();
+                menu.AddChoicer(ChoicerType.Grid, confirmChoices);
+                menu.Draw();
+
+                if (menu.PromptChoicer(6) == 0)
+                {
+                    ExitMenu();
+                }
+
+                menu.Remove(5, 6);
+                break; // for compiler
+        }
+    }
+
+    // clear the menu and re-add the header
+    menu.RemoveAll();
+    menu.AddText($"╾─╴╴╴  PatchThingy v{versionNum}  ╶╶╶─╼", Alignment.Center);
+
+    if (chosenMode == ScriptMode.Generate)
+    {
+        // load data files
+        DataFile vanilla = new(vanillaPath);
+        DataFile modded = new(activePath);
+
+        DataHandler.GeneratePatches(menu, vanilla, modded);
+    }
+
+    if (chosenMode == ScriptMode.Apply)
+    {
+        // check if Vanilla Data exists. If not, assume
+        // Active Data is an unmodified version of Deltarune.
+        if (!File.Exists(vanillaPath))
+        {
+            // If Active Data ALSO doesn't exist, then panic.
+            if (!File.Exists(activePath))
+            {
+                menu.AddText("! ERROR !", Alignment.Center, ConsoleColor.Red);
+                menu.AddText("Could not find game data.", Alignment.Center);
+                menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy"]);
+                menu.Draw();
+                menu.PromptChoicer(3);
+                ExitMenu();
+                return; // for compiler
+            }
+
+            // Rename Active Data to create Vanilla Data.
+            // 
+            // Vanilla Data is used to apply patches so I
+            // don't generate patches for the modified version.
+            File.Move(activePath, vanillaPath);
         }
 
-        // Rename Active Data to create Vanilla Data.
-        // 
-        // Vanilla Data is used to apply patches so I
-        // don't generate patches for the modified version.
-        File.Move(activePath, vanillaPath);
+        // Apply patches to Vanilla Data, then save changes to Active Data.
+        DataFile data = new(vanillaPath);
+        DataHandler.ApplyPatches(menu, data);
+
+        // Create Backup Data by copying the new Active Data
+        // File.Copy(activePath, backupPath);
     }
 
-    // Apply patches to Vanilla Data, then save changes to Active Data.
-    DataFile data = new(vanillaPath);
-    DataHandler.ApplyPatches(menu, data);
+    if (chosenMode == ScriptMode.Revert)
+    {
+        // Copy Vanilla Data to Active Data, reverting to
+        // the version of the game used to generate patches.
+        File.Delete(activePath);
+        File.Copy(vanillaPath, activePath);
 
-    // Create Backup Data by copying the new Active Data
-    // File.Copy(activePath, backupPath);
+        // success popup
+        menu.AddSeparator();
+        menu.AddText("SUCCESS", Alignment.Center, ConsoleColor.Yellow);
+        menu.AddText("Successfully applied patches!", Alignment.Center);
+        menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy"]);
+        menu.Draw();
+        menu.PromptChoicer(10);
+    }
 }
-
-if (chosenMode == ScriptMode.Revert)
+catch (Exception error) // show crashes in main terminal output
 {
-    // Copy Vanilla Data to Active Data, reverting to
-    // the version of the game used to generate patches.
-    File.Delete(activePath);
-    File.Copy(vanillaPath, activePath);
-
-    // success popup
-    menu.AddSeparator();
-    menu.AddText("SUCCESS", Alignment.Center, ConsoleColor.Yellow);
-    menu.AddText("Successfully applied patches!", Alignment.Center);
-    menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy"]);
-    menu.Draw();
-    menu.PromptChoicer(10);
+    Console.Write("\x1b[?1049l"); // main screen
+    Console.ForegroundColor = ConsoleColor.DarkGray;
+    Console.WriteLine($"   PatchThingy v{versionNum}");
+    Console.ForegroundColor = ConsoleColor.Red;
+    foreach (string line in error.ToString().Split("\n"))
+    {
+        Console.WriteLine(line);
+        Console.ForegroundColor = ConsoleColor.DarkGray;
+    }
+    Console.WriteLine();
+    Console.ResetColor();
+    Console.CursorVisible = true;
+    Environment.Exit(2);
 }
 
 // after whatever the script does,

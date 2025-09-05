@@ -48,8 +48,35 @@ partial class DataHandler
         // Patch files for code existing in vanilla
         foreach (string filePath in Directory.EnumerateFiles(patchFolder))
         {
+            PatchFile patchFile;
+
             // read patches from file
-            var patchFile = PatchFile.FromText(File.ReadAllText(filePath));
+            try
+            {
+                patchFile = PatchFile.FromText(File.ReadAllText(filePath));
+            }
+            catch
+            {
+                // build error message
+                menu.ReplaceText(11, "! ERROR !", Alignment.Center, ConsoleColor.Red);
+                menu.AddText($"Unable to load patches from {Path.GetFileNameWithoutExtension(filePath)}", Alignment.Center);
+                menu.AddSeparator(false);
+                menu.AddChoicer(ChoicerType.Grid, ["Exit PatchThingy", "Ignore and continue"]);
+                menu.Draw();
+
+                // give option to continue anyway
+                if (menu.PromptChoicer(14) == 1)
+                {
+                    warned = true;
+                    menu.Remove(12, 14);
+                    menu.ReplaceText(11, $"{vandatailla.Data.GeneralInfo.DisplayName.Content} - Applying Patches...", Alignment.Center);
+                    continue; // keep importing
+                }
+                else
+                {
+                    throw; // stop trying to import
+                }
+            }
 
             // find and decompile the associated code
             var patchDest = vandatailla.Data.Code.ByName(Path.GetFileNameWithoutExtension(patchFile.basePath));
@@ -64,15 +91,16 @@ partial class DataHandler
             {
                 // build error message
                 menu.ReplaceText(11, "! ERROR !", Alignment.Center, ConsoleColor.Red);
-                menu.AddText($"Failed to apply patches to {Path.GetFileName(patchFile.basePath)}", Alignment.Center);
-                menu.AddChoicer(ChoicerType.Grid, ["Exit PatchThingy", "Continue anyway"]);
+                menu.AddText($"Unable to cleanly apply patches for  {Path.GetFileName(patchFile.basePath)}", Alignment.Center);
+                menu.AddSeparator(false);
+                menu.AddChoicer(ChoicerType.Grid, ["Exit PatchThingy", "Ignore and continue"]);
                 menu.Draw();
-                warned = true;
 
                 // give option to continue anyway
-                if (menu.PromptChoicer(13) == 0)
+                if (menu.PromptChoicer(14) == 1)
                 {
-                    menu.Remove(12, 13);
+                    warned = true;
+                    menu.Remove(12, 14);
                     menu.ReplaceText(11, $"{vandatailla.Data.GeneralInfo.DisplayName.Content} - Applying Patches...", Alignment.Center);
                     continue; // keep importing
                 }
@@ -199,13 +227,12 @@ partial class DataHandler
             menu.Draw();
         }
 
-        warned = true;
         if (warned)
         {
             // build error message
             menu.ReplaceText(11, "WARNING", Alignment.Center, ConsoleColor.Yellow);
-            menu.AddText($"Some patches failed to apply cleanly,", Alignment.Center);
-            menu.AddText($"possibly making the game unstable.", Alignment.Center);
+            menu.AddText($"Some patches failed to apply cleanly, possibly making the game unstable.", Alignment.Center);
+            menu.AddSeparator(false);
             menu.AddChoicer(ChoicerType.Grid, ["Apply patches anyway", "Do not apply patches"]);
             menu.Draw();
 
