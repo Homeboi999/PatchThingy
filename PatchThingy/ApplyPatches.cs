@@ -30,6 +30,7 @@ partial class DataHandler
         menu.AddSeparator(false);   // 9
         menu.AddSeparator();        // 10
         menu.AddText($"{vandatailla.Data.GeneralInfo.DisplayName.Content} - Applying Patches...", Alignment.Center);
+        menu.Draw();
 
         // Don't try to apply patches that don't exist.
         if (!Path.Exists(Config.current.OutputPath))
@@ -257,8 +258,9 @@ partial class DataHandler
         // success popup
         menu.ReplaceText(11, "SUCCESS", Alignment.Center, ConsoleColor.Yellow);
         menu.AddText("Successfully applied patches!", Alignment.Center);
+        menu.AddSeparator(false);
         menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy"]);
         menu.Draw();
-        menu.PromptChoicer(13);
+        menu.PromptChoicer(14);
     }
 }

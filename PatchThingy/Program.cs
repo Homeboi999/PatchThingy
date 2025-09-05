@@ -166,9 +166,10 @@ try
             {
                 menu.AddText("! ERROR !", Alignment.Center, ConsoleColor.Red);
                 menu.AddText("Could not find game data.", Alignment.Center);
+                menu.AddSeparator(false);
                 menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy"]);
                 menu.Draw();
-                menu.PromptChoicer(3);
+                menu.PromptChoicer(4);
                 ExitMenu();
                 return; // for compiler
             }
@@ -198,10 +199,11 @@ try
         // success popup
         menu.AddSeparator();
         menu.AddText("SUCCESS", Alignment.Center, ConsoleColor.Yellow);
-        menu.AddText("Successfully applied patches!", Alignment.Center);
+        menu.AddText("Successfully reverted to vanilla!", Alignment.Center);
+        menu.AddSeparator(false);
         menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy"]);
         menu.Draw();
-        menu.PromptChoicer(10);
+        menu.PromptChoicer(5);
     }
 }
 catch (Exception error) // show crashes in main terminal output

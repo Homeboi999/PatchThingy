@@ -29,6 +29,7 @@ partial class DataHandler
         menu.AddSeparator(false);   // 9
         menu.AddSeparator();        // 10
         menu.AddText($"{modded.Data.GeneralInfo.DisplayName.Content} - Generating Patches...", Alignment.Center);
+        menu.Draw();
 
         // code files
         foreach (UndertaleCode modCode in modded.Data.Code)
@@ -138,8 +139,9 @@ partial class DataHandler
         // success popup
         menu.ReplaceText(11, "SUCCESS", Alignment.Center, ConsoleColor.Yellow);
         menu.AddText("Successfully generated patches!", Alignment.Center);
+        menu.AddSeparator(false);
         menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy"]);
         menu.Draw();
-        menu.PromptChoicer(13);
+        menu.PromptChoicer(14);
     }
 }
