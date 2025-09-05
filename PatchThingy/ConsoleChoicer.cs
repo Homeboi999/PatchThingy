@@ -13,22 +13,20 @@ public partial class ConsoleMenu
         ChoicerType type;
         string[] choices = [];
         int[] columnPos = [0, 0];
-
-        int line;
         public int curSelection = 0;
-        public bool chosen = false;
+        public bool Chosen = false;
+        public bool Focused = false;
 
-        public ChoicerWidget (ChoicerType type, int line, string[] choices)
+        public ChoicerWidget (ChoicerType type, string[] choices)
         {
             this.type = type;
-            this.line = line;
             this.choices = choices;
         }
 
-        public void Draw(ConsoleMenu box)
+        public void Draw(ConsoleMenu box, int line)
         {
             AlignColumns(box);
-            int startLine = box.y + line;
+            int startLine = box.Pos.y + line;
 
             switch (type)
             {
@@ -57,19 +55,27 @@ public partial class ConsoleMenu
 
         void WriteChoice (string text, int x, int y, bool selected)
         {
-            if (selected)
+            if (Chosen && selected)
             {
-                if (chosen)
-                {
-                    // set color
-                    Console.ForegroundColor = ConsoleColor.Yellow;
-                }
-                else
-                {
-                    // move MenuHeart
-                    MenuHeart.MoveTo(x - 3, y);
-                }
+                // set color
+                Console.ForegroundColor = ConsoleColor.Yellow;
             }
+
+            if (Focused && !Chosen && selected)
+            {
+                // move heart
+                MoveCursor(x - 3, y);
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.Write("♥️");
+                Console.ResetColor();
+            }
+            else
+            {
+                // clear heart
+                MoveCursor(x - 3, y);
+                Console.Write("  ");
+            }
+            
             // draw text at position
             MoveCursor(x, y);
             Console.Write(text);
@@ -160,14 +166,14 @@ public partial class ConsoleMenu
                     // set output to current selection
                     case ConsoleKey.Enter: // alt scheme
                     case ConsoleKey.Z: // deltarune controls
-                        chosen = true;
+                        Chosen = true;
                         return curSelection;
 
                     // CANCEL: set chosen to true
                     // set output to -1
                     case ConsoleKey.Escape:
                     case ConsoleKey.X:
-                        chosen = true;
+                        Chosen = true;
                         return -1;
 
                     // other keys are ignored
@@ -206,16 +212,6 @@ public partial class ConsoleMenu
             }
         }
 
-        public int GetLine()
-        {
-            return line;
-        }
-
-        public void MoveLine(int amount)
-        {
-            line += amount;
-        }
-
         public int LineCount()
         {
             switch(type)
@@ -236,15 +232,15 @@ public partial class ConsoleMenu
     // Add a choicer to the menu
     public void AddChoicer(ChoicerType type, string[] choices)
     {
-        MenuWidgets.Add(new ChoicerWidget(type, NextWidgetLine(), choices));
+        MenuWidgets.Add(new ChoicerWidget(type, choices));
     }
     public void InsertChoicer(int index, ChoicerType type, string[] choices)
     {
-        MenuWidgets.Insert(index, new ChoicerWidget(type, NextWidgetLine(index), choices));
+        MenuWidgets.Insert(index, new ChoicerWidget(type, choices));
     }
 
     // activate the choicer at the given index
-    public int PromptChoicer(int index, int confirmLine = -1)
+    public int PromptChoicer(int index, int confirmIndex = -1)
     {
         // check if the widget is a choicer
         if (MenuWidgets[index] is not ChoicerWidget)
@@ -255,8 +251,9 @@ public partial class ConsoleMenu
         // have to make a sep variable for some reason
         var choicer = (ChoicerWidget)MenuWidgets[index];
         choicer.curSelection = 0;
-        choicer.chosen = false;
-        choicer.Draw(this);
+        choicer.Chosen = false;
+        choicer.Focused = true;
+        choicer.Draw(this, WidgetLine(index));
 
         // values from last loop
         int prevSelection = 0;
@@ -265,85 +262,44 @@ public partial class ConsoleMenu
         int output = -1;
 
         // while there isnt a confirm/cancel
-        while (!choicer.chosen)
+        while (!choicer.Chosen)
         {
             // set input value
             output = choicer.GetUserInput();
 
             // draw after every key press
-            choicer.Draw(this);
+            choicer.Draw(this, WidgetLine(index));
 
             // update past values
             prevSelection = choicer.curSelection;
-            prevChosen = choicer.chosen;
+            prevChosen = choicer.Chosen;
 
             // check if something was selected
             // (and the choice wasnt cancelled)
-            if (choicer.chosen && output >= 0)
+            if (choicer.Chosen && output >= 0)
             {
                 // check if we should do the confirmation
-                if (confirmLine > -1 && MenuWidgets[confirmLine] is ChoicerWidget)
+                if (confirmIndex > -1 && MenuWidgets[confirmIndex] is ChoicerWidget)
                 {
                     // prompt the other choicer for yes/no
-                    if (PromptChoicer(confirmLine) != 0)
+                    if (PromptChoicer(confirmIndex) != 0)
                     {
                         // if no, reset variable to continue loop
-                        choicer.chosen = false;
-                        choicer.Draw(this);
+                        choicer.Chosen = false;
+                        choicer.Focused = true;
+                        choicer.Draw(this, WidgetLine(index));
                     }
                 }
             }
         }
 
         // dont have lingering selection after choice is made
-        choicer.chosen = false;
-        choicer.Draw(this);
-        MenuHeart.Hide();
+        choicer.Chosen = false;
+        choicer.Focused = false;
+        choicer.Draw(this, WidgetLine(index));
 
         // return output to larger switch/case
         return output;
-    }
-
-    // heart cursor shared for all choicers
-    static class MenuHeart
-    {
-        static string sprite = "♥️";
-        static int x = 0;          
-        static int y = 0;
-        static bool visible = false;
-
-        public static void MoveTo(int newX, int newY)
-        {
-            // stop if theres no change
-            if (x == newX && y == newY)
-            {
-                return;
-            }
-
-            // clear the heart from the old position
-            if (visible)
-            {
-                Hide();
-            }
-
-            // draw the heart in the new position
-            visible = true;
-            Console.ForegroundColor = ConsoleColor.Red;
-            MoveCursor(newX, newY);
-            Console.Write(sprite);
-            Console.ResetColor();
-            
-            // save new heart position
-            x = newX;
-            y = newY;
-        }
-        
-        public static void Hide()
-        {
-            visible = false;
-            MoveCursor(x, y);
-            Console.Write("  ");
-        }
     }
 }
 

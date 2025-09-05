@@ -9,27 +9,35 @@ using ImageMagick;
 // Class responisble for drawing the PatchThingy menus
 public partial class ConsoleMenu
 {
-    public int x;
-    public int y;
-    int width;
-    int height;
+    public (int x, int y) Pos;
+
+    // box size, accounting for resizing
+    (int width, int height) Size
+    {
+        get
+        {
+            return (Math.Min(maxWidth, Console.BufferWidth - 2), Math.Max(minHeight, WidgetLine(MenuWidgets.Count)));
+        }
+    }
+
+    int maxWidth;
+    int minHeight;
     int margin;
 
     // Constructor
     public ConsoleMenu(int boxWidth, int boxHeight, int boxMargins = 1)
     {
         margin = boxMargins;
-        width = boxWidth;
-        height = boxHeight;
+        maxWidth = boxWidth;
+        minHeight = boxHeight;
     }
 
     // menu content setup
     interface IWidget
     {
-        public int GetLine();
-        public void MoveLine(int amount);
+        //TODO: this is dumb
         public int LineCount();
-        public void Draw(ConsoleMenu menu);
+        public void Draw(ConsoleMenu menu, int line);
     }
 
     List<IWidget> MenuWidgets = [];
@@ -40,13 +48,10 @@ public partial class ConsoleMenu
         ConsoleColor? color = null;
         Alignment align;
 
-        int line;
-
-        public TextWidget (int line, string content, Alignment align = Alignment.Left)
+        public TextWidget (string content, Alignment align = Alignment.Left)
         {
             this.content = content;
             this.align = align;
-            this.line = line;
         }
 
         public void SetText (string content)
@@ -64,10 +69,10 @@ public partial class ConsoleMenu
             this.align = align;
         }
 
-        public void Draw(ConsoleMenu menu)
+        public void Draw(ConsoleMenu menu, int line)
         {
             int x = 0;
-            int y = menu.y + line;
+            int y = menu.Pos.y + line;
 
             switch (align)
             {
@@ -94,17 +99,6 @@ public partial class ConsoleMenu
             Console.Write(content);
             Console.ResetColor();
         }
-
-        // functions to keep track of space
-        public int GetLine()
-        {
-            return line;
-        }
-
-        public void MoveLine(int amount)
-        {
-            line += amount;
-        }
         
         public int LineCount()
         {
@@ -114,35 +108,23 @@ public partial class ConsoleMenu
 
     class SeparatorWidget : IWidget
     {
-        int line;
         bool Visible;
 
-        public SeparatorWidget (int line, bool Visible)
+        public SeparatorWidget (bool Visible)
         {
-            this.line = line;
             this.Visible = Visible;
         }
 
-        public void Draw(ConsoleMenu menu)
+        public void Draw(ConsoleMenu menu, int line)
         {
             if (Visible)
             {
-                MoveCursor(0, menu.y + line);
+                MoveCursor(0, menu.Pos.y + line);
 
                 string sepString = menu.AssembleRow('┠', '─', '┨');
 
                 Console.Write(sepString);
             }
-        }
-
-        public int GetLine()
-        {
-            return line;
-        }
-
-        public void MoveLine(int amount)
-        {
-            line += amount;
         }
         
         public int LineCount()
@@ -151,103 +133,59 @@ public partial class ConsoleMenu
         }
     }
 
-    // Remove a specific line from the list.
-    public void ClearLine(int line)
-    {
-        for (int i = 0; i < MenuWidgets.Count; i++)
-        {
-            if (MenuWidgets[i].GetLine() == line)
-            {
-                MenuWidgets.RemoveAt(i);
-            }
-            else if (MenuWidgets[i].GetLine() > line && MenuWidgets[i].GetLine() + MenuWidgets[i].LineCount() <= i)
-            {
-                MenuWidgets.RemoveAt(i);
-            }
-        }
-    }
-
-    // Remove all lines from the list.
-    public void ClearAll()
-    {
-        MenuWidgets.Clear();
-    }
-
     // Add a text widget to the menu
     public void AddText (string content, Alignment align = Alignment.Left, ConsoleColor? color = null)
     {
-        TextWidget newText = new(NextWidgetLine(), content);
+        TextWidget newText = new(content);
         newText.SetAlignment(align);
         newText.SetColor(color);
         MenuWidgets.Add(newText);
     }
     public void InsertText (int index, string content, Alignment align = Alignment.Left, ConsoleColor? color = null)
     {
-        TextWidget newText = new(NextWidgetLine(index - 1), content);
+        TextWidget newText = new(content);
         newText.SetAlignment(align);
         newText.SetColor(color);
-
-        // adjust the line number of all subsequent widgets
-        for (int i = index; -1 < i && i < MenuWidgets.Count; i++)
-        {
-            MenuWidgets[i].MoveLine(1);
-        }
         MenuWidgets.Insert(index, newText);
     }
 
     // Adds a separator to the menu
     public void AddSeparator(bool visible = true)
     {
-        MenuWidgets.Add(new SeparatorWidget(NextWidgetLine(), visible));
+        MenuWidgets.Add(new SeparatorWidget(visible));
     }
     public void InsertSeparator(int index, bool visible = true)
     {
         // adjust the line number of all subsequent widgets
-        for (int i = index; -1 < i && i < MenuWidgets.Count; i++)
-        {
-            MenuWidgets[i].MoveLine(1);
-        }
 
-        MenuWidgets.Insert(index, new SeparatorWidget(NextWidgetLine(index - 1), visible));
+        MenuWidgets.Insert(index, new SeparatorWidget(visible));
+    }
+
+    // Remove all widgets from the list.
+    public void RemoveAll()
+    {
+        MenuWidgets.Clear();
     }
 
     // remove a widget from the menu
     public void RemoveWidget(int index)
     {
-        // adjust the line number of all subsequent widgets
-        for (int i = index + 1; -1 < i && i < MenuWidgets.Count; i++)
-        {
-            MenuWidgets[i].MoveLine(-1 - MenuWidgets[index].LineCount());
-        }
-
         if (0 <= index && index < MenuWidgets.Count)
         {
             MenuWidgets.RemoveAt(index);
         }
     }
 
-    // get the line number after a widget
-    int NextWidgetLine()
+    int WidgetLine(int index)
     {
-        if (MenuWidgets.Count > 0)
+        int line = 0;
+
+        for (int i = 0; i < index && i < MenuWidgets.Count; i++)
         {
-            return MenuWidgets.Last().GetLine() + MenuWidgets.Last().LineCount();
+            line += MenuWidgets[i].LineCount();
         }
-        else
-        {
-            return 0;
-        }
-    }
-    int NextWidgetLine(int index)
-    {
-        if (index >= 0 && index < MenuWidgets.Count)
-        {
-            return MenuWidgets[index].GetLine() + MenuWidgets[index].LineCount();
-        }
-        else
-        {
-            return Math.Clamp(index, 0, NextWidgetLine());
-        }
+
+        return line;
     }
 
     // assembles the entire box, aligned correctly,
@@ -256,19 +194,20 @@ public partial class ConsoleMenu
     {
         Console.Write("\x1b[?2026h"); // stop display
         Console.Clear();
-        
+
         // update box position, without going OoB
-        var boxX = (Console.BufferWidth - width) / 2 - 1;
-        var boxY = (Console.BufferHeight - height) / 2 - 1;
-        x = Math.Clamp(boxX, 0, Math.Max(Console.BufferWidth - 1, 0)); // have to do max so width of 0 doesnt crash
-        y = Math.Max(boxY, 0); // taller is fine
+        var boxX = (Console.BufferWidth - maxWidth) / 2 - 1;
+        var boxY = (Console.BufferHeight - minHeight) / 2 - 1;
+        Pos.x = Math.Clamp(boxX, 0, Math.Max(Console.BufferWidth - 1, 0)); // have to do max so width of 0 doesnt crash
+        Pos.y = Math.Max(boxY, 0); // taller is fine
 
         // assemble box as single string
         // so it writes instantly
-        MoveCursor(0, y);
+        MoveCursor(0, Pos.y);
+        
         string boxString = "";
         boxString += AssembleRow('┏', '━', '┓');
-        for (int i = 0; i < height; i++)
+        for (int i = 0; i < Size.height; i++)
         {
             boxString += AssembleRow('┃', ' ', '┃');
         }
@@ -278,9 +217,12 @@ public partial class ConsoleMenu
         Console.Write(boxString);
         Console.Write("\x1b[?2026l"); // start display
 
+        // Potential future version
+        int line = 0;
         foreach (IWidget widget in MenuWidgets)
         {
-            widget.Draw(this);
+            widget.Draw(this, line);
+            line += widget.LineCount();
         }
     }
 
@@ -291,7 +233,7 @@ public partial class ConsoleMenu
         string row = "";
 
         // add spacing according to box position
-        for (int i = 0; i < x && x < Console.BufferWidth - 2; i++)
+        for (int i = 0; i < Pos.x; i++)
         {
             row += " ";
         }
@@ -301,7 +243,7 @@ public partial class ConsoleMenu
 
         // fill row with characters until long enough
         // or the edge of the screen has been reached
-        for (int i = 0; i < width && x + i < Console.BufferWidth - 2; i++)
+        for (int i = 0; i < Size.width; i++)
         {
             row += middle;
         }
@@ -328,15 +270,15 @@ public partial class ConsoleMenu
         switch (align)
         {
             case Alignment.Left:
-                destX = x + 1 + margin;
+                destX = Pos.x + 1 + margin;
                 break;
 
             case Alignment.Center:
-                destX = x + 1 + (width / 2);
+                destX = Pos.x + 1 + (Size.width / 2);
                 break;
 
             case Alignment.Right:
-                destX = x + 1 + width - margin;
+                destX = Pos.x + 1 + Size.width - margin;
                 break;
         }
 
