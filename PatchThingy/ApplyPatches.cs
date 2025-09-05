@@ -15,14 +15,31 @@ partial class DataHandler
 {
     public static void ApplyPatches(ConsoleMenu menu, DataFile vandatailla) // typo but it was funny lmao
     {
-        Console.Clear();
-        // menu.lines[1].SetText(vandatailla.Data.GeneralInfo.DisplayName.Content);
+        bool warned = false;
+
+        // set up the menu for console output
+        menu.ResizeBox(80);
+        menu.AddSeparator();        // 1
+        menu.AddSeparator(false);   // 2
+        menu.AddSeparator(false);
+        menu.AddSeparator(false);
+        menu.AddSeparator(false);
+        menu.AddSeparator(false);
+        menu.AddSeparator(false);
+        menu.AddSeparator(false);
+        menu.AddSeparator(false);   // 9
+        menu.AddSeparator();        // 10
+        menu.AddText($"{vandatailla.Data.GeneralInfo.DisplayName.Content} - Applying Patches...", Alignment.Center);
 
         // Don't try to apply patches that don't exist.
         if (!Path.Exists(Config.current.OutputPath))
         {
-            // menu.lines[4].SetText("No output found. (Try generating patches)", true);
-            // menu.DrawAllLines();
+            menu.ReplaceText(11, "! ERROR !", Alignment.Center, ConsoleColor.Red);
+            menu.AddText("No prior output found.", Alignment.Center);
+            menu.AddText("(Try generating new patches first!)", Alignment.Center);
+            menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy"]);
+            menu.Draw();
+            menu.PromptChoicer(14);
             return;
         }
 
@@ -42,18 +59,36 @@ partial class DataHandler
             var patcher = new Patcher(patchFile.patches, vanillaCode);
             patcher.Patch(Patcher.Mode.FUZZY);
 
-            // in any patches fail to apply here, don't save changes after applying.
+            // in any patches fail to apply here, print a warning.
             if (patcher.Results.Any(result => !result.success))
             {
-                // menu.lines[4].SetText($"Failed to apply patches to code", true);
-                // menu.lines[6].SetText(Path.GetFileName(patchFile.basePath));
-                // menu.DrawAllLines();
-                return; // stop trying to import
+                // build error message
+                menu.ReplaceText(11, "! ERROR !", Alignment.Center, ConsoleColor.Red);
+                menu.AddText($"Failed to apply patches to {Path.GetFileName(patchFile.basePath)}", Alignment.Center);
+                menu.AddChoicer(ChoicerType.Grid, ["Exit PatchThingy", "Continue anyway"]);
+                menu.Draw();
+                warned = true;
+
+                // give option to continue anyway
+                if (menu.PromptChoicer(13) == 0)
+                {
+                    menu.Remove(12, 13);
+                    menu.ReplaceText(11, $"{vandatailla.Data.GeneralInfo.DisplayName.Content} - Applying Patches...", Alignment.Center);
+                    continue; // keep importing
+                }
+                else
+                {
+                    return; // stop trying to import
+                }
             }
 
             // write patched code to file and show progress
             importGroup.QueueReplace(patchDest, string.Join("\n", patcher.ResultLines));
-            Console.WriteLine($"Patched code {Path.GetFileName(patchFile.basePath)}");
+
+            // scroll log output in menu
+            menu.Remove(2);
+            menu.InsertText(9, $"Patched code {Path.GetFileName(patchFile.basePath)}");
+            menu.Draw();
         }
 
         // Newly added code files
@@ -64,7 +99,11 @@ partial class DataHandler
 
             // add file to data
             importGroup.QueueReplace(Path.GetFileNameWithoutExtension(filePath), codeFile);
-            Console.WriteLine($"Added code {Path.GetFileName(filePath)}");
+
+            // scroll log output in menu
+            menu.Remove(2);
+            menu.InsertText(9, $"Added code {Path.GetFileName(filePath)}");
+            menu.Draw();
         }
 
         // Script Definitions
@@ -76,15 +115,23 @@ partial class DataHandler
             // if the definition couldn't be loaded for whatever reason
             if (scriptDef is null)
             {
-                // menu.lines[4].SetText($"Failed to load script definition", true);
-                // menu.lines[6].SetText(Path.GetFileName(filePath));
-                // menu.DrawAllLines();
+                // build error message
+                menu.ReplaceText(11, "! ERROR !", Alignment.Center, ConsoleColor.Red);
+                menu.AddText($"Failed to load script definition for {Path.GetFileNameWithoutExtension(filePath)}", Alignment.Center);
+                menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy"]);
+                menu.Draw();
+                menu.PromptChoicer(13);
+
                 return; // stop trying to import
             }
 
             // add script definition to data
             vandatailla.Data.Scripts.Add(scriptDef.Save(vandatailla.Data));
-            Console.WriteLine($"Defined script {scriptDef.Name}");
+
+            // scroll log output in menu
+            menu.Remove(2);
+            menu.InsertText(9, $"Defined script {scriptDef.Name}");
+            menu.Draw();
         }
 
         // sprite loading
@@ -103,9 +150,13 @@ partial class DataHandler
             // if the definition couldn't be loaded for whatever reason
             if (spriteDef is null)
             {
-                // menu.lines[4].SetText($"Failed to load sprite definition", true);
-                // menu.lines[6].SetText(Path.GetFileName(filePath));
-                // menu.DrawAllLines();
+                // build error message
+                menu.ReplaceText(11, "! ERROR !", Alignment.Center, ConsoleColor.Red);
+                menu.AddText($"Failed to load sprite definition for {Path.GetFileNameWithoutExtension(filePath)}", Alignment.Center);
+                menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy"]);
+                menu.Draw();
+                menu.PromptChoicer(13);
+
                 return; // stop trying to import
             }
 
@@ -114,9 +165,12 @@ partial class DataHandler
             // check if the image exists
             if (!File.Exists(imagePath))
             {
-                // menu.lines[4].SetText($"Failed to load sprite image", true);
-                // menu.lines[6].SetText(Path.GetFileName(imagePath));
-                // menu.DrawAllLines();
+                // build error message
+                menu.ReplaceText(11, "! ERROR !", Alignment.Center, ConsoleColor.Red);
+                menu.AddText($"Failed to load sprite image for {spriteDef.Name}", Alignment.Center);
+                menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy"]);
+                menu.Draw();
+                menu.PromptChoicer(13);
                 return; // stop trying to import
             }
 
@@ -125,8 +179,11 @@ partial class DataHandler
             spriteList.Add(spriteDef);
         }
 
-        // pack sprites to atlas, and add to data
-        atlas.Save(vandatailla.Data);
+        if (spriteList.Count > 0)
+        {
+            // pack sprites to atlas, and add to data
+            atlas.Save(vandatailla.Data);
+        }
 
         foreach (SpriteDefinition spriteDef in spriteList)
         {
@@ -135,16 +192,46 @@ partial class DataHandler
 
             // add sprite definition to data
             vandatailla.Data.Sprites.Add(spriteDef.Save(vandatailla.Data));
-            Console.WriteLine($"Added sprite {spriteDef.Name}");
+
+            // scroll log output in menu
+            menu.Remove(2);
+            menu.InsertText(9, $"Defined script {spriteDef.Name}");
+            menu.Draw();
+        }
+
+        warned = true;
+        if (warned)
+        {
+            // build error message
+            menu.ReplaceText(11, "WARNING", Alignment.Center, ConsoleColor.Yellow);
+            menu.AddText($"Some patches failed to apply cleanly,", Alignment.Center);
+            menu.AddText($"possibly making the game unstable.", Alignment.Center);
+            menu.AddChoicer(ChoicerType.Grid, ["Apply patches anyway", "Do not apply patches"]);
+            menu.Draw();
+
+            if (menu.PromptChoicer(14) == 0)
+            {
+                menu.Remove(12, 14);
+            }
+            else
+            {
+                menu.Remove(12, 14);
+                menu.ReplaceText(11, "Patches were not applied.", Alignment.Center);
+                menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy"]);
+                menu.Draw();
+                menu.PromptChoicer(12);
+                return;
+            }
         }
 
         importGroup.Import();
         vandatailla.SaveChanges(Path.Combine(Config.current.GamePath, DataFile.chapterFolder, "data.win"));
 
         // success popup
-        // menu.lines[3].SetText("SUCCESS", true);
-        // menu.lines[3].SetColor(ConsoleColor.Yellow);
-        // menu.lines[4].SetText("Patches applied successfully!", true);
-        // menu.DrawAllLines(true);
+        menu.ReplaceText(11, "SUCCESS", Alignment.Center, ConsoleColor.Yellow);
+        menu.AddText("Successfully applied patches!", Alignment.Center);
+        menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy"]);
+        menu.Draw();
+        menu.PromptChoicer(13);
     }
 }

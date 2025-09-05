@@ -43,24 +43,11 @@ public partial class ConsoleMenu
                         WriteChoice(choices[i], columnPos[i % 2], startLine + (i / 2), curSelection == i);
                     }
                     break;
-
-                case ChoicerType.InLine:
-                    for (int i = 0; i < choices.Length; i++)
-                    {
-                        WriteChoice(choices[i], columnPos[i], startLine, curSelection == i);
-                    }
-                    break;
             }
         }
 
         void WriteChoice (string text, int x, int y, bool selected)
         {
-            if (Chosen && selected)
-            {
-                // set color
-                Console.ForegroundColor = ConsoleColor.Yellow;
-            }
-
             if (Focused && !Chosen && selected)
             {
                 // move heart
@@ -74,6 +61,12 @@ public partial class ConsoleMenu
                 // clear heart
                 MoveCursor(x - 3, y);
                 Console.Write("  ");
+            }
+
+            if (Chosen && selected)
+            {
+                // set color
+                Console.ForegroundColor = ConsoleColor.Yellow;
             }
             
             // draw text at position
@@ -204,11 +197,6 @@ public partial class ConsoleMenu
                     columnPos[0] = box.AlignPosition(Alignment.Left);
                     break;
 
-                case ChoicerType.InLine:
-                    columnPos[0] = box.AlignPosition(Alignment.Left);
-                    columnPos[1] = box.AlignPosition(Alignment.Center) + box.margin / 2 + 1;
-                    break;
-
             }
         }
 
@@ -222,7 +210,6 @@ public partial class ConsoleMenu
                 case ChoicerType.Grid:
                     return choices.Length / 2 + (choices.Length % 2);
                     
-                case ChoicerType.InLine:
                 default:
                     return 1;
             }
@@ -238,9 +225,13 @@ public partial class ConsoleMenu
     {
         MenuWidgets.Insert(index, new ChoicerWidget(type, choices));
     }
+    public void ReplaceChoicer(int index, ChoicerType type, string[] choices)
+    {
+        MenuWidgets[index] = new ChoicerWidget(type, choices);
+    }
 
     // activate the choicer at the given index
-    public int PromptChoicer(int index, int confirmIndex = -1)
+    public int PromptChoicer(int index)
     {
         // check if the widget is a choicer
         if (MenuWidgets[index] is not ChoicerWidget)
@@ -250,13 +241,12 @@ public partial class ConsoleMenu
 
         // have to make a sep variable for some reason
         var choicer = (ChoicerWidget)MenuWidgets[index];
-        choicer.curSelection = 0;
         choicer.Chosen = false;
         choicer.Focused = true;
         choicer.Draw(this, WidgetLine(index));
 
         // values from last loop
-        int prevSelection = 0;
+        int prevSelection = choicer.curSelection;
         bool prevChosen = false;
 
         int output = -1;
@@ -273,28 +263,9 @@ public partial class ConsoleMenu
             // update past values
             prevSelection = choicer.curSelection;
             prevChosen = choicer.Chosen;
-
-            // check if something was selected
-            // (and the choice wasnt cancelled)
-            if (choicer.Chosen && output >= 0)
-            {
-                // check if we should do the confirmation
-                if (confirmIndex > -1 && MenuWidgets[confirmIndex] is ChoicerWidget)
-                {
-                    // prompt the other choicer for yes/no
-                    if (PromptChoicer(confirmIndex) != 0)
-                    {
-                        // if no, reset variable to continue loop
-                        choicer.Chosen = false;
-                        choicer.Focused = true;
-                        choicer.Draw(this, WidgetLine(index));
-                    }
-                }
-            }
         }
 
-        // dont have lingering selection after choice is made
-        choicer.Chosen = false;
+        // unfocus
         choicer.Focused = false;
         choicer.Draw(this, WidgetLine(index));
 
@@ -307,5 +278,4 @@ public enum ChoicerType
 {
     Grid,
     List,
-    InLine,
 }

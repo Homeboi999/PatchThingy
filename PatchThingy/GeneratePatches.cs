@@ -16,6 +16,20 @@ partial class DataHandler
         JsonSerializerOptions defOptions = new JsonSerializerOptions();
         defOptions.WriteIndented = true;
 
+        // set up the menu for console output
+        menu.ResizeBox(80);
+        menu.AddSeparator();        // 1
+        menu.AddSeparator(false);   // 2
+        menu.AddSeparator(false);
+        menu.AddSeparator(false);
+        menu.AddSeparator(false);
+        menu.AddSeparator(false);
+        menu.AddSeparator(false);
+        menu.AddSeparator(false);
+        menu.AddSeparator(false);   // 9
+        menu.AddSeparator();        // 10
+        menu.AddText($"{modded.Data.GeneralInfo.DisplayName.Content} - Generating Patches...", Alignment.Center);
+
         // code files
         foreach (UndertaleCode modCode in modded.Data.Code)
         {
@@ -41,15 +55,24 @@ partial class DataHandler
                     continue;
                 }
 
+                // add to queue
                 QueueFile(modCode.Name.Content, modChanges.ToString(), FileType.Patch);
-                Console.WriteLine($"Generated patches for {modCode.Name.Content}.gml");
+
+                // scroll log output in menu
+                menu.Remove(2);
+                menu.InsertText(9, $"Generated patches for {modCode.Name.Content}.gml");
+                menu.Draw();
             }
             // if it's a new file, export entire file to the Source folder
             else if (vanillaCode is null)
             {
                 string fileText = string.Join("\n", modded.DecompileCode(modCode));
                 QueueFile(modCode.Name.Content, fileText, FileType.Code);
-                Console.WriteLine($"Created source code for {modCode.Name.Content}.gml");
+
+                // scroll log output in menu
+                menu.Remove(2);
+                menu.InsertText(9, $"Created source code for {modCode.Name.Content}.gml");
+                menu.Draw();
             }
         }
 
@@ -61,9 +84,9 @@ partial class DataHandler
             // i can check if it causes problems afterwards
             if (modScript.Name is null || modScript.Code is null)
             {
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine($"Skipped definition containing a null value");
-                Console.ResetColor();
+                menu.Remove(2);
+                menu.InsertText(9, $"Skipped definition containing a null value", Alignment.Left, ConsoleColor.Yellow);
+                menu.Draw();
                 continue;
             }
 
@@ -83,7 +106,9 @@ partial class DataHandler
                 string jsonText = JsonSerializer.Serialize(scriptDef, defOptions);
 
                 QueueFile(scriptDef.Name, jsonText, FileType.Script);
-                Console.WriteLine($"Created script definition for {scriptDef.Name}");
+                menu.Remove(2);
+                menu.InsertText(9, $"Created script definition for {scriptDef.Name}");
+                menu.Draw();
             }
         }
 
@@ -100,19 +125,21 @@ partial class DataHandler
                 string jsonText = JsonSerializer.Serialize(spriteDef, defOptions);
 
                 QueueFile(spriteDef.Name, jsonText, FileType.Sprite);
-                Console.WriteLine($"Created sprite definition for {spriteDef.Name}");
+                menu.Remove(2);
+                menu.InsertText(9, $"Created sprite definition for {spriteDef.Name}");
+                menu.Draw();
             }
         }
 
         // since patches were generated successfully, 
         // it's safe to overwrite previous patches
-        Console.WriteLine("Writing output files...");
         SaveModFiles();
 
         // success popup
-        // menu.lines[3].SetText("SUCCESS", true);
-        // menu.lines[3].SetColor(ConsoleColor.Yellow);
-        // menu.lines[4].SetText("Successfuly generated patches!", true);
-        // menu.DrawAllLines(true);
+        menu.ReplaceText(11, "SUCCESS", Alignment.Center, ConsoleColor.Yellow);
+        menu.AddText("Successfully generated patches!", Alignment.Center);
+        menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy"]);
+        menu.Draw();
+        menu.PromptChoicer(13);
     }
 }

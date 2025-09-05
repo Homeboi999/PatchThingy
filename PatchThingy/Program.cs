@@ -47,99 +47,107 @@ ScriptMode? chosenMode = null;
 // should let me change modes manually?
 Console.WriteLine(chosenMode);
 #endif
-#if !DEBUG
+
 // setup for the initial menu
-ConsoleMenu menu = new ConsoleMenu(64, 6, 16);
+ConsoleMenu menu = new ConsoleMenu(64, 5);
 string versionNum = typeof(Program).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "??";
+Console.Write("\x1b[?1049h");
+Console.CursorVisible = false;
+
+// check for resizing
+if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+    PosixSignalRegistration.Create(PosixSignal.SIGWINCH, (context) => { menu.Draw(); });
 
 // title bar
-menu.lines[0].SetText($"╾─╴╴╴  PatchThingy v{versionNum}  ╶╶╶─╼", true);
-menu.lines[1].SetType(LineType.Separator);
+menu.AddText($"╾─╴╴╴  PatchThingy v{versionNum}  ╶╶╶─╼", Alignment.Center);
+menu.AddSeparator();
 
 // mode list
-menu.lines[2].SetText("    Generate new patches");
-menu.lines[3].SetText("    Apply existing patches");
-menu.lines[4].SetText("    Restore vanilla data");
+string[] scriptModes = ["Generate new patches", "Apply existing patches", "Manage data files"];
+menu.AddChoicer(ChoicerType.List, scriptModes);
 
 // input location
-menu.lines[5].SetType(LineType.Separator);
-Console.CursorVisible = false;
-menu.DrawAllLines();
+menu.AddSeparator();
+menu.AddText("Please select a mode from the list above.", Alignment.Center);
+menu.Draw();
 
+// confirm options
+string[] confirmChoices = ["Confirm", "Cancel"];
 
 while (chosenMode is null)
 {
-    menu.lines[6].SetText("Please select a mode from the list above.", true);
-    menu.DrawLine(6);
+    menu.SetText(4, "Please select a mode from the list above.");
+    menu.Draw();
 
-    switch (menu.PromptUserInput([2, 3, 4]))
+    switch (menu.PromptChoicer(2))
     {
         case 0:
+            menu.SetText(4, "This will overwrite local patches. Continue?");
+            menu.AddSeparator();
+            menu.AddChoicer(ChoicerType.Grid, confirmChoices);
+            menu.Draw();
 
-            if (menu.ConfirmUserInput(6))
+            if (menu.PromptChoicer(6) == 0)
             {
                 chosenMode = ScriptMode.Generate;
             }
-            else
-            {
-                menu.lines[2].SetColor();
-                menu.DrawLine(2);
-            }
 
+            menu.Remove(5, 6);
             break;
 
         case 1:
+            menu.SetText(4, "This will discard ALL unsaved changes. Continue?");
+            menu.AddSeparator();
+            menu.AddChoicer(ChoicerType.Grid, confirmChoices);
+            menu.Draw();
 
-            if (menu.ConfirmUserInput(6))
+            if (menu.PromptChoicer(6) == 0)
             {
                 chosenMode = ScriptMode.Apply;
             }
-            else
-            {
-                menu.lines[3].SetColor();
-                menu.DrawLine(3);
-            }
-            
+
+            menu.Remove(5, 6);
             break;
 
         case 2:
+            menu.SetText(4, "Currently this just reverts to vanilla. Continue?");
+            menu.AddSeparator();
+            menu.AddChoicer(ChoicerType.Grid, confirmChoices);
+            menu.Draw();
 
-            if (menu.ConfirmUserInput(6))
+            if (menu.PromptChoicer(6) == 0)
             {
                 chosenMode = ScriptMode.Revert;
             }
-            else
-            {
-                menu.lines[4].SetColor();
-                menu.DrawLine(4);
-            }
-            
+
+            menu.Remove(5, 6);
             break;
+
         default:
-            menu.lines[6].SetText("* i see how it is...");
-            menu.DrawLine(6);
-            ExitMenu();
+            menu.SetText(4, "Are you sure you want to exit PatchThingy?");
+            menu.AddSeparator();
+            menu.AddChoicer(ChoicerType.Grid, confirmChoices);
+            menu.Draw();
+
+            if (menu.PromptChoicer(6) == 0)
+            {
+                ExitMenu();
+            }
+
+            menu.Remove(5, 6);
             break; // for compiler
     }
 }
 
-// set up the menu layout for any popups
-// or errors that I need
-menu.ClearAll();
-menu.lines[1].SetColor(ConsoleColor.DarkGray);
-menu.lines[2].SetType(LineType.Separator);
-menu.lines[3].SetText("! ERROR !", true); // default to error, successes
-menu.lines[3].SetColor(ConsoleColor.Red); // will set their header
-menu.lines[5].SetType(LineType.Separator);
-menu.lines[6].SetColor(ConsoleColor.DarkGray);
+// clear the menu and re-add the header
+menu.RemoveAll();
+menu.AddText($"╾─╴╴╴  PatchThingy v{versionNum}  ╶╶╶─╼", Alignment.Center);
 
 if (chosenMode == ScriptMode.Generate)
 {
     // load data files
     DataFile vanilla = new(vanillaPath);
     DataFile modded = new(activePath);
-
-    // mayb in the future, double-check that the versions are the same?
 
     DataHandler.GeneratePatches(menu, vanilla, modded);
 }
@@ -153,9 +161,12 @@ if (chosenMode == ScriptMode.Apply)
         // If Active Data ALSO doesn't exist, then panic.
         if (!File.Exists(activePath))
         {
-            menu.lines[4].SetText("Could not find game data.", true);
-            menu.DrawAllLines();
-            Environment.Exit(2);
+            menu.AddText("! ERROR !", Alignment.Center, ConsoleColor.Red);
+            menu.AddText("Could not find game data.", Alignment.Center);
+            menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy"]);
+            menu.Draw();
+            menu.PromptChoicer(3);
+            ExitMenu();
             return; // for compiler
         }
 
@@ -182,36 +193,14 @@ if (chosenMode == ScriptMode.Revert)
     File.Copy(vanillaPath, activePath);
 
     // success popup
-    menu.lines[3].SetText("SUCCESS", true);
-    menu.lines[3].SetColor(ConsoleColor.Yellow);
-    menu.lines[4].SetText("Successfully restored vanilla data!");
-    menu.DrawAllLines();
-}
-#else
-Console.CursorVisible = false;
-Console.Write("\x1b[?1049h"); // alt screen
-ConsoleMenu menu = new ConsoleMenu(64, 8, 5);
-// check for resizing
-if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-    PosixSignalRegistration.Create(PosixSignal.SIGWINCH, (context) => { menu.Draw(); });
-
-string[] testChoices = ["WOW", "testing", "lmao", "sugondeez", "ligma balls"];
-
-menu.AddText("  TITLE2  ", Alignment.Center);
-menu.AddSeparator(false);
-menu.AddSeparator();
-menu.AddChoicer(ChoicerType.Grid, testChoices);
-menu.AddChoicer(ChoicerType.InLine, ["sure ig", "NUH UH"]);
-menu.InsertSeparator(4);
-menu.AddSeparator();
-menu.AddText("menu choicer test");
-menu.Draw();
-
-while (menu.PromptChoicer(3, 5) != -1)
-{
+    menu.AddSeparator();
+    menu.AddText("SUCCESS", Alignment.Center, ConsoleColor.Yellow);
+    menu.AddText("Successfully applied patches!", Alignment.Center);
+    menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy"]);
+    menu.Draw();
+    menu.PromptChoicer(10);
 }
 
-#endif
 // after whatever the script does,
 // move cursor out of the box
 ExitMenu();

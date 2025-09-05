@@ -12,24 +12,33 @@ public partial class ConsoleMenu
     public (int x, int y) Pos;
 
     // box size, accounting for resizing
-    (int width, int height) Size
+    public (int width, int height) Size
     {
         get
         {
-            return (Math.Min(maxWidth, Console.BufferWidth - 2), Math.Max(minHeight, WidgetLine(MenuWidgets.Count)));
+            return (Math.Min(maxWidth, Console.BufferWidth - 2), Math.Max(0, WidgetLine(MenuWidgets.Count) - 1));
         }
     }
 
     int maxWidth;
-    int minHeight;
     int margin;
 
     // Constructor
-    public ConsoleMenu(int boxWidth, int boxHeight, int boxMargins = 1)
+    public ConsoleMenu(int boxWidth, int boxMargins = 1)
     {
         margin = boxMargins;
         maxWidth = boxWidth;
-        minHeight = boxHeight;
+    }
+
+    // change the target size of the box
+    public void ResizeBox(int width)
+    {
+        maxWidth = width;
+    }
+    public void ResizeBox(int width, int margin)
+    {
+        maxWidth = width;
+        this.margin = margin;
     }
 
     // menu content setup
@@ -44,28 +53,13 @@ public partial class ConsoleMenu
 
     class TextWidget : IWidget
     {
-        string content;
-        ConsoleColor? color = null;
-        Alignment align;
+        public string content;
+        public ConsoleColor? color = null;
+        public Alignment align;
 
         public TextWidget (string content, Alignment align = Alignment.Left)
         {
             this.content = content;
-            this.align = align;
-        }
-
-        public void SetText (string content)
-        {
-            this.content = content;
-        }
-
-        public void SetColor(ConsoleColor? color)
-        {
-            this.color = color;
-        }
-
-        public void SetAlignment(Alignment align)
-        {
             this.align = align;
         }
 
@@ -137,16 +131,61 @@ public partial class ConsoleMenu
     public void AddText (string content, Alignment align = Alignment.Left, ConsoleColor? color = null)
     {
         TextWidget newText = new(content);
-        newText.SetAlignment(align);
-        newText.SetColor(color);
+        newText.align = align;
+        newText.color = color;
         MenuWidgets.Add(newText);
     }
     public void InsertText (int index, string content, Alignment align = Alignment.Left, ConsoleColor? color = null)
     {
+        if (index > MenuWidgets.Count || index < 0)
+        {
+            return;
+        }
+
         TextWidget newText = new(content);
-        newText.SetAlignment(align);
-        newText.SetColor(color);
+        newText.align = align;
+        newText.color = color;
         MenuWidgets.Insert(index, newText);
+    }
+    public void ReplaceText(int index, string content, Alignment align = Alignment.Left, ConsoleColor? color = null)
+    {
+        if (index > MenuWidgets.Count || index < 0)
+        {
+            return;
+        }
+
+        TextWidget newText = new(content);
+        newText.align = align;
+        newText.color = color;
+        MenuWidgets[index] = newText;
+    }
+
+    public void SetText (int index, string content)
+    {
+        TextWidget widget = (TextWidget)MenuWidgets[index];
+
+        if (widget is not null)
+        {
+            widget.content = content;
+        }
+    }
+    public void SetAlignment(int index, Alignment align)
+    {
+        TextWidget widget = (TextWidget)MenuWidgets[index];
+
+        if (widget is not null)
+        {
+            widget.align = align;
+        }
+    }
+    public void SetColor(int index, ConsoleColor? color)
+    {
+        TextWidget widget = (TextWidget)MenuWidgets[index];
+
+        if (widget is not null)
+        {
+            widget.color = color;
+        }
     }
 
     // Adds a separator to the menu
@@ -160,20 +199,31 @@ public partial class ConsoleMenu
 
         MenuWidgets.Insert(index, new SeparatorWidget(visible));
     }
+    public void ReplaceSeparator(int index, bool visible = true)
+    {
+        // adjust the line number of all subsequent widgets
 
-    // Remove all widgets from the list.
+        MenuWidgets[index] = new SeparatorWidget(visible);
+    }
+
+    // Remove all widgets from the menu.
     public void RemoveAll()
     {
         MenuWidgets.Clear();
     }
 
-    // remove a widget from the menu
-    public void RemoveWidget(int index)
+    // remove one or more widgets from the menu
+    public void Remove(int index)
     {
-        if (0 <= index && index < MenuWidgets.Count)
-        {
-            MenuWidgets.RemoveAt(index);
-        }
+        index = Math.Clamp(index, 0, MenuWidgets.Count - 1);
+        MenuWidgets.RemoveAt(index);
+    }
+    public void Remove(int start, int end)
+    {
+        start = Math.Max(start, 0);
+        end = Math.Min(end, MenuWidgets.Count - 1);
+
+        MenuWidgets.RemoveRange(Math.Min(start, end), Math.Abs(end - start) + 1);
     }
 
     int WidgetLine(int index)
@@ -196,8 +246,8 @@ public partial class ConsoleMenu
         Console.Clear();
 
         // update box position, without going OoB
-        var boxX = (Console.BufferWidth - maxWidth) / 2 - 1;
-        var boxY = (Console.BufferHeight - minHeight) / 2 - 1;
+        var boxX = (Console.BufferWidth - Size.width) / 2 - 1;
+        var boxY = (Console.BufferHeight - Size.height) / 2 - 1;
         Pos.x = Math.Clamp(boxX, 0, Math.Max(Console.BufferWidth - 1, 0)); // have to do max so width of 0 doesnt crash
         Pos.y = Math.Max(boxY, 0); // taller is fine
 
