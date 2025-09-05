@@ -265,6 +265,11 @@ public partial class ConsoleMenu
             prevChosen = choicer.Chosen;
         }
 
+        if (output == -1)
+        {
+            choicer.Chosen = false;
+        }
+
         // unfocus
         choicer.Focused = false;
         choicer.Draw(this, WidgetLine(index));

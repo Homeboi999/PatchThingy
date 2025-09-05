@@ -27,6 +27,21 @@ if (Config.current is null)
     return; // for compiler
 }
 
+// create variables used to select
+// a chapter and mode.
+ScriptMode? chosenMode = null;
+int chosenChapter = -1;
+
+// setup for the initial menu
+ConsoleMenu menu = new ConsoleMenu(64, 8);
+string versionNum = typeof(Program).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "??";
+Console.Write("\x1b[?1049h");
+Console.CursorVisible = false;
+
+// check for resizing
+if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+    PosixSignalRegistration.Create(PosixSignal.SIGWINCH, (context) => { menu.Draw(); });
+
 // Get the filepath for all 3 versions of data.win
 // Each copy serves a different purpose, making the
 // process of updating much easier.
@@ -40,105 +55,135 @@ string vanillaPath = Path.Combine(Config.current.GamePath, DataFile.chapterFolde
 // Backup Data: a second copy of the patched data.win, in case of an update.
 string backupPath = Path.Combine(Config.current.GamePath, DataFile.chapterFolder, "data-backup.win");
 
-ScriptMode? chosenMode = null;
-#if DEBUG
-// Console.ReadKey doesnt work in debug console.
-// if attached to the debugger, a breakpoint here
-// should let me change modes manually?
-Console.WriteLine(chosenMode);
-#endif
+// variables that get used during the loop
+string[] chapters = ["Chapter 1", "Chapter 2", "Chapter 3", "Chapter 4"];
+string[] scriptModes = ["Generate new patches", "Apply existing patches", "Manage data files"];
+bool backToStart = false;
 
-// setup for the initial menu
-ConsoleMenu menu = new ConsoleMenu(64, 5);
-string versionNum = typeof(Program).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "??";
-Console.Write("\x1b[?1049h");
-Console.CursorVisible = false;
-
-// check for resizing
-if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-    PosixSignalRegistration.Create(PosixSignal.SIGWINCH, (context) => { menu.Draw(); });
+// confirm options
+string[] confirmChoices = ["Confirm", "Cancel"];
 
 // exit menu when crashing
 try
 {
     // title bar
     menu.AddText($"╾─╴╴╴  PatchThingy v{versionNum}  ╶╶╶─╼", Alignment.Center);
+    menu.AddText("Select a Deltarune chapter to patch.", Alignment.Center);
     menu.AddSeparator();
 
-    // mode list
-    string[] scriptModes = ["Generate new patches", "Apply existing patches", "Manage data files"];
-    menu.AddChoicer(ChoicerType.List, scriptModes);
+    // chapter choicer
+    menu.AddChoicer(ChoicerType.Grid, chapters);
 
-    // input location
-    menu.AddSeparator();
-    menu.AddText("Please select a mode from the list above.", Alignment.Center);
-    menu.Draw();
-
-    // confirm options
-    string[] confirmChoices = ["Confirm", "Cancel"];
-
-    while (chosenMode is null)
+    // so i can loop back to chap.select menu
+    while (chosenMode is null && chosenChapter < 0)
     {
-        menu.SetText(4, "Please select a mode from the list above.");
-        menu.Draw();
+        chosenChapter = -1;
+        backToStart = false;
 
-        switch (menu.PromptChoicer(2))
+        // reset text
+        menu.SetText(1, "Select a Deltarune chapter to patch.");
+
+        while (chosenChapter < 0)
         {
-            case 0:
-                menu.SetText(4, "This will overwrite local patches. Continue?");
-                menu.AddSeparator();
-                menu.AddChoicer(ChoicerType.Grid, confirmChoices);
-                menu.Draw();
+            menu.Draw();
 
-                if (menu.PromptChoicer(6) == 0)
-                {
-                    chosenMode = ScriptMode.Generate;
-                }
+            switch (menu.PromptChoicer(3))
+            {
+                case 0:
+                    chosenChapter = 1;
+                    break;
+                case 1:
+                    chosenChapter = 2;
+                    break;
+                case 2:
+                    chosenChapter = 3;
+                    break;
+                case 3:
+                    chosenChapter = 4;
+                    break;
 
-                menu.Remove(5, 6);
-                break;
+                default:
+                    menu.AddSeparator();
+                    menu.AddText("Are you sure you want to exit PatchThingy?", Alignment.Center);
+                    menu.AddChoicer(ChoicerType.Grid, confirmChoices);
+                    menu.Draw();
 
-            case 1:
-                menu.SetText(4, "This will discard ALL unsaved changes. Continue?");
-                menu.AddSeparator();
-                menu.AddChoicer(ChoicerType.Grid, confirmChoices);
-                menu.Draw();
+                    if (menu.PromptChoicer(6) == 0)
+                    {
+                        ExitMenu();
+                    }
 
-                if (menu.PromptChoicer(6) == 0)
-                {
-                    chosenMode = ScriptMode.Apply;
-                }
+                    menu.Remove(4, 6);
+                    break; // for compiler
+            }
+        }
 
-                menu.Remove(5, 6);
-                break;
+        // mode list
+        menu.SetText(1, $"Please select an action for Deltarune Chapter {chosenChapter}.");
+        menu.AddSeparator();
+        menu.AddChoicer(ChoicerType.List, scriptModes);
 
-            case 2:
-                menu.SetText(4, "Currently this just reverts to vanilla. Continue?");
-                menu.AddSeparator();
-                menu.AddChoicer(ChoicerType.Grid, confirmChoices);
-                menu.Draw();
+        while (chosenMode is null && !backToStart)
+        {
+            menu.Draw();
 
-                if (menu.PromptChoicer(6) == 0)
-                {
-                    chosenMode = ScriptMode.Revert;
-                }
+            switch (menu.PromptChoicer(5))
+            {
+                case 0:
+                    if (Directory.Exists(Config.current.OutputPath))
+                    {
+                        menu.AddSeparator();
+                        menu.AddText("This will overwrite local patches. Continue?", Alignment.Center);
+                        menu.AddChoicer(ChoicerType.Grid, confirmChoices);
+                        menu.Draw();
 
-                menu.Remove(5, 6);
-                break;
+                        if (menu.PromptChoicer(8) == 0)
+                        {
+                            chosenMode = ScriptMode.Generate;
+                        }
 
-            default:
-                menu.SetText(4, "Are you sure you want to exit PatchThingy?");
-                menu.AddSeparator();
-                menu.AddChoicer(ChoicerType.Grid, confirmChoices);
-                menu.Draw();
+                        menu.Remove(6, 8);
+                    }
+                    else
+                    {
+                        chosenMode = ScriptMode.Generate;
+                    }
+                    break;
 
-                if (menu.PromptChoicer(6) == 0)
-                {
-                    ExitMenu();
-                }
+                case 1:
+                    menu.AddSeparator();
+                    menu.AddText("This will discard all unsaved modifications. Continue?", Alignment.Center);
+                    menu.AddChoicer(ChoicerType.Grid, confirmChoices);
+                    menu.Draw();
 
-                menu.Remove(5, 6);
-                break; // for compiler
+                    if (menu.PromptChoicer(8) == 0)
+                    {
+                        chosenMode = ScriptMode.Apply;
+                    }
+
+                    menu.Remove(6, 8);
+                    break;
+
+                case 2:
+                    menu.AddSeparator();
+                    menu.AddText("Currently this just reverts to vanilla. Continue?", Alignment.Center);
+                    menu.AddChoicer(ChoicerType.Grid, confirmChoices);
+                    menu.Draw();
+
+                    if (menu.PromptChoicer(8) == 0)
+                    {
+                        chosenMode = ScriptMode.Revert;
+                    }
+
+                    menu.Remove(6, 8);
+                    break;
+
+                default:
+                    menu.Remove(4, 5);
+                    chosenChapter = -1;
+                    backToStart = true;
+                    break;
+            }
         }
     }
 
@@ -217,7 +262,6 @@ catch (Exception error) // show crashes in main terminal output
         Console.WriteLine(line);
         Console.ForegroundColor = ConsoleColor.DarkGray;
     }
-    Console.WriteLine();
     Console.ResetColor();
     Console.CursorVisible = true;
     Environment.Exit(2);
