@@ -44,14 +44,14 @@ partial class DataHandler
         public string Name;
         public string Text;
         public FileType Type;
-        public int Chapter;
+        
+        public int Chapter = DataFile.chapter;
 
-        public TempFile (string Name, string Text, FileType Type, int? Chapter = null)
+        public TempFile (string Name, string Text, FileType Type)
         {
             this.Name = Name;
             this.Text = Text;
             this.Type = Type;
-            this.Chapter = Chapter ?? DataFile.chapter;
         }
     }
 
@@ -60,10 +60,6 @@ partial class DataHandler
     public static void QueueFile(string fileName, string fileText, FileType fileType)
     {
         FileQueue.Add(new TempFile(fileName, fileText, fileType));
-    }
-    public static void QueueFile(string fileName, string fileText, FileType fileType, int fileChapter)
-    {
-        FileQueue.Add(new TempFile(fileName, fileText, fileType, fileChapter));
     }
 
     static void SaveModFiles()
@@ -79,29 +75,41 @@ partial class DataHandler
         string path;
         foreach (TempFile queueFile in FileQueue)
         {
+            string typeFolder = "";
+
             switch(queueFile.Type)
             {
                 case FileType.Code:
-                    path = Path.Combine(GetPath(queueFile.Chapter), codeFolder, $"{queueFile.Name}.gml");
+                    typeFolder = Path.Combine(codeFolder, $"{queueFile.Name}.gml");
                     break;
 
                 case FileType.Script:
-                    path = Path.Combine(GetPath(queueFile.Chapter), scriptFolder, $"{queueFile.Name}.json");
+                    typeFolder = Path.Combine(scriptFolder, $"{queueFile.Name}.json");
                     break;
 
                 case FileType.Sprite:
-                    path = Path.Combine(GetPath(queueFile.Chapter), spriteFolder, $"{queueFile.Name}.json");
+                    typeFolder = Path.Combine(spriteFolder, $"{queueFile.Name}.json");
                     break;
 
                 case FileType.Patch:
-                    path = Path.Combine(GetPath(queueFile.Chapter), patchFolder, $"{queueFile.Name}.gml.patch");
+                    typeFolder = Path.Combine(patchFolder, $"{queueFile.Name}.gml.patch");
                     break;
 
-                // failsafe to create an "Other" folder to save to
+                // get the compiler to shut up
                 default:
-                    Directory.CreateDirectory(Path.Combine(GetPath(queueFile.Chapter), "./Other", $"{queueFile.Name}.txt"));
-                    path = Path.Combine(GetPath(queueFile.Chapter), "./Other", $"{queueFile.Name}.txt");
                     break;
+            }
+
+            if (File.Exists(Path.Combine(GetPath(0), typeFolder)))
+            {
+                queueFile.Chapter = 0;
+            }
+
+            path = Path.Combine(GetPath(queueFile.Chapter), typeFolder);
+            
+            if (!Directory.Exists(path))
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(path)!);
             }
 
             File.WriteAllText(path, queueFile.Text);
@@ -111,19 +119,25 @@ partial class DataHandler
     static void ResetFolder(string folderPath, string toDelete)
     {
         string fullPath = Path.Combine(GetPath(DataFile.chapter), folderPath);
-        string globalPath = Path.Combine(GetPath(0), folderPath);
 
-        // Create folder if it doesn't already exist
-        Directory.CreateDirectory(fullPath);
-        Directory.CreateDirectory(globalPath);
+        // if folder doesnt exist, dont need to delete
+        if (!Directory.Exists(fullPath))
+        {
+            return;
+        }
 
         // Empty folder of all files of a given type
-        foreach (string file in Directory.EnumerateFiles(folderPath))
+        foreach (string file in Directory.EnumerateFiles(fullPath))
         {
             if (file.EndsWith(toDelete))
             {
                 File.Delete(file);
             }
+        }
+
+        if (Directory.GetFileSystemEntries(fullPath).Length == 0)
+        {
+            Directory.Delete(fullPath);
         }
         // dont clear out global patches
     }
