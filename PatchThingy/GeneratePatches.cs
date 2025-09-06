@@ -41,7 +41,22 @@ partial class DataHandler
             // get name from vanilla data.win to check if it's a new file or not
             UndertaleCode vanillaCode = vanilla.Data.Code.ByName(modCode.Name.Content);
 
-            if (vanillaCode is not null && vanillaCode.ParentEntry is null)
+            // look for a matching source code file in previous output
+            // if found, save the file to Source/Code instead.
+            bool sourceExists = false;
+            {
+                if (File.Exists(Path.Combine(GetPath(DataFile.chapter), codeFolder, $"{modCode.Name.Content}.gml")))
+                {
+                    sourceExists = true;
+                }
+                
+                if (File.Exists(Path.Combine(GetPath(0), codeFolder, $"{modCode.Name.Content}.gml")))
+                {
+                    sourceExists = true;
+                }
+            }
+
+            if (vanillaCode is not null && vanillaCode.ParentEntry is null && !sourceExists)
             {
                 PatchFile modChanges = new();
                 modChanges.basePath = $"a/Code/{vanillaCode.Name.Content}.gml";

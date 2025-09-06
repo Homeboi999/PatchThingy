@@ -140,39 +140,42 @@ partial class DataHandler
                 File.Delete(file);
             }
         }
-
-        if (Directory.GetFileSystemEntries(fullPath).Length == 0)
-        {
-            Directory.Delete(fullPath);
-        }
         // dont clear out global patches
     }
 
-    public static void ConvertPatches(DataFile data)
+    public static int ConvertPatches(DataFile data, int chapter)
     {
-        foreach(string filePath in Directory.EnumerateFiles(Path.Combine(GetPath(DataFile.chapter), codeFolder)))
+        int count = 0;
+
+        foreach(string filePath in Directory.EnumerateFiles(Path.Combine(GetPath(chapter), codeFolder)))
         {
             if (!Path.GetFileName(filePath).EndsWith(".gml.patch"))
             {
+                Console.WriteLine($"Skipping {Path.GetFileName(filePath)}");
                 continue; // exit if not a patch file
             }
 
             // get code from Datafile
             string fileName = Path.GetFileNameWithoutExtension(filePath);
-            UndertaleCode code = data.Data.Code.ByName(fileName);
+            string codeName = Path.GetFileNameWithoutExtension(fileName); // theres 2 extensions.
+            UndertaleCode code = data.Data.Code.ByName(codeName);
 
             if (code is null)
             {
+                Console.WriteLine($"No code for {codeName}");
                 continue; // exit if code doesnt exist
             }
 
             // save new code file
-            string newPath = Path.Combine(Path.GetFullPath(filePath), $"{fileName}.gml");
+            string newPath = Path.Combine(Path.GetDirectoryName(filePath)!, fileName);
             List<string> codeLines = data.DecompileCode(code);
             File.WriteAllLines(newPath, codeLines);
 
             // delete old patch file
             File.Delete(filePath);
+            count++;
         }
+
+        return count;
     }
 }

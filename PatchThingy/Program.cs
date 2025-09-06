@@ -50,7 +50,7 @@ bool reselectChapter = false;
 string[] confirmChoices = ["Confirm", "Cancel"];
 string[] dataOptions = [
     "Revert to Vanilla",
-    "Update Vanilla from Active",
+    "Update Vanilla Data",
     "Restore from Backup",
     "Create new Backup",
     "Convert Patch to Source"
@@ -344,6 +344,7 @@ try
     {
         string sourceData = "";
         string destData = "";
+        string message = "";
 
         // get the start + end points depending on
         // which mode is selected
@@ -352,21 +353,25 @@ try
             case ScriptMode.Revert:
                 sourceData = vanillaPath;
                 destData = activePath;
+                message = $"Successfully loaded Chapter {DataFile.chapter} from {Path.GetFileName(sourceData)}!";
                 break;
 
             case ScriptMode.Update:
                 sourceData = activePath;
                 destData = vanillaPath;
+                message = $"Successfully updated {Path.GetFileName(destData)} for Chapter {DataFile.chapter}!";
                 break;
                 
             case ScriptMode.LoadBackup:
                 sourceData = backupPath;
                 destData = activePath;
+                message = $"Successfully loaded Chapter {DataFile.chapter} from {Path.GetFileName(sourceData)}!";
                 break;
                 
             case ScriptMode.NewBackup:
                 sourceData = activePath;
                 destData = backupPath;
+                message = $"Successfully updated {Path.GetFileName(destData)} for Chapter {DataFile.chapter}!";
                 break;
         }
 
@@ -391,7 +396,7 @@ try
         // success popup
         menu.AddSeparator();
         menu.AddText("SUCCESS", Alignment.Center, ConsoleColor.Yellow);
-        menu.AddText($"Successfully reverted Chapter {DataFile.chapter} to vanilla!", Alignment.Center);
+        menu.AddText(message, Alignment.Center);
         menu.AddSeparator(false);
         menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy"]);
         menu.Draw();
@@ -401,10 +406,14 @@ try
     if (chosenMode == ScriptMode.ConvertPatches)
     {
         DataFile modded;
+        int chapterCount = 0;
+        int globalCount = 0;
 
         try
         {
             modded = new DataFile(activePath);
+            chapterCount = DataHandler.ConvertPatches(modded, DataFile.chapter);
+            globalCount = DataHandler.ConvertPatches(modded, 0);
         }
         catch (FileNotFoundException)
         {
@@ -419,7 +428,47 @@ try
             return; // for compiler
         }
 
-        DataHandler.ConvertPatches(modded);
+        string message;
+        string chapterMessage = $"{chapterCount} Chapter {DataFile.chapter} patches";
+        string globalMessage = $"{globalCount} Global patches";
+
+        // set output message based on how many
+        // patches of each type were converted
+        if (chapterCount == 0 && globalCount == 0)
+        {
+            // print error if nothing happened
+            // not an error but idk what else to call it
+            menu.AddSeparator();
+            menu.AddText("! ERROR !", Alignment.Center, ConsoleColor.Red);
+            menu.AddText("No patches detected. (Move desired patches to Source/Code)", Alignment.Center);
+            menu.AddSeparator(false);
+            menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy"]);
+            menu.Draw();
+            menu.PromptChoicer(5);
+            ExitMenu();
+            return; // for compiler
+        }
+        else if (chapterCount > 0 && globalCount == 0)
+        {
+            message = $"Converted {chapterMessage}!";
+        }
+        else if (chapterCount == 0 && globalCount > 0)
+        {
+            message = $"Converted {globalMessage}!";
+        }
+        else
+        {
+            message = $"Converted {chapterMessage} and {globalMessage}!";
+        }
+
+        // success popup
+        menu.AddSeparator();
+        menu.AddText("SUCCESS", Alignment.Center, ConsoleColor.Yellow);
+        menu.AddText(message, Alignment.Center);
+        menu.AddSeparator(false);
+        menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy"]);
+        menu.Draw();
+        menu.PromptChoicer(5);
     }
 }
 catch (Exception error) // show crashes in main terminal output
