@@ -6,7 +6,7 @@ using Underanalyzer.Decompiler;
 
 class DataFile
 {
-    public const string chapterFolder = "chapter2_windows"; // hardcode to only look at ch2 for now
+    public static int chapter = 0; // hardcode to only look at ch2 for now
     public UndertaleData Data;
 
         GlobalDecompileContext globalDecompileContext;
@@ -31,11 +31,30 @@ class DataFile
             .Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.None)
             .ToList();
     }
+
     public void SaveChanges(string filePath)
     {
         using (Stream file = File.Open(filePath, FileMode.Create))
         {
             UndertaleIO.Write(file, Data);
         }
+    }
+    
+    public static string GetPath()
+    {
+        string path = Path.Combine(Config.current.GamePath, $"./chapter{DataFile.chapter}_windows");
+
+        if (!Path.Exists(path))
+        {
+            // just crash, idk what else to do
+            // if it somehow tries finding Chapter 58
+            //
+            // itll prob crash anyway later
+            throw new Exception("Attempted to load nonexistent chapter.");
+        }
+
+        // TODO: support other versions of Deltarune.
+        // ex. MacOS, Chapters 1&2, SURVEY_PROGRAM
+        return path;
     }
 }

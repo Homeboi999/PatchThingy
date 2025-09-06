@@ -30,7 +30,6 @@ if (Config.current is null)
 // create variables used to select
 // a chapter and mode.
 ScriptMode? chosenMode = null;
-int chosenChapter = -1;
 
 // setup for the initial menu
 ConsoleMenu menu = new ConsoleMenu(64, 8);
@@ -41,19 +40,6 @@ Console.CursorVisible = false;
 // check for resizing
 if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
     PosixSignalRegistration.Create(PosixSignal.SIGWINCH, (context) => { menu.Draw(); });
-
-// Get the filepath for all 3 versions of data.win
-// Each copy serves a different purpose, making the
-// process of updating much easier.
-
-// Active Data: the data.win that Deltarune loads, and that Steam would replace.
-string activePath = Path.Combine(Config.current.GamePath, DataFile.chapterFolder, "data.win");
-
-// Vanilla Data: the version of data.win that the patches were based on
-string vanillaPath = Path.Combine(Config.current.GamePath, DataFile.chapterFolder, "data-vanilla.win");
-
-// Backup Data: a second copy of the patched data.win, in case of an update.
-string backupPath = Path.Combine(Config.current.GamePath, DataFile.chapterFolder, "data-backup.win");
 
 // variables that get used during the loop
 string[] chapters = ["Chapter 1", "Chapter 2", "Chapter 3", "Chapter 4"];
@@ -75,31 +61,31 @@ try
     menu.AddChoicer(ChoicerType.Grid, chapters);
 
     // so i can loop back to chap.select menu
-    while (chosenMode is null && chosenChapter < 0)
+    while (chosenMode is null && DataFile.chapter < 1)
     {
-        chosenChapter = -1;
+        DataFile.chapter = 0;
         backToStart = false;
 
         // reset text
         menu.SetText(1, "Select a Deltarune chapter to patch.");
 
-        while (chosenChapter < 0)
+        while (DataFile.chapter < 1)
         {
             menu.Draw();
 
             switch (menu.PromptChoicer(3))
             {
                 case 0:
-                    chosenChapter = 1;
+                    DataFile.chapter = 1;
                     break;
                 case 1:
-                    chosenChapter = 2;
+                    DataFile.chapter = 2;
                     break;
                 case 2:
-                    chosenChapter = 3;
+                    DataFile.chapter = 3;
                     break;
                 case 3:
-                    chosenChapter = 4;
+                    DataFile.chapter = 4;
                     break;
 
                 default:
@@ -119,7 +105,7 @@ try
         }
 
         // mode list
-        menu.SetText(1, $"Please select an action for Deltarune Chapter {chosenChapter}.");
+        menu.SetText(1, $"Please select an action for Deltarune Chapter {DataFile.chapter}.");
         menu.AddSeparator();
         menu.AddChoicer(ChoicerType.List, scriptModes);
 
@@ -180,12 +166,25 @@ try
 
                 default:
                     menu.Remove(4, 5);
-                    chosenChapter = -1;
+                    DataFile.chapter = 0;
                     backToStart = true;
                     break;
             }
         }
     }
+
+    // Get the filepath for all 3 versions of data.win
+    // Each copy serves a different purpose, making the
+    // process of updating much easier.
+
+    // Active Data: the data.win that Deltarune loads, and that Steam would replace.
+    string activePath = Path.Combine(Config.current.GamePath, DataFile.GetPath(), "data.win");
+
+    // Vanilla Data: the version of data.win that the patches were based on
+    string vanillaPath = Path.Combine(Config.current.GamePath, DataFile.GetPath(), "data-vanilla.win");
+
+    // Backup Data: a second copy of the patched data.win, in case of an update.
+    string backupPath = Path.Combine(Config.current.GamePath, DataFile.GetPath(), "data-backup.win");
 
     // clear the menu and re-add the header
     menu.RemoveAll();
