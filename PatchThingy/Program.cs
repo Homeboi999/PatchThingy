@@ -44,10 +44,17 @@ if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 // variables that get used during the loop
 string[] chapters = ["Chapter 1", "Chapter 2", "Chapter 3", "Chapter 4"];
 string[] scriptModes = ["Generate new patches", "Apply existing patches", "Manage data files"];
-bool backToStart = false;
+bool reselectChapter = false;
 
 // confirm options
 string[] confirmChoices = ["Confirm", "Cancel"];
+string[] dataOptions = [
+    "Revert to Vanilla",
+    "Update Vanilla from Active",
+    "Restore from Backup",
+    "Create new Backup",
+    "Convert Patch to Source"
+    ];
 
 // exit menu when crashing
 try
@@ -64,7 +71,7 @@ try
     while (chosenMode is null && DataFile.chapter < 1)
     {
         DataFile.chapter = 0;
-        backToStart = false;
+        reselectChapter = false;
 
         // reset text
         menu.SetText(1, "Select a Deltarune chapter to patch.");
@@ -109,7 +116,7 @@ try
         menu.AddSeparator();
         menu.AddChoicer(ChoicerType.List, scriptModes);
 
-        while (chosenMode is null && !backToStart)
+        while (chosenMode is null && !reselectChapter)
         {
             menu.Draw();
 
@@ -152,22 +159,95 @@ try
 
                 case 2:
                     menu.AddSeparator();
-                    menu.AddText("Currently this just reverts to vanilla. Continue?", Alignment.Center);
-                    menu.AddChoicer(ChoicerType.Grid, confirmChoices);
+                    menu.AddChoicer(ChoicerType.Grid, dataOptions);
                     menu.Draw();
 
-                    if (menu.PromptChoicer(8) == 0)
+                    switch (menu.PromptChoicer(7))
                     {
-                        chosenMode = ScriptMode.Revert;
-                    }
+                        case 0:
+                            menu.AddSeparator();
+                            menu.AddText("Copy Vanilla Data to Active Data, reverting to", Alignment.Center);
+                            menu.AddText("the version of the game used to generate patches.", Alignment.Center);
+                            menu.AddChoicer(ChoicerType.Grid, confirmChoices);
+                            menu.Draw();
 
-                    menu.Remove(6, 8);
+                            if (menu.PromptChoicer(11) == 0)
+                            {
+                                chosenMode = ScriptMode.Revert;
+                            }
+
+                            menu.Remove(8, 11);
+                            break;
+
+                        case 1:
+                            menu.AddSeparator();
+                            menu.AddText("Copy Active Data to update Vanilla Data.", Alignment.Center);
+                            menu.AddText("Only use this after verifying files in Steam!", Alignment.Center, ConsoleColor.Yellow);
+                            menu.AddChoicer(ChoicerType.Grid, confirmChoices);
+                            menu.Draw();
+
+                            if (menu.PromptChoicer(11) == 0)
+                            {
+                                chosenMode = ScriptMode.Update;
+                            }
+
+                            menu.Remove(8, 11);
+                            break;
+
+                        case 2:
+                            menu.AddSeparator();
+                            menu.AddText("Copy Backup Data to Active Data, restoring", Alignment.Center);
+                            menu.AddText("to previous version in case something broke.", Alignment.Center);
+                            menu.AddChoicer(ChoicerType.Grid, confirmChoices);
+                            menu.Draw();
+
+                            if (menu.PromptChoicer(11) == 0)
+                            {
+                                chosenMode = ScriptMode.LoadBackup;
+                            }
+
+                            menu.Remove(8, 11);
+                            break;
+
+                        case 3:
+                            menu.AddSeparator();
+                            menu.AddText("Copy Active Data to Backup Data, creating", Alignment.Center);
+                            menu.AddText("a backup without generating new patches.", Alignment.Center);
+                            menu.AddChoicer(ChoicerType.Grid, confirmChoices);
+                            menu.Draw();
+
+                            if (menu.PromptChoicer(11) == 0)
+                            {
+                                chosenMode = ScriptMode.NewBackup;
+                            }
+
+                            menu.Remove(8, 11);
+                            break;
+
+                        case 4:
+                            menu.AddSeparator();
+                            menu.AddText("Converts .patch files placed the Source/Code folder", Alignment.Center);
+                            menu.AddText("into the full GML code. (Directly from data.win)", Alignment.Center);
+                            menu.AddChoicer(ChoicerType.Grid, confirmChoices);
+                            menu.Draw();
+
+                            if (menu.PromptChoicer(11) == 0)
+                            {
+                                chosenMode = ScriptMode.ConvertPatches;
+                            }
+
+                            menu.Remove(8, 11);
+                            break;
+                        default:
+                            menu.Remove(6, 7);
+                            break;
+                    }
                     break;
 
                 default:
                     menu.Remove(4, 5);
                     DataFile.chapter = 0;
-                    backToStart = true;
+                    reselectChapter = true;
                     break;
             }
         }
@@ -192,10 +272,33 @@ try
 
     if (chosenMode == ScriptMode.Generate)
     {
-        // load data files
-        DataFile vanilla = new(vanillaPath);
-        DataFile modded = new(activePath);
+        DataFile vanilla;
+        DataFile modded;
 
+        try
+        {
+            // load data files
+            vanilla = new(vanillaPath);
+            modded = new(activePath);
+        }
+        catch (FileNotFoundException)
+        {
+            menu.AddSeparator();
+            menu.AddText("! ERROR !", Alignment.Center, ConsoleColor.Red);
+            menu.AddText("Unable to locate required data files.", Alignment.Center);
+            menu.AddText("(Does data-vanilla.win exist?)", Alignment.Center);
+            menu.AddSeparator(false);
+            menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy"]);
+            menu.Draw();
+            menu.PromptChoicer(6);
+            ExitMenu();
+            return; // for compiler
+        }
+
+        // create backup of previous version
+        File.Copy(activePath, backupPath, true);
+
+        // generate patches
         DataHandler.GeneratePatches(menu, vanilla, modded);
     }
 
@@ -208,12 +311,13 @@ try
             // If Active Data ALSO doesn't exist, then panic.
             if (!File.Exists(activePath))
             {
+                menu.AddSeparator();
                 menu.AddText("! ERROR !", Alignment.Center, ConsoleColor.Red);
                 menu.AddText("Could not find game data.", Alignment.Center);
                 menu.AddSeparator(false);
                 menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy"]);
                 menu.Draw();
-                menu.PromptChoicer(4);
+                menu.PromptChoicer(5);
                 ExitMenu();
                 return; // for compiler
             }
@@ -228,39 +332,109 @@ try
         // Apply patches to Vanilla Data, then save changes to Active Data.
         DataFile data = new(vanillaPath);
         DataHandler.ApplyPatches(menu, data);
-
-        // Create Backup Data by copying the new Active Data
-        // File.Copy(activePath, backupPath);
     }
 
-    if (chosenMode == ScriptMode.Revert)
+    // Manage Data options
+    //
+    // these are mostly convenience things
+    // like switching between different
+    // versions of data.win
+
+    if (chosenMode == ScriptMode.Revert || chosenMode == ScriptMode.Update || chosenMode == ScriptMode.LoadBackup || chosenMode == ScriptMode.NewBackup)
     {
-        // Copy Vanilla Data to Active Data, reverting to
-        // the version of the game used to generate patches.
-        File.Delete(activePath);
-        File.Copy(vanillaPath, activePath);
+        string sourceData = "";
+        string destData = "";
+
+        // get the start + end points depending on
+        // which mode is selected
+        switch (chosenMode)
+        {
+            case ScriptMode.Revert:
+                sourceData = vanillaPath;
+                destData = activePath;
+                break;
+
+            case ScriptMode.Update:
+                sourceData = activePath;
+                destData = vanillaPath;
+                break;
+                
+            case ScriptMode.LoadBackup:
+                sourceData = backupPath;
+                destData = activePath;
+                break;
+                
+            case ScriptMode.NewBackup:
+                sourceData = activePath;
+                destData = backupPath;
+                break;
+        }
+
+        // try to copy, otherwise make an error for the menu
+        try
+        {
+            File.Copy(sourceData, destData, true);
+        }
+        catch (FileNotFoundException)
+        {
+            menu.AddSeparator();
+            menu.AddText("! ERROR !", Alignment.Center, ConsoleColor.Red);
+            menu.AddText($"Could not find {Path.GetFileName(sourceData)} for Chapter {DataFile.chapter}.", Alignment.Center);
+            menu.AddSeparator(false);
+            menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy"]);
+            menu.Draw();
+            menu.PromptChoicer(5);
+            ExitMenu();
+            return; // for compiler
+        }
 
         // success popup
         menu.AddSeparator();
         menu.AddText("SUCCESS", Alignment.Center, ConsoleColor.Yellow);
-        menu.AddText("Successfully reverted to vanilla!", Alignment.Center);
+        menu.AddText($"Successfully reverted Chapter {DataFile.chapter} to vanilla!", Alignment.Center);
         menu.AddSeparator(false);
         menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy"]);
         menu.Draw();
         menu.PromptChoicer(5);
     }
+
+    if (chosenMode == ScriptMode.ConvertPatches)
+    {
+        DataFile modded;
+
+        try
+        {
+            modded = new DataFile(activePath);
+        }
+        catch (FileNotFoundException)
+        {
+            menu.AddSeparator();
+            menu.AddText("! ERROR !", Alignment.Center, ConsoleColor.Red);
+            menu.AddText($"Could not find {Path.GetFileName(activePath)} for Chapter {DataFile.chapter}.", Alignment.Center);
+            menu.AddSeparator(false);
+            menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy"]);
+            menu.Draw();
+            menu.PromptChoicer(5);
+            ExitMenu();
+            return; // for compiler
+        }
+
+        DataHandler.ConvertPatches(modded);
+    }
 }
 catch (Exception error) // show crashes in main terminal output
 {
     Console.Write("\x1b[?1049l"); // main screen
-    Console.ForegroundColor = ConsoleColor.DarkGray;
-    Console.WriteLine($"   PatchThingy v{versionNum}");
     Console.ForegroundColor = ConsoleColor.Red;
+
+    Console.WriteLine($"   PatchThingy v{versionNum}");
+    
     foreach (string line in error.ToString().Split("\n"))
     {
         Console.WriteLine(line);
         Console.ForegroundColor = ConsoleColor.DarkGray;
     }
+
     Console.ResetColor();
     Console.CursorVisible = true;
     Environment.Exit(2);
@@ -283,5 +457,8 @@ enum ScriptMode
     Generate,
     Apply,
     Revert,
-    DecorTest
+    Update,
+    LoadBackup,
+    NewBackup,
+    ConvertPatches,
 }

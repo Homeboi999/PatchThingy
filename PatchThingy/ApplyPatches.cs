@@ -9,7 +9,7 @@ using RectpackSharp;
 
 // One class to manage all changes to the data.win
 //
-// This file contains the function that applies the
+// This file contains the functions that apply the
 // patches in the output folder to the Active Data.
 partial class DataHandler
 {
@@ -94,11 +94,6 @@ partial class DataHandler
         menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy"]);
         menu.Draw();
         menu.PromptChoicer(14);
-    }
-
-    static bool FolderExists(int chapter)
-    {
-        return Path.Exists(GetPath(chapter)) && Directory.GetFileSystemEntries(GetPath(chapter)).Length > 0;
     }
 
     // moved all this code out to a separate function
