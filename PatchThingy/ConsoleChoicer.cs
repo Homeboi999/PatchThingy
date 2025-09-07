@@ -16,6 +16,7 @@ public partial class ConsoleMenu
         public int curSelection = 0;
         public bool Chosen = false;
         public bool Focused = false;
+        public bool Visible = false;
 
         public ChoicerWidget (ChoicerType type, string[] choices)
         {
@@ -25,6 +26,11 @@ public partial class ConsoleMenu
 
         public void Draw(ConsoleMenu box, int line)
         {
+            if (!Visible)
+            {
+                return;
+            }
+
             AlignColumns(box);
             int startLine = box.Pos.y + line;
 
@@ -202,6 +208,11 @@ public partial class ConsoleMenu
 
         public int LineCount()
         {
+            if (!Visible)
+            {
+                return 0;
+            }
+
             switch(type)
             {
                 case ChoicerType.List:
@@ -217,9 +228,10 @@ public partial class ConsoleMenu
     }
 
     // Add a choicer to the menu
-    public void AddChoicer(ChoicerType type, string[] choices)
+    public int AddChoicer(ChoicerType type, string[] choices)
     {
         MenuWidgets.Add(new ChoicerWidget(type, choices));
+        return MenuWidgets.Count - 1;
     }
     public void InsertChoicer(int index, ChoicerType type, string[] choices)
     {
@@ -231,7 +243,7 @@ public partial class ConsoleMenu
     }
 
     // activate the choicer at the given index
-    public int PromptChoicer(int index)
+    public int PromptChoicer(int index, bool showPrevious = false)
     {
         // check if the widget is a choicer
         if (MenuWidgets[index] is not ChoicerWidget)
@@ -239,11 +251,21 @@ public partial class ConsoleMenu
             return -1;
         }
 
+        // hide all other choicers if told 
+        foreach (ChoicerWidget widget in MenuWidgets.OfType<ChoicerWidget>())
+        {
+            if (!showPrevious)
+            {
+                widget.Visible = false;
+            }
+        }
+
         // have to make a sep variable for some reason
         var choicer = (ChoicerWidget)MenuWidgets[index];
         choicer.Chosen = false;
         choicer.Focused = true;
-        choicer.Draw(this, WidgetLine(index));
+        choicer.Visible = true;
+        Draw();
 
         // values from last loop
         int prevSelection = choicer.curSelection;
@@ -270,12 +292,42 @@ public partial class ConsoleMenu
             choicer.Chosen = false;
         }
 
-        // unfocus
+        // unfocus and hide
         choicer.Focused = false;
-        choicer.Draw(this, WidgetLine(index));
+        Draw();
 
         // return output to larger switch/case
         return output;
+    }
+
+    public bool ConfirmChoicer(string[] message)
+    {
+        // remember the starting index
+        int start = MenuWidgets.Count;
+        bool result;
+
+        // add separated section with choicer
+        AddSeparator();
+        AddSeparator(false);
+        foreach (string line in message)
+        {
+            AddText(line, Alignment.Center);
+        }
+
+        if (message.Length > 1)
+        {
+            AddSeparator(false);
+        }
+        
+        int choicer = AddChoicer(ChoicerType.Grid, ["Confirm", "Cancel"]);
+        AddSeparator(false);
+
+        // remove widgets after choice
+        result = PromptChoicer(choicer, true) == 0;
+        Remove(start, choicer + 1);
+
+        // get result of choicer
+        return result;
     }
 }
 

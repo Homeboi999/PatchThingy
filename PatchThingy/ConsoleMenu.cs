@@ -44,9 +44,8 @@ public partial class ConsoleMenu
     // menu content setup
     interface IWidget
     {
-        //TODO: this is dumb
-        public int LineCount();
         public void Draw(ConsoleMenu menu, int line);
+        public int LineCount();
     }
 
     List<IWidget> MenuWidgets = [];

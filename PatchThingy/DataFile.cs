@@ -6,11 +6,38 @@ using Underanalyzer.Decompiler;
 
 class DataFile
 {
+    // find the relevant versions of data.win
+
+    // Active Data: the data.win that Deltarune loads, and that Steam would replace
+    // Vanilla Data: the version of data.win that the patches were based on
+    // Backup Data: a second copy of the patched data.win, in case of an update
+    public static string active
+    {
+        get
+        {
+            return Path.Combine(Config.current.GamePath, GetPath(), "data.win");
+        }
+    }
+    public static string vanilla
+    {
+        get
+        {
+            return Path.Combine(Config.current.GamePath, GetPath(), "data-vanilla.win");
+        }
+    }
+    public static string backup
+    {
+        get
+        {
+            return Path.Combine(Config.current.GamePath, GetPath(), "data-backup.win");
+        }
+    }
+
     public static int chapter = 0; // hardcode to only look at ch2 for now
     public UndertaleData Data;
 
-        GlobalDecompileContext globalDecompileContext;
-        IDecompileSettings decompilerSettings;
+    GlobalDecompileContext globalDecompileContext;
+    IDecompileSettings decompilerSettings;
 
     public DataFile(string filePath)
     {
