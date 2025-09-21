@@ -26,10 +26,10 @@ partial class DataHandler
     }
 
     // Pre-generate path strings for ease-of-access
-    const string codeFolder = "./Source/Code";
-    const string scriptFolder = "./Source/Scripts";
-    const string spriteFolder = "./Source/Sprites";
-    const string patchFolder = "./Patches/Code";
+    const string codeFolder = "./Code";
+    const string scriptFolder = "./Scripts";
+    const string spriteFolder = "./Sprites";
+    const string patchFolder = "./Patches";
 
     public enum FileType
     {
@@ -106,10 +106,11 @@ partial class DataHandler
             }
 
             path = Path.Combine(GetPath(queueFile.Chapter), typeFolder);
-            
-            if (!Directory.Exists(path))
+
+            // Don't replace source code.
+            if (queueFile.Type == FileType.Code && File.Exists(path))
             {
-                Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+                continue;
             }
 
             File.WriteAllText(path, queueFile.Text);
@@ -129,7 +130,7 @@ partial class DataHandler
         // if folder doesnt exist, dont need to delete
         if (!Directory.Exists(fullPath))
         {
-            return;
+            Directory.CreateDirectory(fullPath);
         }
 
         // Empty folder of all files of a given type

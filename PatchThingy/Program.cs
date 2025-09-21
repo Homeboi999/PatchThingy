@@ -9,6 +9,7 @@ using System.Text.Json;
 using System.Reflection;
 using ImageMagick.Drawing;
 using System.Runtime.InteropServices;
+using System.Diagnostics;
 
 Console.CancelKeyPress += (sender, eventArgs) => ExitMenu();
 
@@ -43,6 +44,12 @@ ScriptMode? chosenMode = null;
 string[] chapters = ["Chapter 1", "Chapter 2", "Chapter 3", "Chapter 4"];
 string[] scriptModes = ["Generate new patches", "Apply existing patches", "Manage data files"];
 
+// debugger crashes on readkey, so just bypass it as much as i can
+#if DEBUG
+chosenMode = ScriptMode.Generate;
+DataFile.chapter = 2;
+#endif
+
 // confirm options
 string[] dataOptions = [
     "Revert to Vanilla",
@@ -56,7 +63,11 @@ string[] dataOptions = [
 try
 {
     // title bar
+    #if DEBUG
+    menu.AddText($"╾─╴╴╴  PatchThingy v{versionNum}_DEBUG  ╶╶╶─╼", Alignment.Center);
+    #else
     menu.AddText($"╾─╴╴╴  PatchThingy v{versionNum}  ╶╶╶─╼", Alignment.Center);
+    #endif
     menu.AddSeparator(false);
     menu.AddText("", Alignment.Center);
     menu.AddSeparator(false); // spacing
@@ -448,6 +459,10 @@ try
 }
 catch (Exception error) // show crashes in main terminal output
 {
+    #if DEBUG
+    Debugger.Break();
+    #endif
+
     Console.Write("\x1b[?1049l"); // main screen
     Console.ForegroundColor = ConsoleColor.Red;
 

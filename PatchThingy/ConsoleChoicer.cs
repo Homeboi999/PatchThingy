@@ -87,9 +87,14 @@ public partial class ConsoleMenu
         // the choicer, setting curSelection accordingly.
         public int GetUserInput()
         {
+            bool SkipInput = false;
+            // just exit if debug
+            #if DEBUG
+            SkipInput = true;
+            #endif
             // while loop to retrigger ReadKey
             // if an invalid key is pressed
-            while (true)
+            while (!SkipInput)
             {
                 // ONLY 1 READKEY AT A TIME!!!
                 // the program pauses to wait for each input separately
@@ -179,6 +184,12 @@ public partial class ConsoleMenu
                     default:
                         break;
                 }
+            }
+
+            // enter loop afterwards
+            Console.WriteLine("ReadKey skipped");
+            while (true)
+            {
             }
         }
 
