@@ -6,6 +6,7 @@ using Underanalyzer.Decompiler;
 using RectpackSharp;
 using ImageMagick;
 using UndertaleModLib.Util;
+using UndertaleModLib.Compiler;
 
 public record ScriptDefinition (string Name, string Code)
 {
@@ -277,26 +278,25 @@ public record GameObjectDefinition
 (
     string Name,
     CollisionShapeFlags CollisionShape,
-    List<List<EventDefinition>> Events
+    List<EventDefinition> Events
 )
 {
     public static GameObjectDefinition Load(UndertaleGameObject gameObject)
     {
         string name = gameObject.Name.Content;
         CollisionShapeFlags collisionShape = gameObject.CollisionShape;
-        List<List<EventDefinition>> events = [];
+        List<EventDefinition> events = [];
 
-        // convert events
-        foreach (UndertalePointerList<UndertaleGameObject.Event> objectEventList in gameObject.Events)
+        // first layer of lists is for event types.
+        // (explains the empty entries in the json)
+        for (int i = 0; i <= 14; i++)
         {
-            List<EventDefinition> newList = [];
+            // i think smthn said the next list only had 
 
-            foreach (UndertaleGameObject.Event objectEvent in objectEventList)
+            foreach (UndertaleGameObject.Event eventAction in gameObject.Events[i])
             {
-                newList.Add(EventDefinition.Load(objectEvent));
+                events.Add(EventDefinition.Load(eventAction, i));
             }
-
-            events.Add(newList);
         }
 
         return new GameObjectDefinition(name, collisionShape, events);
@@ -309,41 +309,42 @@ public record GameObjectDefinition
         gameObject.CollisionShape = this.CollisionShape;
 
         // convert events
-        foreach (List<EventDefinition> eventDefList in this.Events)
+        foreach (EventDefinition eventDef in this.Events)
         {
-            UndertalePointerList<UndertaleGameObject.Event> newList = [];
-
-            foreach (EventDefinition eventDef in eventDefList)
-            {
-                newList.Add(eventDef.Save(data));
-            }
-
-            gameObject.Events.Add(newList);
+            eventDef.Save(data, gameObject);
         }
 
         return gameObject;
     }
 }
 
-public record EventDefinition (string ActionCode, uint Subtype)
+public record EventDefinition (string Code, EventType Type, uint Subtype)
 {
-    public static EventDefinition Load(UndertaleGameObject.Event objectEvent)
+    public static EventDefinition Load(UndertaleGameObject.Event objectEvent, int typeIndex)
     {
-        return new EventDefinition(objectEvent.Actions[0].CodeId.Name.Content, objectEvent.EventSubtype);
+        return new EventDefinition(objectEvent.Actions[0].CodeId.Name.Content, (EventType)typeIndex, objectEvent.EventSubtype);
     }
 
-    public UndertaleGameObject.Event Save(UndertaleData data)
+    public void Save(UndertaleData data, UndertaleGameObject gameObject)
     {
-        var newAction = new UndertaleGameObject.EventAction();
-        newAction.CodeId = data.Code.ByName(this.ActionCode);
+        // create the EventAction
+        var eventActions = new UndertalePointerList<UndertaleGameObject.EventAction>();
+        eventActions.Add(new UndertaleGameObject.EventAction());
 
-        var actionList = new UndertalePointerList<UndertaleGameObject.EventAction>();
-        actionList.Add(newAction);
+        // ensure code entry exists before proceeding
+        UndertaleCode codeEntry = data.Code.ByName(this.Code);
 
-        var newEvent = new UndertaleGameObject.Event();
-        newEvent.Actions = actionList;
-        newEvent.EventSubtype = this.Subtype;
+        if (codeEntry is null)
+        {
+            // gameObjects are added before code files, so
+            // we need to make an empty file to link to.
+            eventActions[0].CodeId = UndertaleCode.CreateEmptyEntry(data, this.Code);
 
-        return newEvent;
+            // the QueueReplace used for source code will
+            // still work regardless i think
+        }
+
+        // properly link the code and the events
+        CodeImportGroup.LinkEvent(gameObject, codeEntry, this.Type, this.Subtype);
     }
 }
