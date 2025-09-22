@@ -126,6 +126,56 @@ public partial class ConsoleMenu
         }
     }
 
+    // TODO: implement this. making it work again first
+    class LogWidget : IWidget
+    {
+        public int size;
+        public int index = 0;
+        public List<string> content = [];
+        public Alignment align;
+
+        public LogWidget (int size, Alignment align = Alignment.Left)
+        {
+            this.size = size;
+            this.align = align;
+        }
+
+        public void Draw(ConsoleMenu menu, int line)
+        {
+            int x = 0;
+            int y = menu.Pos.y + line;
+
+            // assemble array of strings
+            // from content starting at index
+            //
+            // draw each string with alignment code here
+            //
+            // if indexing OoB, blank string
+            switch (align)
+            {
+                case Alignment.Left:
+                    x = menu.AlignPosition(align);
+                    break;
+
+                case Alignment.Center:
+                    x = menu.AlignPosition(align) - (content[0].Length / 2);
+                    break;
+
+                case Alignment.Right:
+                    x = menu.AlignPosition(align) - content[0].Length;
+                    break;
+            }
+
+            MoveCursor(x, y);
+            Console.Write(content);
+        }
+        
+        public int LineCount()
+        {
+            return 1;
+        }
+    }
+
     // Add a text widget to the menu
     public void AddText (string content, Alignment align = Alignment.Left, ConsoleColor? color = null)
     {

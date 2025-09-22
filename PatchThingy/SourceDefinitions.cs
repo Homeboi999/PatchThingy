@@ -272,3 +272,33 @@ public record TextureAtlas
         return new MagickImage(MagickColors.Transparent, bounds.Width, bounds.Height);
     }
 }
+
+public record GameObjectDefinition
+{
+    public string Name = "";
+    CollisionShapeFlags CollisionShape;
+
+    // no way this works, right??
+    UndertalePointerList<UndertalePointerList<UndertaleGameObject.Event>> Events = [];
+
+    public static GameObjectDefinition Load(UndertaleGameObject gameObject)
+    {
+        var objectDef = new GameObjectDefinition();
+
+        objectDef.Name = gameObject.Name.Content;
+        objectDef.CollisionShape = gameObject.CollisionShape;
+
+        objectDef.Events = gameObject.Events;
+        return objectDef;
+    }
+
+    public UndertaleGameObject Save(UndertaleData data)
+    {
+        var gameObject = new UndertaleGameObject();
+        gameObject.Name = data.Strings.MakeString(this.Name);
+        gameObject.CollisionShape = this.CollisionShape;
+        gameObject.Events = this.Events;
+
+        return gameObject;
+    }
+}

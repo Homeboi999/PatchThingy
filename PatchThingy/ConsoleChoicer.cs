@@ -87,110 +87,109 @@ public partial class ConsoleMenu
         // the choicer, setting curSelection accordingly.
         public int GetUserInput()
         {
-            bool SkipInput = false;
-            // just exit if debug
-            #if DEBUG
-            SkipInput = true;
-            #endif
-            // while loop to retrigger ReadKey
-            // if an invalid key is pressed
-            while (!SkipInput)
+            try
             {
-                // ONLY 1 READKEY AT A TIME!!!
-                // the program pauses to wait for each input separately
-                switch (Console.ReadKey(true).Key)
+                // while loop to retrigger ReadKey
+                // if an invalid key is pressed
+                while (true)
                 {
-                    // UP/DOWN: only wrap on List
-                    // do nothing on InLine
-                    case ConsoleKey.UpArrow:
-                        if (type == ChoicerType.List)
-                        {
-                            if (curSelection - 1 < 0)
+                    // ONLY 1 READKEY AT A TIME!!!
+                    // the program pauses to wait for each input separately
+                    switch (Console.ReadKey(true).Key)
+                    {
+                        // UP/DOWN: only wrap on List
+                        // do nothing on InLine
+                        case ConsoleKey.UpArrow:
+                            if (type == ChoicerType.List)
                             {
-                                curSelection = choices.Length - 1;
+                                if (curSelection - 1 < 0)
+                                {
+                                    curSelection = choices.Length - 1;
+                                }
+                                else
+                                {
+                                    curSelection--;
+                                }
                             }
-                            else
+                            else if (type == ChoicerType.Grid)
                             {
-                                curSelection--;
+                                if (curSelection - 2 >= 0)
+                                {
+                                    curSelection -= 2;
+                                }
                             }
-                        }
-                        else if (type == ChoicerType.Grid)
-                        {
-                            if (curSelection - 2 >= 0)
-                            {
-                                curSelection -= 2;
-                            }
-                        }
-                        return -1;
+                            return -1;
 
-                    case ConsoleKey.DownArrow:
-                        if (type == ChoicerType.List)
-                        {
-                            if (curSelection + 1 >= choices.Length)
+                        case ConsoleKey.DownArrow:
+                            if (type == ChoicerType.List)
                             {
-                                curSelection = 0;
+                                if (curSelection + 1 >= choices.Length)
+                                {
+                                    curSelection = 0;
+                                }
+                                else
+                                {
+                                    curSelection++;
+                                }
                             }
-                            else
+                            else if (type == ChoicerType.Grid)
                             {
-                                curSelection++;
+                                if (curSelection + 2 < choices.Length)
+                                {
+                                    curSelection += 2;
+                                }
                             }
-                        }
-                        else if (type == ChoicerType.Grid)
-                        {
-                            if (curSelection + 2 < choices.Length)
+                            return -1;
+
+                        // LEFT/RIGHT: dont move right from end of list
+                        // do nothing on List
+                        case ConsoleKey.LeftArrow:
+                            if (type != ChoicerType.List)
                             {
-                                curSelection += 2;
+                                if (curSelection % 2 == 1)
+                                {
+                                    curSelection--;
+                                }
                             }
-                        }
-                        return -1;
+                            return -1;
 
-                    // LEFT/RIGHT: dont move right from end of list
-                    // do nothing on List
-                    case ConsoleKey.LeftArrow:
-                        if (type != ChoicerType.List)
-                        {
-                            if (curSelection % 2 == 1)
+                        case ConsoleKey.RightArrow:
+                            if (type != ChoicerType.List)
                             {
-                                curSelection--;
+                                if (curSelection % 2 == 0 && curSelection + 1 < choices.Length)
+                                {
+                                    curSelection++;
+                                }
                             }
-                        }
-                        return -1;
+                            return -1;
 
-                    case ConsoleKey.RightArrow:
-                        if (type != ChoicerType.List)
-                        {
-                            if (curSelection % 2 == 0 && curSelection + 1 < choices.Length)
-                            {
-                                curSelection++;
-                            }
-                        }
-                        return -1;
+                        // CONFIRM: set chosen to true
+                        // set output to current selection
+                        case ConsoleKey.Enter: // alt scheme
+                        case ConsoleKey.Z: // deltarune controls
+                            Chosen = true;
+                            return curSelection;
 
-                    // CONFIRM: set chosen to true
-                    // set output to current selection
-                    case ConsoleKey.Enter: // alt scheme
-                    case ConsoleKey.Z: // deltarune controls
-                        Chosen = true;
-                        return curSelection;
+                        // CANCEL: set chosen to true
+                        // set output to -1
+                        case ConsoleKey.Escape:
+                        case ConsoleKey.X:
+                            Chosen = true;
+                            return -1;
 
-                    // CANCEL: set chosen to true
-                    // set output to -1
-                    case ConsoleKey.Escape:
-                    case ConsoleKey.X:
-                        Chosen = true;
-                        return -1;
-
-                    // other keys are ignored
-                    default:
-                        break;
+                        // other keys are ignored
+                        default:
+                            break;
+                    }
                 }
             }
-
-            // enter loop afterwards
-            Console.WriteLine("ReadKey skipped");
-            while (true)
+            catch (InvalidOperationException)
             {
+                // in case of debugger, cancel
+                Chosen = true;
+                return -1;
             }
+
         }
 
         void AlignColumns(ConsoleMenu box)

@@ -30,6 +30,7 @@ partial class DataHandler
     const string scriptFolder = "./Scripts";
     const string spriteFolder = "./Sprites";
     const string patchFolder = "./Patches";
+    const string objectFolder = "./GameObjects";
 
     public enum FileType
     {
@@ -37,6 +38,7 @@ partial class DataHandler
         Script,
         Sprite,
         Patch,
+        GameObject,
     }
 
     public record TempFile
@@ -65,10 +67,11 @@ partial class DataHandler
     static void SaveModFiles()
     {
         // Reset output folder structure.
-        ResetFolder(codeFolder, ".gml");
+        ResetFolder(codeFolder, ".gml", true);
         ResetFolder(scriptFolder, ".json");
         ResetFolder(spriteFolder, ".json");
         ResetFolder(patchFolder, ".gml.patch");
+        ResetFolder(objectFolder, ".json");
 
         // Write file to the correct folder
         // based on the file type.
@@ -93,6 +96,10 @@ partial class DataHandler
 
                 case FileType.Patch:
                     typeFolder = Path.Combine(patchFolder, $"{queueFile.Name}.gml.patch");
+                    break;
+
+                case FileType.GameObject:
+                    typeFolder = Path.Combine(objectFolder, $"{queueFile.Name}.json");
                     break;
 
                 // get the compiler to shut up
@@ -123,7 +130,7 @@ partial class DataHandler
         return Path.Exists(GetPath(chapter)) && Directory.GetFileSystemEntries(GetPath(chapter)).Length > 0;
     }
 
-    static void ResetFolder(string folderPath, string toDelete)
+    static void ResetFolder(string folderPath, string toDelete, bool keepFiles = false)
     {
         string fullPath = Path.Combine(GetPath(DataFile.chapter), folderPath);
 
@@ -131,6 +138,12 @@ partial class DataHandler
         if (!Directory.Exists(fullPath))
         {
             Directory.CreateDirectory(fullPath);
+        }
+
+        // exit early if told to
+        if (keepFiles)
+        {
+            return;
         }
 
         // Empty folder of all files of a given type
@@ -141,7 +154,6 @@ partial class DataHandler
                 File.Delete(file);
             }
         }
-        // dont clear out global patches
     }
 
     public static int ConvertPatches(DataFile data, int chapter)

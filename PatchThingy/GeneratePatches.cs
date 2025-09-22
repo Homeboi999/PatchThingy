@@ -41,22 +41,7 @@ partial class DataHandler
             // get name from vanilla data.win to check if it's a new file or not
             UndertaleCode vanillaCode = vanilla.Data.Code.ByName(modCode.Name.Content);
 
-            // look for a matching source code file in previous output
-            // if found, save the file to Source/Code instead.
-            bool sourceExists = false;
-            {
-                if (File.Exists(Path.Combine(GetPath(DataFile.chapter), codeFolder, $"{modCode.Name.Content}.gml")))
-                {
-                    sourceExists = true;
-                }
-                
-                if (File.Exists(Path.Combine(GetPath(0), codeFolder, $"{modCode.Name.Content}.gml")))
-                {
-                    sourceExists = true;
-                }
-            }
-
-            if (vanillaCode is not null && vanillaCode.ParentEntry is null && !sourceExists)
+            if (vanillaCode is not null && vanillaCode.ParentEntry is null)
             {
                 PatchFile modChanges = new();
                 modChanges.basePath = $"a/Code/{vanillaCode.Name.Content}.gml";
@@ -88,6 +73,25 @@ partial class DataHandler
                 // scroll log output in menu
                 menu.Remove(2);
                 menu.InsertText(9, $"Created source code for {modCode.Name.Content}.gml");
+                menu.Draw();
+            }
+        }
+
+        // game object definitions
+        foreach (UndertaleGameObject modObject in modded.Data.GameObjects)
+        {
+            UndertaleGameObject vanillaObject = vanilla.Data.GameObjects.ByName(modObject.Name.Content);
+            GameObjectDefinition objectDef;
+
+            // ofc, only save new objects
+            if (vanillaObject is null)
+            {
+                objectDef = GameObjectDefinition.Load(modObject);
+                string jsonText = JsonSerializer.Serialize(objectDef, defOptions);
+
+                QueueFile(objectDef.Name, jsonText, FileType.GameObject);
+                menu.Remove(2);
+                menu.InsertText(9, $"Created game object definition for {objectDef.Name}");
                 menu.Draw();
             }
         }
