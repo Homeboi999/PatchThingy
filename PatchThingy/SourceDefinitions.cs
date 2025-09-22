@@ -274,22 +274,32 @@ public record TextureAtlas
 }
 
 public record GameObjectDefinition
+(
+    string Name,
+    CollisionShapeFlags CollisionShape,
+    List<List<EventDefinition>> Events
+)
 {
-    public string Name = "";
-    CollisionShapeFlags CollisionShape;
-
-    // no way this works, right??
-    UndertalePointerList<UndertalePointerList<UndertaleGameObject.Event>> Events = [];
-
     public static GameObjectDefinition Load(UndertaleGameObject gameObject)
     {
-        var objectDef = new GameObjectDefinition();
+        string name = gameObject.Name.Content;
+        CollisionShapeFlags collisionShape = gameObject.CollisionShape;
+        List<List<EventDefinition>> events = [];
 
-        objectDef.Name = gameObject.Name.Content;
-        objectDef.CollisionShape = gameObject.CollisionShape;
+        // convert events
+        foreach (UndertalePointerList<UndertaleGameObject.Event> objectEventList in gameObject.Events)
+        {
+            List<EventDefinition> newList = [];
 
-        objectDef.Events = gameObject.Events;
-        return objectDef;
+            foreach (UndertaleGameObject.Event objectEvent in objectEventList)
+            {
+                newList.Add(EventDefinition.Load(objectEvent));
+            }
+
+            events.Add(newList);
+        }
+
+        return new GameObjectDefinition(name, collisionShape, events);
     }
 
     public UndertaleGameObject Save(UndertaleData data)
@@ -297,8 +307,43 @@ public record GameObjectDefinition
         var gameObject = new UndertaleGameObject();
         gameObject.Name = data.Strings.MakeString(this.Name);
         gameObject.CollisionShape = this.CollisionShape;
-        gameObject.Events = this.Events;
+
+        // convert events
+        foreach (List<EventDefinition> eventDefList in this.Events)
+        {
+            UndertalePointerList<UndertaleGameObject.Event> newList = [];
+
+            foreach (EventDefinition eventDef in eventDefList)
+            {
+                newList.Add(eventDef.Save(data));
+            }
+
+            gameObject.Events.Add(newList);
+        }
 
         return gameObject;
+    }
+}
+
+public record EventDefinition (string ActionCode, uint Subtype)
+{
+    public static EventDefinition Load(UndertaleGameObject.Event objectEvent)
+    {
+        return new EventDefinition(objectEvent.Actions[0].CodeId.Name.Content, objectEvent.EventSubtype);
+    }
+
+    public UndertaleGameObject.Event Save(UndertaleData data)
+    {
+        var newAction = new UndertaleGameObject.EventAction();
+        newAction.CodeId = data.Code.ByName(this.ActionCode);
+
+        var actionList = new UndertalePointerList<UndertaleGameObject.EventAction>();
+        actionList.Add(newAction);
+
+        var newEvent = new UndertaleGameObject.Event();
+        newEvent.Actions = actionList;
+        newEvent.EventSubtype = this.Subtype;
+
+        return newEvent;
     }
 }
