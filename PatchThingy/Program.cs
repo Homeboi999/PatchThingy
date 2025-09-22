@@ -46,8 +46,11 @@ string[] scriptModes = ["Generate new patches", "Apply existing patches", "Manag
 
 // debugger crashes on readkey, so just bypass it as much as i can
 #if DEBUG
-chosenMode = ScriptMode.Generate;
-DataFile.chapter = 2;
+if (Debugger.IsAttached)
+{
+    chosenMode = ScriptMode.Apply;
+    DataFile.chapter = 2;
+}
 #endif
 
 // confirm options

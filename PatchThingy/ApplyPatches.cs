@@ -183,6 +183,39 @@ partial class DataHandler
             }
         }
 
+        // Game Object Definitions
+        // (must come before code definitions so we dont make them from code files)
+        curPath = Path.Combine(GetPath(chapter), objectFolder);
+        if (Path.Exists(curPath))
+        {
+            foreach (string filePath in Directory.EnumerateFiles(curPath))
+            {
+                // load the script definition from JSON
+                GameObjectDefinition objectDef = JsonSerializer.Deserialize<GameObjectDefinition>(File.ReadAllText(filePath))!;
+
+                // if the definition couldn't be loaded for whatever reason
+                if (objectDef is null)
+                {
+                    // build error message
+                    menu.ReplaceText(11, "! ERROR !", Alignment.Center, ConsoleColor.Red);
+                    menu.AddText($"Failed to load game object definition for {Path.GetFileNameWithoutExtension(filePath)}", Alignment.Center);
+                    menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy"]);
+                    menu.Draw();
+                    menu.PromptChoicer(13);
+
+                    return; // stop trying to import
+                }
+
+                // add script definition to data
+                vandatailla.Data.GameObjects.Add(objectDef.Save(vandatailla.Data));
+
+                // scroll log output in menu
+                menu.Remove(2);
+                menu.InsertText(9, $"Defined script {objectDef.Name}");
+                menu.Draw();
+            }
+        }
+
         // Newly added code files
         curPath = Path.Combine(GetPath(chapter), codeFolder);
         if (Path.Exists(curPath))
@@ -191,9 +224,48 @@ partial class DataHandler
             {
                 // read code from file
                 var codeFile = File.ReadAllText(filePath);
+                string codeName = Path.GetFileNameWithoutExtension(filePath);
 
                 // add file to data
-                importGroup.QueueReplace(Path.GetFileNameWithoutExtension(filePath), codeFile);
+                try
+                {
+                    importGroup.QueueReplace(codeName, codeFile);
+                }
+                catch (Exception error) when (error.Message == $"Collision event cannot be automatically resolved; must attach to object manually ({Path.GetFileNameWithoutExtension(filePath)})")
+                {
+                    // TODO: this is dumb
+
+                    // Name Finding Code from ImportGroup
+                    //
+                    // Parse object event. First, find positions of last two underscores in name.
+                    int lastUnderscore = codeName.LastIndexOf('_');
+                    int secondLastUnderscore = codeName.LastIndexOf('_', lastUnderscore - 1);
+                    // no check for if it failed to parse; it wouldve already thrown that atp
+
+                    // Extract object name, event type, and event subtype
+                    ReadOnlySpan<char> objectName = codeName.AsSpan(new Range("gml_Object_".Length, secondLastUnderscore));
+
+                    // Check for pre-imported game object
+                    UndertaleGameObject gameObject = vandatailla.Data.GameObjects.ByName(objectName);
+
+                    if (gameObject is null)
+                    {
+                        throw;
+                    }
+
+                    // blank code entry already created
+                    UndertaleCode codeEntry = vandatailla.Data.Code.ByName(codeName);
+                    uint targetObject = uint.Parse(codeName.AsSpan(new Range(lastUnderscore + 1, codeName.Length)));
+
+                    // Link code to object's event (and create one if necessary)
+                    CodeImportGroup.LinkEvent(gameObject, codeEntry, EventType.Collision, targetObject);
+
+                    // testing
+                    menu.Remove(2);
+                    menu.InsertText(9, $"Tried to add code {Path.GetFileName(filePath)}", Alignment.Left, ConsoleColor.Yellow);
+                    menu.Draw();
+                    continue;
+                }
 
                 // scroll log output in menu
                 menu.Remove(2);
