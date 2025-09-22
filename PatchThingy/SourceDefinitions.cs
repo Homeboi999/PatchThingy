@@ -311,7 +311,7 @@ public record GameObjectDefinition
         // convert events
         foreach (EventDefinition eventDef in this.Events)
         {
-            eventDef.Save(data, gameObject);
+            eventDef.Save(gameObject, data);
         }
 
         return gameObject;
@@ -325,12 +325,8 @@ public record EventDefinition (string Code, EventType Type, uint Subtype)
         return new EventDefinition(objectEvent.Actions[0].CodeId.Name.Content, (EventType)typeIndex, objectEvent.EventSubtype);
     }
 
-    public void Save(UndertaleData data, UndertaleGameObject gameObject)
+    public void Save(UndertaleGameObject gameObject, UndertaleData data)
     {
-        // create the EventAction
-        var eventActions = new UndertalePointerList<UndertaleGameObject.EventAction>();
-        eventActions.Add(new UndertaleGameObject.EventAction());
-
         // ensure code entry exists before proceeding
         UndertaleCode codeEntry = data.Code.ByName(this.Code);
 
@@ -338,7 +334,7 @@ public record EventDefinition (string Code, EventType Type, uint Subtype)
         {
             // gameObjects are added before code files, so
             // we need to make an empty file to link to.
-            eventActions[0].CodeId = UndertaleCode.CreateEmptyEntry(data, this.Code);
+            codeEntry = UndertaleCode.CreateEmptyEntry(data, this.Code);
 
             // the QueueReplace used for source code will
             // still work regardless i think

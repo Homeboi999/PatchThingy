@@ -66,11 +66,7 @@ string[] dataOptions = [
 try
 {
     // title bar
-    #if DEBUG
-    menu.AddText($"╾─╴╴╴  PatchThingy v{versionNum}_DEBUG  ╶╶╶─╼", Alignment.Center);
-    #else
     menu.AddText($"╾─╴╴╴  PatchThingy v{versionNum}  ╶╶╶─╼", Alignment.Center);
-    #endif
     menu.AddSeparator(false);
     menu.AddText("", Alignment.Center);
     menu.AddSeparator(false); // spacing
@@ -463,7 +459,11 @@ try
 catch (Exception error) // show crashes in main terminal output
 {
     #if DEBUG
-    Debugger.Break();
+    if (Debugger.IsAttached)
+    {
+        // just throw so i can use debugger on it
+        throw;
+    }
     #endif
 
     Console.Write("\x1b[?1049l"); // main screen

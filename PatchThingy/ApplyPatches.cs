@@ -153,10 +153,10 @@ partial class DataHandler
                 if (patcher.Results.Any(result => !result.success))
                 {
                     // build error message
-                    menu.ReplaceText(11, "! ERROR !", Alignment.Center, ConsoleColor.Red);
+                    menu.ReplaceText(11, "! WARNING !", Alignment.Center, ConsoleColor.Yellow);
                     menu.AddText($"Unable to cleanly apply patches for  {patchDest}", Alignment.Center);
                     menu.AddSeparator(false);
-                    menu.AddChoicer(ChoicerType.Grid, ["Exit PatchThingy", "Ignore and continue"]);
+                    menu.AddChoicer(ChoicerType.Grid, ["Exit PatchThingy", "Continue anyway"]);
                     menu.Draw();
 
                     // give option to continue anyway
@@ -233,38 +233,15 @@ partial class DataHandler
                 }
                 catch (Exception error) when (error.Message == $"Collision event cannot be automatically resolved; must attach to object manually ({Path.GetFileNameWithoutExtension(filePath)})")
                 {
-                    // TODO: this is dumb
-
-                    // Name Finding Code from ImportGroup
-                    //
-                    // Parse object event. First, find positions of last two underscores in name.
-                    int lastUnderscore = codeName.LastIndexOf('_');
-                    int secondLastUnderscore = codeName.LastIndexOf('_', lastUnderscore - 1);
-                    // no check for if it failed to parse; it wouldve already thrown that atp
-
-                    // Extract object name, event type, and event subtype
-                    ReadOnlySpan<char> objectName = codeName.AsSpan(new Range("gml_Object_".Length, secondLastUnderscore));
-
-                    // Check for pre-imported game object
-                    UndertaleGameObject gameObject = vandatailla.Data.GameObjects.ByName(objectName);
-
-                    if (gameObject is null)
-                    {
-                        throw;
-                    }
-
-                    // blank code entry already created
-                    UndertaleCode codeEntry = vandatailla.Data.Code.ByName(codeName);
-                    uint targetObject = uint.Parse(codeName.AsSpan(new Range(lastUnderscore + 1, codeName.Length)));
-
-                    // Link code to object's event (and create one if necessary)
-                    CodeImportGroup.LinkEvent(gameObject, codeEntry, EventType.Collision, targetObject);
-
-                    // testing
-                    menu.Remove(2);
-                    menu.InsertText(9, $"Tried to add code {Path.GetFileName(filePath)}", Alignment.Left, ConsoleColor.Yellow);
+                    // build error message
+                    menu.ReplaceText(11, "! WARNING !", Alignment.Center, ConsoleColor.Yellow);
+                    menu.AddText($"Failed to import code file {Path.GetFileNameWithoutExtension(filePath)}", Alignment.Center);
+                    menu.AddText($"Collision event cannot be automatically resolved; must attach to object manually.", Alignment.Center);
+                    menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy", "Continue anyway"]);
                     menu.Draw();
-                    continue;
+                    menu.PromptChoicer(14);
+
+                    return; // stop trying to import
                 }
 
                 // scroll log output in menu
