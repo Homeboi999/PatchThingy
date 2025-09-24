@@ -314,6 +314,12 @@ public partial class ConsoleMenu
 
         // draw box to screen
         Console.Write(boxString);
+
+#if DEBUG
+        Console.WriteLine();
+        Console.Write("DEBUG");
+#endif
+
         Console.Write("\x1b[?2026l"); // start display
 
         // Potential future version

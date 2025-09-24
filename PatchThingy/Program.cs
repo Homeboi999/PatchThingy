@@ -4,6 +4,7 @@
 using UndertaleModLib;
 using UndertaleModLib.Models;
 using UndertaleModLib.Decompiler;
+using UndertaleModLib.Compiler;
 using CodeChicken.DiffPatch;
 using System.Text.Json;
 using System.Reflection;
@@ -59,7 +60,8 @@ string[] dataOptions = [
     "Update Vanilla Data",
     "Restore from Backup",
     "Create new Backup",
-    "Convert Patch to Source"
+    "Convert Patch to Source",
+    "Update Source Code"
     ];
 
 // exit menu when crashing
@@ -85,25 +87,29 @@ try
     string[] generateMessage = ["This will overwrite local patches. Continue?"];
     string[] applyMessage = ["This will discard all unsaved modifications. Continue?"];
 
-    string[] revertMessage = [];
-    revertMessage.Append("Copy Vanilla Data to Active Data, reverting to");
-    revertMessage.Append("the version of the game used to generate patches.");
+    string[] revertMessage = ["", ""];
+    revertMessage[0] = "Copy Vanilla Data to Active Data, reverting to";
+    revertMessage[1] = "the version of the game used to generate patches.";
 
-    string[] updateMessage = [];
-    updateMessage.Append("Copy Active Data to update Vanilla Data.");
-    updateMessage.Append("Only use this after verifying files in Steam!");
+    string[] updateMessage = ["", ""];
+    updateMessage[0] = "Copy Active Data to update Vanilla Data.";
+    updateMessage[1] = "Only use this after verifying files in Steam!";
 
-    string[] loadBackupMessage = [];
-    loadBackupMessage.Append("Copy Backup Data to Active Data, restoring");
-    loadBackupMessage.Append("to previous version in case something broke.");
+    string[] loadBackupMessage = ["", ""];
+    loadBackupMessage[0] = "Copy Backup Data to Active Data, restoring";
+    loadBackupMessage[1] = "to previous version in case something broke.";
 
-    string[] newBackupMessage = [];
-    newBackupMessage.Append("Copy Active Data to Backup Data, creating");
-    newBackupMessage.Append("a backup without generating new patches.");
+    string[] newBackupMessage = ["", ""];
+    newBackupMessage[0] = "Copy Active Data to Backup Data, creating";
+    newBackupMessage[1] = "a backup without generating new patches.";
 
-    string[] convertPatchesMessage = [];
-    convertPatchesMessage.Append("Converts .patch files placed the Source/Code folder");
-    convertPatchesMessage.Append("into the full GML code. (Directly from data.win)");
+    string[] convertPatchesMessage = ["", ""];
+    convertPatchesMessage[0] = "Converts .patch files placed the Source/Code folder";
+    convertPatchesMessage[1] = "into the full GML code. (Directly from data.win)";
+
+    string[] importSourceMessage = ["", ""];
+    importSourceMessage[0] = "Updates the .gml code present in the Active Data";
+    importSourceMessage[1] = "without interfering with other parts of the game.";
 
     int curChoicer = chapterChoicer;
     menu.Draw();
@@ -240,6 +246,15 @@ try
                     if (menu.ConfirmChoicer(convertPatchesMessage))
                     {
                         chosenMode = ScriptMode.ConvertPatches;
+                    }
+
+                    break;
+
+                case 5:
+
+                    if (menu.ConfirmChoicer(importSourceMessage))
+                    {
+                        chosenMode = ScriptMode.ImportSource;
                     }
 
                     break;
@@ -455,6 +470,88 @@ try
         menu.Draw();
         menu.PromptChoicer(5);
     }
+
+    if (chosenMode == ScriptMode.ImportSource)
+    {
+        // make sure data.win exists
+        if (!File.Exists(DataFile.active))
+        {
+            menu.AddSeparator();
+            menu.AddText("! ERROR !", Alignment.Center, ConsoleColor.Red);
+            menu.AddText("Could not find game data.", Alignment.Center);
+            menu.AddSeparator(false);
+            menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy"]);
+            menu.Draw();
+            menu.PromptChoicer(5);
+            ExitMenu();
+            return; // for compiler
+        }
+
+        // set up the menu for console output
+        menu.ResizeBox(80);
+        menu.AddSeparator();        // 1
+        menu.AddSeparator(false);   // 2
+        menu.AddSeparator(false);
+        menu.AddSeparator(false);
+        menu.AddSeparator(false);
+        menu.AddSeparator(false);
+        menu.AddSeparator(false);
+        menu.AddSeparator(false);
+        menu.AddSeparator(false);   // 9
+        menu.AddSeparator();        // 10
+        menu.AddText($"Deltarune Chapter {DataFile.chapter} - Importing Code...", Alignment.Center);
+        menu.Draw();
+
+        // load Active Data.
+        DataFile data = new(DataFile.active);
+        CodeImportGroup importGroup = new(data.Data);
+
+        string codePath = Path.Combine(DataHandler.GetPath(DataFile.chapter), DataHandler.codeFolder);
+        if (Path.Exists(codePath))
+        {
+            foreach (string filePath in Directory.EnumerateFiles(codePath))
+            {
+                // read code from file
+                var codeFile = File.ReadAllText(filePath);
+                string codeName = Path.GetFileNameWithoutExtension(filePath);
+
+                // add file to data
+                try
+                {
+                    importGroup.QueueReplace(codeName, codeFile);
+                }
+                catch (Exception error) when (error.Message == $"Collision event cannot be automatically resolved; must attach to object manually ({Path.GetFileNameWithoutExtension(filePath)})")
+                {
+                    // build error message
+                    menu.ReplaceText(11, "! WARNING !", Alignment.Center, ConsoleColor.Yellow);
+                    menu.AddText($"Failed to import code file {Path.GetFileNameWithoutExtension(filePath)}", Alignment.Center);
+                    menu.AddText($"Collision event cannot be automatically resolved; must attach to object manually.", Alignment.Center);
+                    menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy", "Continue anyway"]);
+                    menu.Draw();
+                    menu.PromptChoicer(14);
+
+                    return; // stop trying to import
+                }
+
+                // scroll log output in menu
+                menu.Remove(2);
+                menu.InsertText(9, $"Added code {Path.GetFileName(filePath)}");
+                menu.Draw();
+            }
+        }
+
+        // save file
+        importGroup.Import();
+        data.SaveChanges(Path.Combine(Config.current.GamePath, DataFile.GetPath(), "data.win"));
+
+        // success popup
+        menu.ReplaceText(11, "SUCCESS", Alignment.Center, ConsoleColor.Yellow);
+        menu.AddText("Successfully updated code!", Alignment.Center);
+        menu.AddSeparator(false);
+        menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy"]);
+        menu.Draw();
+        menu.PromptChoicer(14);
+    }
 }
 catch (Exception error) // show crashes in main terminal output
 {
@@ -503,4 +600,5 @@ enum ScriptMode
     LoadBackup,
     NewBackup,
     ConvertPatches,
+    ImportSource,
 }

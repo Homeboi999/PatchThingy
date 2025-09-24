@@ -26,11 +26,11 @@ partial class DataHandler
     }
 
     // Pre-generate path strings for ease-of-access
-    const string codeFolder = "./Code";
-    const string scriptFolder = "./Scripts";
-    const string spriteFolder = "./Sprites";
-    const string patchFolder = "./Patches";
-    const string objectFolder = "./GameObjects";
+    public const string codeFolder = "./Code";
+    public const string scriptFolder = "./Scripts";
+    public const string spriteFolder = "./Sprites";
+    public const string patchFolder = "./Patches";
+    public const string objectFolder = "./GameObjects";
 
     public enum FileType
     {
