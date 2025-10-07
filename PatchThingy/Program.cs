@@ -50,7 +50,7 @@ string[] scriptModes = ["Generate new patches", "Apply existing patches", "Manag
 if (Debugger.IsAttached)
 {
     chosenMode = ScriptMode.Apply;
-    DataFile.chapter = 2;
+    DataFile.chapter = 1;
 }
 #endif
 

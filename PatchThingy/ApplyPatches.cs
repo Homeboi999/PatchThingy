@@ -143,43 +143,47 @@ partial class DataHandler
 
                 // find and decompile the associated code
                 var patchDest = vandatailla.Data.Code.ByName(Path.GetFileNameWithoutExtension(patchFile.basePath));
-                var vanillaCode = vandatailla.DecompileCode(patchDest);
 
-                // apply patches to vanilla code
-                var patcher = new Patcher(patchFile.patches, vanillaCode);
-                patcher.Patch(Patcher.Mode.FUZZY);
-
-                // in any patches fail to apply here, print a warning.
-                if (patcher.Results.Any(result => !result.success))
+                if (patchDest is not null)
                 {
-                    // build error message
-                    menu.ReplaceText(11, "! WARNING !", Alignment.Center, ConsoleColor.Yellow);
-                    menu.AddText($"Unable to cleanly apply patches for  {patchDest}", Alignment.Center);
-                    menu.AddSeparator(false);
-                    menu.AddChoicer(ChoicerType.Grid, ["Exit PatchThingy", "Continue anyway"]);
+                    var vanillaCode = vandatailla.DecompileCode(patchDest);
+
+                    // apply patches to vanilla code
+                    var patcher = new Patcher(patchFile.patches, vanillaCode);
+                    patcher.Patch(Patcher.Mode.FUZZY);
+
+                    // in any patches fail to apply here, print a warning.
+                    if (patcher.Results.Any(result => !result.success))
+                    {
+                        // build error message
+                        menu.ReplaceText(11, "! WARNING !", Alignment.Center, ConsoleColor.Yellow);
+                        menu.AddText($"Unable to cleanly apply patches for  {patchDest}", Alignment.Center);
+                        menu.AddSeparator(false);
+                        menu.AddChoicer(ChoicerType.Grid, ["Exit PatchThingy", "Continue anyway"]);
+                        menu.Draw();
+
+                        // give option to continue anyway
+                        if (menu.PromptChoicer(14) == 1)
+                        {
+                            warned = true;
+                            menu.Remove(12, 14);
+                            menu.ReplaceText(11, $"{vandatailla.Data.GeneralInfo.DisplayName.Content} - Applying Patches...", Alignment.Center);
+                            continue; // keep importing
+                        }
+                        else
+                        {
+                            return; // stop trying to import
+                        }
+                    }
+
+                    // write patched code to file and show progress
+                    importGroup.QueueReplace(patchDest, string.Join("\n", patcher.ResultLines));
+
+                    // scroll log output in menu
+                    menu.Remove(2);
+                    menu.InsertText(9, $"Patched code {Path.GetFileName(patchFile.basePath)}");
                     menu.Draw();
-
-                    // give option to continue anyway
-                    if (menu.PromptChoicer(14) == 1)
-                    {
-                        warned = true;
-                        menu.Remove(12, 14);
-                        menu.ReplaceText(11, $"{vandatailla.Data.GeneralInfo.DisplayName.Content} - Applying Patches...", Alignment.Center);
-                        continue; // keep importing
-                    }
-                    else
-                    {
-                        return; // stop trying to import
-                    }
                 }
-
-                // write patched code to file and show progress
-                importGroup.QueueReplace(patchDest, string.Join("\n", patcher.ResultLines));
-
-                // scroll log output in menu
-                menu.Remove(2);
-                menu.InsertText(9, $"Patched code {Path.GetFileName(patchFile.basePath)}");
-                menu.Draw();
             }
         }
 
