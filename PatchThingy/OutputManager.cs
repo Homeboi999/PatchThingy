@@ -59,12 +59,60 @@ partial class DataHandler
 
     static List<TempFile> FileQueue = [];
 
-    public static void QueueFile(string fileName, string fileText, FileType fileType)
+    public static bool QueueFile(string fileName, string fileText, FileType fileType)
     {
-        FileQueue.Add(new TempFile(fileName, fileText, fileType));
+        TempFile queueFile = new TempFile(fileName, fileText, fileType);
+        queueFile.Chapter = DataFile.chapter;
+
+        // Write file to the correct folder
+        // based on the file type.
+        string typeFolder = "";
+
+        switch(queueFile.Type)
+        {
+            case FileType.Code:
+                typeFolder = Path.Combine(codeFolder, $"{queueFile.Name}.gml");
+                break;
+
+            case FileType.Script:
+                typeFolder = Path.Combine(scriptFolder, $"{queueFile.Name}.json");
+                break;
+
+            case FileType.Sprite:
+                typeFolder = Path.Combine(spriteFolder, $"{queueFile.Name}.json");
+                break;
+
+            case FileType.Patch:
+                typeFolder = Path.Combine(patchFolder, $"{queueFile.Name}.gml.patch");
+                break;
+
+            case FileType.GameObject:
+                typeFolder = Path.Combine(objectFolder, $"{queueFile.Name}.json");
+                break;
+
+            // get the compiler to shut up
+            default:
+                break;
+        }
+
+        // check for duplicate entries
+        if (FileQueue.Exists(file => (file.Name == queueFile.Name)))
+        {
+            return false;
+        }
+
+        // save if the chapter is global or not
+        if (File.Exists(Path.Combine(GetPath(0), typeFolder)) && fileType != FileType.Patch)
+        {
+            queueFile.Chapter = 0;
+        }
+
+        // add to queue
+        FileQueue.Add(queueFile);
+        return true;
     }
 
-    static void SaveModFiles()
+    static void SaveModFiles(bool skipGlobal)
     {
         // Reset output folder structure.
         ResetFolder(codeFolder, ".gml", true);
@@ -110,6 +158,12 @@ partial class DataHandler
             if (File.Exists(Path.Combine(GetPath(0), typeFolder)))
             {
                 queueFile.Chapter = 0;
+
+                // Skip global patches if not chosen chapter
+                if (skipGlobal)
+                {
+                    continue;
+                }
             }
 
             path = Path.Combine(GetPath(queueFile.Chapter), typeFolder);

@@ -31,7 +31,6 @@ if (Config.current is null)
 
 // setup for the initial menu
 ConsoleMenu menu = new ConsoleMenu(64, 8);
-string versionNum = typeof(Program).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "??";
 Console.Write("\x1b[?1049h");
 Console.CursorVisible = false;
 
@@ -42,7 +41,8 @@ if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 // create variables used to select
 // a chapter and mode.
 ScriptMode? chosenMode = null;
-string[] chapters = ["Chapter 1", "Chapter 2", "Chapter 3", "Chapter 4", "All Chapters"];
+string[] chapters = ["Chapter 1", "Chapter 2", "Chapter 3", "Chapter 4"];
+string[] chapterChoices = ["Chapter 1", "Chapter 2", "Chapter 3", "Chapter 4", "All Chapters"];
 string[] scriptModes = ["Generate new patches", "Apply existing patches", "File Management"];
 
 // if true, loop through each chapter for any mode
@@ -71,7 +71,7 @@ string[] dataOptions = ["Update", "Restore"];
 try
 {
     // title bar
-    menu.AddText($"╾─╴╴╴  PatchThingy v{versionNum}  ╶╶╶─╼", Alignment.Center);
+    menu.AddText($"╾─╴╴╴  PatchThingy v{ConsoleMenu.versionNum}  ╶╶╶─╼", Alignment.Center);
     menu.AddSeparator(false);
     menu.AddText("", Alignment.Center);
     menu.AddSeparator(false); // spacing
@@ -79,7 +79,7 @@ try
 
     // chapter/mode choicers
     menu.AddSeparator(false); // spacing
-    int chapterChoicer = menu.AddChoicer(ChoicerType.Grid, chapters); // 6
+    int chapterChoicer = menu.AddChoicer(ChoicerType.Grid, chapterChoices); // 6
     int modeChoicer = menu.AddChoicer(ChoicerType.List, scriptModes); // 7
     int fileChoicer = menu.AddChoicer(ChoicerType.Grid, fileOptions); // 8
     menu.AddSeparator(false);
@@ -202,6 +202,7 @@ try
                 default:
                     DataFile.chapter = 0;
                     curChoicer = chapterChoicer;
+                    allChapters = false;
                     continue;
             }
         }
@@ -270,30 +271,92 @@ try
         }
     }
 
-    // clear the menu and re-add the header
+    // clear menu
     menu.RemoveAll();
-    menu.AddText($"╾─╴╴╴  PatchThingy v{versionNum}  ╶╶╶─╼", Alignment.Center);
 
     if (chosenMode == ScriptMode.Generate)
     {
-        DataFile vanilla;
-        DataFile modded;
-
-        try
-        {
-            // load data files
-            vanilla = new(DataFile.vanilla);
-            modded = new(DataFile.active);
-        }
-        catch (FileNotFoundException)
-        {
-            menu.MessagePopup(PopupType.Error, ["Unable to locate required data files.", "(Does data-vanilla.win exist?)"]);
-            ExitMenu();
-            return; // for compiler
-        }
-
         // generate patches
-        DataHandler.GeneratePatches(menu, vanilla, modded);
+        if (allChapters)
+        {
+            // menu setup
+            menu.AddSeparator(false);
+            menu.AddText("Which chapter should Global Patches be generated from?", Alignment.Center);
+            menu.AddSeparator(false);
+            menu.AddSeparator();
+            menu.AddSeparator(false);
+            int globalPatchChoicer = menu.AddChoicer(ChoicerType.Grid, chapters);
+            menu.AddSeparator(false);
+            int globalChapter = 0;
+
+            // make sure a chapter gets selected.
+            while (globalChapter < 1)
+            {
+                // select a preferred chapter
+                int choice = menu.PromptChoicer(globalPatchChoicer) + 1;
+
+                // confirm selection, then update the globalChapter variable
+                if (choice > 0 && menu.ConfirmChoicer([$"Use Chapter {choice} to generate Global Patches?"], ["Yes", "No"]) == 0)
+                {
+                    globalChapter = choice;
+                }
+            }
+            // clear menu again
+            menu.RemoveAll();
+
+            // set up the menu for console output
+            // only do this once at the very start
+            menu.ResizeBox(80);
+            menu.AddSeparator();        // 1
+            menu.AddSeparator(false);   // 2
+            menu.AddSeparator(false);
+            menu.AddSeparator(false);
+            menu.AddSeparator(false);
+            menu.AddSeparator(false);
+            menu.AddSeparator(false);
+            menu.AddSeparator(false);
+            menu.AddSeparator(false);   // 9
+            menu.AddSeparator();        // 10
+
+            // set up last text beforehand so i can
+            // use ReplaceText instead so multi-chapters reuse it
+            menu.AddText("bepis");
+
+            // loop through each chapter to generate patches.
+            // starts at 1 for ch1. chapter length includes
+            // "All Chapters" option, so it is ignored for this.
+            for (int i = 1; i <= chapters.Count(); i++)
+            {
+                // set the current chapter to load
+                DataFile.chapter = i;
+
+                // only generate global patches if chosen
+                DataHandler.GeneratePatches(menu, (DataFile.chapter != globalChapter), (i == chapters.Count()));
+            }
+        }
+        else
+        {
+            // set up the menu for console output
+            menu.ResizeBox(80);
+            menu.AddSeparator();        // 1
+            menu.AddSeparator(false);   // 2
+            menu.AddSeparator(false);
+            menu.AddSeparator(false);
+            menu.AddSeparator(false);
+            menu.AddSeparator(false);
+            menu.AddSeparator(false);
+            menu.AddSeparator(false);
+            menu.AddSeparator(false);   // 9
+            menu.AddSeparator();        // 10
+
+            // set up last text beforehand so i can
+            // use ReplaceText instead so multi-chapters reuse it
+            menu.AddText("bepis");
+
+            // generate
+            DataHandler.GeneratePatches(menu);
+        }
+        ExitMenu();
     }
 
     if (chosenMode == ScriptMode.Apply)
@@ -550,7 +613,7 @@ catch (Exception error) // show crashes in main terminal output
     Console.Write("\x1b[?1049l"); // main screen
     Console.ForegroundColor = ConsoleColor.Red;
 
-    Console.WriteLine($"   PatchThingy v{versionNum}");
+    Console.WriteLine($"   PatchThingy v{ConsoleMenu.versionNum}");
     
     foreach (string line in error.ToString().Split("\n"))
     {

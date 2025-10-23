@@ -331,10 +331,7 @@ public partial class ConsoleMenu
             AddText(line, Alignment.Center);
         }
 
-        if (message.Length > 1)
-        {
-            AddSeparator(false);
-        }
+        AddSeparator(false);
         
         int choicer = AddChoicer(ChoicerType.Grid, choices);
         AddSeparator(false);
@@ -357,6 +354,8 @@ public partial class ConsoleMenu
 
         // add separated section with choicer
         AddSeparator();
+        AddSeparator(false);
+
         switch (type)
         {
             case PopupType.Error:

@@ -33,7 +33,7 @@ class DataFile
         }
     }
 
-    public static int chapter = 0; // hardcode to only look at ch2 for now
+    public static int chapter = 0;
     public UndertaleData Data;
 
     GlobalDecompileContext globalDecompileContext;

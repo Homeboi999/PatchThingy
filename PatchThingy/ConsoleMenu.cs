@@ -5,11 +5,13 @@ using CodeChicken.DiffPatch;
 using System.Text.Json;
 using System.Diagnostics;
 using ImageMagick;
+using System.Reflection;
 
 // Class responisble for drawing the PatchThingy menus
 public partial class ConsoleMenu
 {
     public (int x, int y) Pos;
+    public static string versionNum = typeof(Program).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "??";
 
     // box size, accounting for resizing
     public (int width, int height) Size
@@ -259,6 +261,16 @@ public partial class ConsoleMenu
     public void RemoveAll()
     {
         MenuWidgets.Clear();
+
+        string versionString = $"v{versionNum}";
+
+        // add debug indicator in a nicer spot
+#if DEBUG
+        versionString = versionString + "-DEBUG";
+#endif
+
+        // re-add title bar cuz i dont ever want it to leave.
+        AddText($"╾─╴╴╴  PatchThingy {versionString}  ╶╶╶─╼", Alignment.Center);
     }
 
     // remove one or more widgets from the menu
@@ -314,11 +326,6 @@ public partial class ConsoleMenu
 
         // draw box to screen
         Console.Write(boxString);
-
-#if DEBUG
-        Console.WriteLine();
-        Console.Write("DEBUG");
-#endif
 
         Console.Write("\x1b[?2026l"); // start display
 

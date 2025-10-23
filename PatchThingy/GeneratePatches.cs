@@ -10,25 +10,29 @@ using System.Text.Json;
 // patches and writes them to the output folder.
 partial class DataHandler
 {
-    public static void GeneratePatches(ConsoleMenu menu, DataFile vanilla, DataFile modded)
+    public static void GeneratePatches(ConsoleMenu menu, bool skipGlobal = false, bool lastChapter = true)
     {
+        DataFile vanilla;
+        DataFile modded;
+
+        try
+        {
+            // load data files
+            vanilla = new(DataFile.vanilla);
+            modded = new(DataFile.active);
+        }
+        catch (FileNotFoundException)
+        {
+            menu.MessagePopup(PopupType.Error, [$"Unable to locate required data files for Chapter {DataFile.chapter}.", "(Does data-vanilla.win exist?)"]);
+            return; // exit, of course
+        }
+
         // change output format
         JsonSerializerOptions defOptions = new JsonSerializerOptions();
         defOptions.WriteIndented = true;
 
-        // set up the menu for console output
-        menu.ResizeBox(80);
-        menu.AddSeparator();        // 1
-        menu.AddSeparator(false);   // 2
-        menu.AddSeparator(false);
-        menu.AddSeparator(false);
-        menu.AddSeparator(false);
-        menu.AddSeparator(false);
-        menu.AddSeparator(false);
-        menu.AddSeparator(false);
-        menu.AddSeparator(false);   // 9
-        menu.AddSeparator();        // 10
-        menu.AddText($"{modded.Data.GeneralInfo.DisplayName.Content} - Generating Patches...", Alignment.Center);
+        // menu is set up so 11 is the start
+        menu.ReplaceText(11, $"{modded.Data.GeneralInfo.DisplayName.Content} - Generating Patches...", Alignment.Center);
         menu.Draw();
 
         // code files
@@ -68,12 +72,14 @@ partial class DataHandler
             else if (vanillaCode is null)
             {
                 string fileText = string.Join("\n", modded.DecompileCode(modCode));
-                QueueFile(modCode.Name.Content, fileText, FileType.Code);
 
                 // scroll log output in menu
-                menu.Remove(2);
-                menu.InsertText(9, $"Created source code for {modCode.Name.Content}.gml");
-                menu.Draw();
+                if (QueueFile(modCode.Name.Content, fileText, FileType.Code))
+                {
+                    menu.Remove(2);
+                    menu.InsertText(9, $"Created source code for {modCode.Name.Content}.gml");
+                    menu.Draw();
+                }
             }
         }
 
@@ -84,15 +90,18 @@ partial class DataHandler
             GameObjectDefinition objectDef;
 
             // ofc, only save new objects
-            if (vanillaObject is null)
+            if (vanillaObject is null && !skipGlobal)
             {
                 objectDef = GameObjectDefinition.Load(modObject);
                 string jsonText = JsonSerializer.Serialize(objectDef, defOptions);
 
-                QueueFile(objectDef.Name, jsonText, FileType.GameObject);
-                menu.Remove(2);
-                menu.InsertText(9, $"Created game object definition for {objectDef.Name}");
-                menu.Draw();
+                // scroll log output in menu
+                if (QueueFile(objectDef.Name, jsonText, FileType.GameObject))
+                {
+                    menu.Remove(2);
+                    menu.InsertText(9, $"Created game object definition for {objectDef.Name}");
+                    menu.Draw();
+                }
             }
         }
 
@@ -119,16 +128,21 @@ partial class DataHandler
             UndertaleScript vanillaScript = vanilla.Data.Scripts.ByName(modScript.Name.Content);
             ScriptDefinition scriptDef;
 
-            // if the script isnt in vanilla, make a definition for it when applying
-            if (vanillaScript is null)
+            // if the script isnt in vanilla and this is where we're getting, 
+            // make a definition for it when applying
+            if (vanillaScript is null && !skipGlobal)
             {
                 scriptDef = ScriptDefinition.Load(modScript);
                 string jsonText = JsonSerializer.Serialize(scriptDef, defOptions);
 
-                QueueFile(scriptDef.Name, jsonText, FileType.Script);
-                menu.Remove(2);
-                menu.InsertText(9, $"Created script definition for {scriptDef.Name}");
-                menu.Draw();
+                
+
+                if (QueueFile(scriptDef.Name, jsonText, FileType.Script))
+                {
+                    menu.Remove(2);
+                    menu.InsertText(9, $"Created script definition for {scriptDef.Name}");
+                    menu.Draw();
+                }
             }
         }
 
@@ -138,24 +152,30 @@ partial class DataHandler
             UndertaleSprite vanillaSprite = vanilla.Data.Sprites.ByName(modSprite.Name.Content);
             SpriteDefinition spriteDef;
 
-            if (vanillaSprite is null)
+            if (vanillaSprite is null && !skipGlobal)
             {
                 // assemble sprite definition
                 spriteDef = SpriteDefinition.Load(modSprite);
                 string jsonText = JsonSerializer.Serialize(spriteDef, defOptions);
 
-                QueueFile(spriteDef.Name, jsonText, FileType.Sprite);
-                menu.Remove(2);
-                menu.InsertText(9, $"Created sprite definition for {spriteDef.Name}");
-                menu.Draw();
+                if (QueueFile(spriteDef.Name, jsonText, FileType.Sprite))
+                {
+                    menu.Remove(2);
+                    menu.InsertText(9, $"Created sprite definition for {spriteDef.Name}");
+                    menu.Draw();
+                }
             }
         }
 
         // since patches were generated successfully, 
         // it's safe to overwrite previous patches
-        SaveModFiles();
+        SaveModFiles(skipGlobal);
 
-        // success popup
-        menu.MessagePopup(PopupType.Success, ["Successfully generated patches!"]);
+        // immediately advance if its the last chapter
+        if (lastChapter)
+        {
+            // success popup
+            menu.MessagePopup(PopupType.Success, ["Successfully generated patches!"]);
+        }
     }
 }
