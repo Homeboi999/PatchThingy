@@ -42,8 +42,11 @@ if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 // create variables used to select
 // a chapter and mode.
 ScriptMode? chosenMode = null;
-string[] chapters = ["Chapter 1", "Chapter 2", "Chapter 3", "Chapter 4"];
-string[] scriptModes = ["Generate new patches", "Apply existing patches", "Manage data files"];
+string[] chapters = ["Chapter 1", "Chapter 2", "Chapter 3", "Chapter 4", "All Chapters"];
+string[] scriptModes = ["Generate new patches", "Apply existing patches", "File Management"];
+
+// if true, loop through each chapter for any mode
+bool allChapters = false;
 
 // debugger crashes on readkey, so just bypass it as much as i can
 #if DEBUG
@@ -55,14 +58,14 @@ if (Debugger.IsAttached)
 #endif
 
 // confirm options
-string[] dataOptions = [
-    "Revert to Vanilla",
-    "Update Vanilla Data",
-    "Restore from Backup",
-    "Create new Backup",
+string[] fileOptions = [
+    "Vanilla Data",
+    "Mod Backup",
     "Convert Patch to Source",
     "Update Source Code"
     ];
+
+string[] dataOptions = ["Update", "Restore"];
 
 // exit menu when crashing
 try
@@ -78,7 +81,7 @@ try
     menu.AddSeparator(false); // spacing
     int chapterChoicer = menu.AddChoicer(ChoicerType.Grid, chapters); // 6
     int modeChoicer = menu.AddChoicer(ChoicerType.List, scriptModes); // 7
-    int dataModeChoicer = menu.AddChoicer(ChoicerType.Grid, dataOptions); // 8
+    int fileChoicer = menu.AddChoicer(ChoicerType.Grid, fileOptions); // 8
     menu.AddSeparator(false);
 
     // script mode confirm messages
@@ -87,21 +90,13 @@ try
     string[] generateMessage = ["This will overwrite local patches. Continue?"];
     string[] applyMessage = ["This will discard all unsaved modifications. Continue?"];
 
-    string[] revertMessage = ["", ""];
-    revertMessage[0] = "Copy Vanilla Data to Active Data, reverting to";
-    revertMessage[1] = "the version of the game used to generate patches.";
+    string[] vanillaEditMessage = ["", ""];
+    vanillaEditMessage[0] = "Copy the Vanilla Data to/from the Active Data.";
+    vanillaEditMessage[1] = "Used to update Deltarune or unload current patches.";
 
-    string[] updateMessage = ["", ""];
-    updateMessage[0] = "Copy Active Data to update Vanilla Data.";
-    updateMessage[1] = "Only use this after verifying files in Steam!";
-
-    string[] loadBackupMessage = ["", ""];
-    loadBackupMessage[0] = "Copy Backup Data to Active Data, restoring";
-    loadBackupMessage[1] = "to previous version in case something broke.";
-
-    string[] newBackupMessage = ["", ""];
-    newBackupMessage[0] = "Copy Active Data to Backup Data, creating";
-    newBackupMessage[1] = "a backup without generating new patches.";
+    string[] backupEditMessage = ["", ""];
+    backupEditMessage[0] = "Copy the Backup Data to/from the Active Data.";
+    backupEditMessage[1] = "Used to save/load a patched version of Deltarune.";
 
     string[] convertPatchesMessage = ["", ""];
     convertPatchesMessage[0] = "Converts .patch files placed the Source/Code folder";
@@ -115,7 +110,7 @@ try
     menu.Draw();
 
     // so i can loop back to chap.select menu
-    while (chosenMode is null || DataFile.chapter < 1)
+    while (chosenMode is null || (DataFile.chapter < 1 && !allChapters))
     {
         if (curChoicer == chapterChoicer)
         {
@@ -140,9 +135,13 @@ try
                     DataFile.chapter = 4;
                     curChoicer = modeChoicer;
                     break;
+                case 4:
+                    allChapters = true;
+                    curChoicer = modeChoicer;
+                    break;
 
                 default:
-                    if (menu.ConfirmChoicer(exitMessage))
+                    if (menu.ConfirmChoicer(exitMessage) == 0)
                     {
                         ExitMenu();
                     }
@@ -154,7 +153,14 @@ try
         if (curChoicer == modeChoicer)
         {
             // mode list
-            menu.SetText(2, $"Please select an action for Deltarune Chapter {DataFile.chapter}.");
+            if (allChapters)
+            {
+                menu.SetText(2, $"Please select an action for all chapters of Deltarune.");
+            }
+            else
+            {
+                menu.SetText(2, $"Please select an action for Deltarune Chapter {DataFile.chapter}.");
+            }
 
             switch (menu.PromptChoicer(modeChoicer))
             {
@@ -162,7 +168,7 @@ try
                     // don't confirm choice if there isnt already patches
                     if (Directory.Exists(Config.current.OutputPath))
                     {
-                        if (menu.ConfirmChoicer(generateMessage))
+                        if (menu.ConfirmChoicer(generateMessage) == 0)
                         {
                             chosenMode = ScriptMode.Generate;
                         }
@@ -178,7 +184,7 @@ try
                     // (assumes this is an unmodified game)
                     if (File.Exists(DataFile.vanilla))
                     {
-                        if (menu.ConfirmChoicer(applyMessage))
+                        if (menu.ConfirmChoicer(applyMessage) == 0)
                         {
                             chosenMode = ScriptMode.Apply;
                         }
@@ -190,7 +196,7 @@ try
                     break;
 
                 case 2:
-                    curChoicer = dataModeChoicer;
+                    curChoicer = fileChoicer;
                     break;
 
                 default:
@@ -200,50 +206,48 @@ try
             }
         }
 
-        if (curChoicer == dataModeChoicer)
+        if (curChoicer == fileChoicer)
         {
             // new choicer with more options
-            switch (menu.PromptChoicer(dataModeChoicer))
+            switch (menu.PromptChoicer(fileChoicer))
             {
                 case 0:
 
-                    if (menu.ConfirmChoicer(revertMessage))
+                    switch (menu.ConfirmChoicer(vanillaEditMessage, dataOptions))
                     {
-                        chosenMode = ScriptMode.Revert;
-                    }
-
-                    break;
-
-                case 1:
-
-                    if (menu.ConfirmChoicer(updateMessage))
-                    {
-                        chosenMode = ScriptMode.Update;
+                        case 0:
+                            chosenMode = ScriptMode.UpdateVanilla;
+                            break;
+                        case 1:
+                            chosenMode = ScriptMode.LoadVanilla;
+                            break;
+                        default:
+                            curChoicer = modeChoicer;
+                            break;
                     }
 
                     break;
 
                 case 2:
 
-                    if (menu.ConfirmChoicer(loadBackupMessage))
+                    switch (menu.ConfirmChoicer(backupEditMessage, dataOptions))
                     {
-                        chosenMode = ScriptMode.LoadBackup;
-                    }
-
-                    break;
-
-                case 3:
-
-                    if (menu.ConfirmChoicer(newBackupMessage))
-                    {
-                        chosenMode = ScriptMode.NewBackup;
+                        case 0:
+                            chosenMode = ScriptMode.UpdateBackup;
+                            break;
+                        case 1:
+                            chosenMode = ScriptMode.LoadBackup;
+                            break;
+                        default:
+                            curChoicer = modeChoicer;
+                            break;
                     }
 
                     break;
 
                 case 4:
 
-                    if (menu.ConfirmChoicer(convertPatchesMessage))
+                    if (menu.ConfirmChoicer(convertPatchesMessage) == 0)
                     {
                         chosenMode = ScriptMode.ConvertPatches;
                     }
@@ -252,7 +256,7 @@ try
 
                 case 5:
 
-                    if (menu.ConfirmChoicer(importSourceMessage))
+                    if (menu.ConfirmChoicer(importSourceMessage) == 0)
                     {
                         chosenMode = ScriptMode.ImportSource;
                     }
@@ -283,20 +287,10 @@ try
         }
         catch (FileNotFoundException)
         {
-            menu.AddSeparator();
-            menu.AddText("! ERROR !", Alignment.Center, ConsoleColor.Red);
-            menu.AddText("Unable to locate required data files.", Alignment.Center);
-            menu.AddText("(Does data-vanilla.win exist?)", Alignment.Center);
-            menu.AddSeparator(false);
-            menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy"]);
-            menu.Draw();
-            menu.PromptChoicer(6);
+            menu.MessagePopup(PopupType.Error, ["Unable to locate required data files.", "(Does data-vanilla.win exist?)"]);
             ExitMenu();
             return; // for compiler
         }
-
-        // create backup of previous version
-        File.Copy(DataFile.active, DataFile.backup, true);
 
         // generate patches
         DataHandler.GeneratePatches(menu, vanilla, modded);
@@ -311,13 +305,7 @@ try
             // If Active Data ALSO doesn't exist, then panic.
             if (!File.Exists(DataFile.active))
             {
-                menu.AddSeparator();
-                menu.AddText("! ERROR !", Alignment.Center, ConsoleColor.Red);
-                menu.AddText("Could not find game data.", Alignment.Center);
-                menu.AddSeparator(false);
-                menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy"]);
-                menu.Draw();
-                menu.PromptChoicer(5);
+                menu.MessagePopup(PopupType.Error, ["Could not find game data."]);
                 ExitMenu();
                 return; // for compiler
             }
@@ -340,7 +328,7 @@ try
     // like switching between different
     // versions of data.win
 
-    if (chosenMode == ScriptMode.Revert || chosenMode == ScriptMode.Update || chosenMode == ScriptMode.LoadBackup || chosenMode == ScriptMode.NewBackup)
+    if (chosenMode == ScriptMode.LoadVanilla || chosenMode == ScriptMode.UpdateVanilla || chosenMode == ScriptMode.LoadBackup || chosenMode == ScriptMode.UpdateBackup)
     {
         string sourceData = "";
         string destData = "";
@@ -350,13 +338,13 @@ try
         // which mode is selected
         switch (chosenMode)
         {
-            case ScriptMode.Revert:
+            case ScriptMode.LoadVanilla:
                 sourceData = DataFile.vanilla;
                 destData = DataFile.active;
                 message = $"Successfully loaded Chapter {DataFile.chapter} from {Path.GetFileName(sourceData)}!";
                 break;
 
-            case ScriptMode.Update:
+            case ScriptMode.UpdateVanilla:
                 sourceData = DataFile.active;
                 destData = DataFile.vanilla;
                 message = $"Successfully updated {Path.GetFileName(destData)} for Chapter {DataFile.chapter}!";
@@ -368,7 +356,7 @@ try
                 message = $"Successfully loaded Chapter {DataFile.chapter} from {Path.GetFileName(sourceData)}!";
                 break;
                 
-            case ScriptMode.NewBackup:
+            case ScriptMode.UpdateBackup:
                 sourceData = DataFile.active;
                 destData = DataFile.backup;
                 message = $"Successfully updated {Path.GetFileName(destData)} for Chapter {DataFile.chapter}!";
@@ -382,25 +370,14 @@ try
         }
         catch (FileNotFoundException)
         {
-            menu.AddSeparator();
-            menu.AddText("! ERROR !", Alignment.Center, ConsoleColor.Red);
-            menu.AddText($"Could not find {Path.GetFileName(sourceData)} for Chapter {DataFile.chapter}.", Alignment.Center);
-            menu.AddSeparator(false);
-            menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy"]);
-            menu.Draw();
-            menu.PromptChoicer(5);
+            string error = $"Could not find {Path.GetFileName(sourceData)} for Chapter {DataFile.chapter}.";
+            menu.MessagePopup(PopupType.Error, [error]);
             ExitMenu();
             return; // for compiler
         }
 
         // success popup
-        menu.AddSeparator();
-        menu.AddText("SUCCESS", Alignment.Center, ConsoleColor.Yellow);
-        menu.AddText(message, Alignment.Center);
-        menu.AddSeparator(false);
-        menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy"]);
-        menu.Draw();
-        menu.PromptChoicer(5);
+        menu.MessagePopup(PopupType.Success, [message]);
     }
 
     if (chosenMode == ScriptMode.ConvertPatches)
@@ -417,13 +394,7 @@ try
         }
         catch (FileNotFoundException)
         {
-            menu.AddSeparator();
-            menu.AddText("! ERROR !", Alignment.Center, ConsoleColor.Red);
-            menu.AddText($"Could not find {Path.GetFileName(DataFile.active)} for Chapter {DataFile.chapter}.", Alignment.Center);
-            menu.AddSeparator(false);
-            menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy"]);
-            menu.Draw();
-            menu.PromptChoicer(5);
+            menu.MessagePopup(PopupType.Error, [$"Could not find {Path.GetFileName(DataFile.active)} for Chapter {DataFile.chapter}."]);
             ExitMenu();
             return; // for compiler
         }
@@ -438,13 +409,7 @@ try
         {
             // print error if nothing happened
             // not an error but idk what else to call it
-            menu.AddSeparator();
-            menu.AddText("! ERROR !", Alignment.Center, ConsoleColor.Red);
-            menu.AddText("No patches detected. (Move desired patches to Source/Code)", Alignment.Center);
-            menu.AddSeparator(false);
-            menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy"]);
-            menu.Draw();
-            menu.PromptChoicer(5);
+            menu.MessagePopup(PopupType.Error, ["No patches detected. (Move desired patches to Source/Code)"]);
             ExitMenu();
             return; // for compiler
         }
@@ -462,13 +427,7 @@ try
         }
 
         // success popup
-        menu.AddSeparator();
-        menu.AddText("SUCCESS", Alignment.Center, ConsoleColor.Yellow);
-        menu.AddText(message, Alignment.Center);
-        menu.AddSeparator(false);
-        menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy"]);
-        menu.Draw();
-        menu.PromptChoicer(5);
+        menu.MessagePopup(PopupType.Success, [message]);
     }
 
     if (chosenMode == ScriptMode.ImportSource)
@@ -476,13 +435,7 @@ try
         // make sure data.win exists
         if (!File.Exists(DataFile.active))
         {
-            menu.AddSeparator();
-            menu.AddText("! ERROR !", Alignment.Center, ConsoleColor.Red);
-            menu.AddText("Could not find game data.", Alignment.Center);
-            menu.AddSeparator(false);
-            menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy"]);
-            menu.Draw();
-            menu.PromptChoicer(5);
+            menu.MessagePopup(PopupType.Error, ["Could not find game data."]);
             ExitMenu();
             return; // for compiler
         }
@@ -506,6 +459,7 @@ try
         DataFile data = new(DataFile.active);
         CodeImportGroup importGroup = new(data.Data);
 
+        // chapter code
         string codePath = Path.Combine(DataHandler.GetPath(DataFile.chapter), DataHandler.codeFolder);
         if (Path.Exists(codePath))
         {
@@ -523,12 +477,47 @@ try
                 catch (Exception error) when (error.Message == $"Collision event cannot be automatically resolved; must attach to object manually ({Path.GetFileNameWithoutExtension(filePath)})")
                 {
                     // build error message
-                    menu.ReplaceText(11, "! WARNING !", Alignment.Center, ConsoleColor.Yellow);
-                    menu.AddText($"Failed to import code file {Path.GetFileNameWithoutExtension(filePath)}", Alignment.Center);
-                    menu.AddText($"Collision event cannot be automatically resolved; must attach to object manually.", Alignment.Center);
-                    menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy", "Continue anyway"]);
-                    menu.Draw();
-                    menu.PromptChoicer(14);
+                    string[] errorMessage = [
+                        $"Failed to import code file {Path.GetFileNameWithoutExtension(filePath)}",
+                        $"Collision event cannot be automatically resolved; must attach to object manually."
+                        ];
+                        
+                    // option to continue importing.
+                    if (menu.MessagePopup(PopupType.Warning, errorMessage))
+                    {
+                        ExitMenu();
+                    }
+
+                    return; // stop trying to import
+                }
+
+                // scroll log output in menu
+                menu.Remove(2);
+                menu.InsertText(9, $"Added code {Path.GetFileName(filePath)}");
+                menu.Draw();
+            }
+        }
+
+        // global code
+        codePath = Path.Combine(DataHandler.GetPath(0), DataHandler.codeFolder);
+        if (Path.Exists(codePath))
+        {
+            foreach (string filePath in Directory.EnumerateFiles(codePath))
+            {
+                // read code from file
+                var codeFile = File.ReadAllText(filePath);
+                string codeName = Path.GetFileNameWithoutExtension(filePath);
+
+                // add file to data
+                try
+                {
+                    importGroup.QueueReplace(codeName, codeFile);
+                }
+                catch (Exception error) when (error.Message == $"Collision event cannot be automatically resolved; must attach to object manually ({Path.GetFileNameWithoutExtension(filePath)})")
+                {
+                    // build error message
+                    string[] errorMessage = [$"Failed to import code file {Path.GetFileNameWithoutExtension(filePath)}", "Collision event cannot be automatically resolved; must attach to object manually."];
+                    if (menu.MessagePopup(PopupType.Warning, errorMessage))
 
                     return; // stop trying to import
                 }
@@ -545,12 +534,7 @@ try
         data.SaveChanges(Path.Combine(Config.current.GamePath, DataFile.GetPath(), "data.win"));
 
         // success popup
-        menu.ReplaceText(11, "SUCCESS", Alignment.Center, ConsoleColor.Yellow);
-        menu.AddText("Successfully updated code!", Alignment.Center);
-        menu.AddSeparator(false);
-        menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy"]);
-        menu.Draw();
-        menu.PromptChoicer(14);
+        menu.MessagePopup(PopupType.Success, ["Successfully updated code!"]);
     }
 }
 catch (Exception error) // show crashes in main terminal output
@@ -595,10 +579,10 @@ enum ScriptMode
 {
     Generate,
     Apply,
-    Revert,
-    Update,
+    LoadVanilla,
+    UpdateVanilla,
     LoadBackup,
-    NewBackup,
+    UpdateBackup,
     ConvertPatches,
     ImportSource,
 }

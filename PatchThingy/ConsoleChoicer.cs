@@ -310,11 +310,18 @@ public partial class ConsoleMenu
         return output;
     }
 
-    public bool ConfirmChoicer(string[] message)
+    // extra choicer to confirm options
+    public int ConfirmChoicer(string[] message, string[]? choices = null)
     {
+        // set choices if null
+        if (choices is null)
+        {
+            choices = ["Confirm", "Cancel"];
+        }
+
         // remember the starting index
         int start = MenuWidgets.Count;
-        bool result;
+        int result;
 
         // add separated section with choicer
         AddSeparator();
@@ -329,14 +336,57 @@ public partial class ConsoleMenu
             AddSeparator(false);
         }
         
-        int choicer = AddChoicer(ChoicerType.Grid, ["Confirm", "Cancel"]);
+        int choicer = AddChoicer(ChoicerType.Grid, choices);
         AddSeparator(false);
 
         // remove widgets after choice
-        result = PromptChoicer(choicer, true) == 0;
+        result = PromptChoicer(choicer, true);
         Remove(start, choicer + 1);
 
         // get result of choicer
+        return result;
+    }
+
+    // error message that cancels operation
+    public bool MessagePopup(PopupType type, string[] message)
+    {
+        // remember the starting index
+        int start = MenuWidgets.Count;
+        bool result;
+        string[] choices = ["Exit PatchThingy"];;
+
+        // add separated section with choicer
+        AddSeparator();
+        switch (type)
+        {
+            case PopupType.Error:
+                AddText("! ERROR !", Alignment.Center, ConsoleColor.Red);
+                break;
+
+            case PopupType.Warning:
+                AddText("! WARNING !", Alignment.Center, ConsoleColor.Yellow);
+                choices = ["Exit PatchThingy", "Continue Anyway"];
+                break;
+
+            case PopupType.Success:
+                AddText("Success!", Alignment.Center, ConsoleColor.Yellow);
+                break;
+        }
+
+        foreach (string line in message)
+        {
+            AddText(line, Alignment.Center);
+        }
+        
+        AddSeparator(false);
+
+        int choicer = AddChoicer(ChoicerType.Grid, choices);
+        AddSeparator(false);
+
+        // remove widgets after choice
+        result = PromptChoicer(choicer, true) != 1;
+        Remove(start, choicer + 1);
+
         return result;
     }
 }
@@ -345,4 +395,11 @@ public enum ChoicerType
 {
     Grid,
     List,
+}
+
+public enum PopupType
+{
+    Error,
+    Warning,
+    Success
 }

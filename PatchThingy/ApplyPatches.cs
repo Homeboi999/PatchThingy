@@ -36,22 +36,12 @@ partial class DataHandler
         // Don't try to apply patches that don't exist.
         if (!Path.Exists(Config.current.OutputPath))
         {
-            menu.ReplaceText(11, "! ERROR !", Alignment.Center, ConsoleColor.Red);
-            menu.AddText("Missing prior output in directory ", Alignment.Center);
-            menu.AddText(Config.current.OutputPath, Alignment.Center);
-            menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy"]);
-            menu.Draw();
-            menu.PromptChoicer(14);
+            menu.MessagePopup(PopupType.Error, ["Missing prior output in directory "]);
             return;
         }
         else if (!FolderExists(DataFile.chapter) && !FolderExists(0))
         {
-            menu.ReplaceText(11, "! ERROR !", Alignment.Center, ConsoleColor.Red);
-            menu.AddText($"No patches found for Chapter {DataFile.chapter}.", Alignment.Center);
-            menu.AddText("(Try creating global patches)", Alignment.Center);
-            menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy"]);
-            menu.Draw();
-            menu.PromptChoicer(14);
+            menu.MessagePopup(PopupType.Error, [$"No patches found for Chapter {DataFile.chapter}.", "(Try creating global patches)"]);
             return;
         }
 
@@ -65,19 +55,11 @@ partial class DataHandler
         if (warned)
         {
             // build error message
-            menu.ReplaceText(11, "WARNING", Alignment.Center, ConsoleColor.Yellow);
-            menu.AddText($"Some patches failed to apply cleanly, possibly making the game unstable.", Alignment.Center);
-            menu.AddSeparator(false);
-            menu.AddChoicer(ChoicerType.Grid, ["Apply patches anyway", "Do not apply patches"]);
-            menu.Draw();
+            string[] errorMessage = ["Some patches failed to apply cleanly, possibly making the game unstable."];
+            
 
-            if (menu.PromptChoicer(14) == 0)
+            if (!menu.MessagePopup(PopupType.Warning, errorMessage))
             {
-                menu.Remove(12, 14);
-            }
-            else
-            {
-                menu.Remove(12, 14);
                 menu.ReplaceText(11, "Patches were not applied.", Alignment.Center);
                 menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy"]);
                 menu.Draw();
@@ -89,12 +71,7 @@ partial class DataHandler
         vandatailla.SaveChanges(Path.Combine(Config.current.GamePath, DataFile.GetPath(), "data.win"));
 
         // success popup
-        menu.ReplaceText(11, "SUCCESS", Alignment.Center, ConsoleColor.Yellow);
-        menu.AddText("Successfully applied patches!", Alignment.Center);
-        menu.AddSeparator(false);
-        menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy"]);
-        menu.Draw();
-        menu.PromptChoicer(14);
+        menu.MessagePopup(PopupType.Success, ["Successfully applied patches!"]);
     }
 
     // moved all this code out to a separate function
@@ -120,12 +97,7 @@ partial class DataHandler
                 if (objectDef is null)
                 {
                     // build error message
-                    menu.ReplaceText(11, "! ERROR !", Alignment.Center, ConsoleColor.Red);
-                    menu.AddText($"Failed to load game object definition for {Path.GetFileNameWithoutExtension(filePath)}", Alignment.Center);
-                    menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy"]);
-                    menu.Draw();
-                    menu.PromptChoicer(13);
-
+                    menu.MessagePopup(PopupType.Error, [$"Failed to load game object definition for {Path.GetFileNameWithoutExtension(filePath)}"]);
                     return; // stop trying to import
                 }
 
@@ -157,12 +129,7 @@ partial class DataHandler
                 catch (Exception error) when (error.Message == $"Collision event cannot be automatically resolved; must attach to object manually ({Path.GetFileNameWithoutExtension(filePath)})")
                 {
                     // build error message
-                    menu.ReplaceText(11, "! WARNING !", Alignment.Center, ConsoleColor.Yellow);
-                    menu.AddText($"Failed to import code file {Path.GetFileNameWithoutExtension(filePath)}", Alignment.Center);
-                    menu.AddText($"Collision event cannot be automatically resolved; must attach to object manually.", Alignment.Center);
-                    menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy", "Continue anyway"]);
-                    menu.Draw();
-                    menu.PromptChoicer(14);
+                    menu.MessagePopup(PopupType.Error, [$"Failed to import code file {Path.GetFileNameWithoutExtension(filePath)}", $"Collision event cannot be automatically resolved; must attach to object manually."]);
 
                     return; // stop trying to import
                 }
@@ -187,12 +154,7 @@ partial class DataHandler
                 if (scriptDef is null)
                 {
                     // build error message
-                    menu.ReplaceText(11, "! ERROR !", Alignment.Center, ConsoleColor.Red);
-                    menu.AddText($"Failed to load script definition for {Path.GetFileNameWithoutExtension(filePath)}", Alignment.Center);
-                    menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy"]);
-                    menu.Draw();
-                    menu.PromptChoicer(13);
-
+                    menu.MessagePopup(PopupType.Error, [$"Failed to load script definition for {Path.GetFileNameWithoutExtension(filePath)}"]);
                     return; // stop trying to import
                 }
 
@@ -222,11 +184,7 @@ partial class DataHandler
                 catch
                 {
                     // build error message
-                    menu.ReplaceText(11, "! ERROR !", Alignment.Center, ConsoleColor.Red);
-                    menu.AddText($"Unable to load patches from {Path.GetFileNameWithoutExtension(filePath)}", Alignment.Center);
-                    menu.AddSeparator(false);
-                    menu.AddChoicer(ChoicerType.Grid, ["Exit PatchThingy", "Ignore and continue"]);
-                    menu.Draw();
+                    menu.MessagePopup(PopupType.Error, [$"Unable to load patches from {Path.GetFileNameWithoutExtension(filePath)}"]);
 
                     // give option to continue anyway
                     if (menu.PromptChoicer(14) == 1)
@@ -257,11 +215,7 @@ partial class DataHandler
                     if (patcher.Results.Any(result => !result.success))
                     {
                         // build error message
-                        menu.ReplaceText(11, "! WARNING !", Alignment.Center, ConsoleColor.Yellow);
-                        menu.AddText($"Unable to cleanly apply patches for  {patchDest}", Alignment.Center);
-                        menu.AddSeparator(false);
-                        menu.AddChoicer(ChoicerType.Grid, ["Exit PatchThingy", "Continue anyway"]);
-                        menu.Draw();
+                        menu.MessagePopup(PopupType.Error, [$"Unable to cleanly apply patches for  {patchDest}"]);
 
                         // give option to continue anyway
                         if (menu.PromptChoicer(14) == 1)
@@ -308,11 +262,7 @@ partial class DataHandler
                 if (spriteDef is null)
                 {
                     // build error message
-                    menu.ReplaceText(11, "! ERROR !", Alignment.Center, ConsoleColor.Red);
-                    menu.AddText($"Failed to load sprite definition for {Path.GetFileNameWithoutExtension(filePath)}", Alignment.Center);
-                    menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy"]);
-                    menu.Draw();
-                    menu.PromptChoicer(13);
+                    menu.MessagePopup(PopupType.Error, [$"Failed to load sprite definition for {Path.GetFileNameWithoutExtension(filePath)}"]);
 
                     return; // stop trying to import
                 }
@@ -323,11 +273,7 @@ partial class DataHandler
                 if (!File.Exists(imagePath))
                 {
                     // build error message
-                    menu.ReplaceText(11, "! ERROR !", Alignment.Center, ConsoleColor.Red);
-                    menu.AddText($"Failed to load sprite image for {spriteDef.Name}", Alignment.Center);
-                    menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy"]);
-                    menu.Draw();
-                    menu.PromptChoicer(13);
+                    menu.MessagePopup(PopupType.Error, [$"Failed to load sprite image for {spriteDef.Name}"]);
                     return; // stop trying to import
                 }
 

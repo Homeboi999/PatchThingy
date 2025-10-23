@@ -156,11 +156,6 @@ partial class DataHandler
         SaveModFiles();
 
         // success popup
-        menu.ReplaceText(11, "SUCCESS", Alignment.Center, ConsoleColor.Yellow);
-        menu.AddText("Successfully generated patches!", Alignment.Center);
-        menu.AddSeparator(false);
-        menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy"]);
-        menu.Draw();
-        menu.PromptChoicer(14);
+        menu.MessagePopup(PopupType.Success, ["Successfully generated patches!"]);
     }
 }
