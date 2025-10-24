@@ -65,7 +65,7 @@ string[] fileOptions = [
     "Update Source Code"
     ];
 
-string[] dataOptions = ["Update", "Restore"];
+string[] dataOptions = ["Restore", "Update"];
 
 // exit menu when crashing
 try
@@ -210,36 +210,36 @@ try
                     switch (menu.ConfirmChoicer(vanillaEditMessage, dataOptions))
                     {
                         case 0:
-                            chosenMode = ScriptMode.UpdateVanilla;
-                            break;
-                        case 1:
                             chosenMode = ScriptMode.LoadVanilla;
                             break;
+                        case 1:
+                            chosenMode = ScriptMode.UpdateVanilla;
+                            break;
                         default:
-                            curChoicer = modeChoicer;
+                            // cancel
+                            break;
+                    }
+
+                    break;
+
+                case 1:
+
+                    switch (menu.ConfirmChoicer(backupEditMessage, dataOptions))
+                    {
+                        case 0:
+                            chosenMode = ScriptMode.LoadBackup;
+                            break;
+                        case 1:
+                            chosenMode = ScriptMode.UpdateBackup;
+                            break;
+                        default:
+                            // cancel
                             break;
                     }
 
                     break;
 
                 case 2:
-
-                    switch (menu.ConfirmChoicer(backupEditMessage, dataOptions))
-                    {
-                        case 0:
-                            chosenMode = ScriptMode.UpdateBackup;
-                            break;
-                        case 1:
-                            chosenMode = ScriptMode.LoadBackup;
-                            break;
-                        default:
-                            curChoicer = modeChoicer;
-                            break;
-                    }
-
-                    break;
-
-                case 4:
 
                     if (menu.ConfirmChoicer(convertPatchesMessage) == 0)
                     {
@@ -248,7 +248,7 @@ try
 
                     break;
 
-                case 5:
+                case 3:
 
                     if (menu.ConfirmChoicer(importSourceMessage) == 0)
                     {
@@ -266,6 +266,7 @@ try
 
     // clear menu
     menu.RemoveAll();
+    menu.ResizeBox(80);
 
     if (chosenMode == ScriptMode.Generate)
     {
@@ -304,7 +305,6 @@ try
 
             // set up the menu for console output
             // only do this once at the very start
-            menu.ResizeBox(80);
             menu.AddSeparator();        // 1
             menu.AddSeparator(false);   // 2
             menu.AddSeparator(false);
@@ -335,7 +335,6 @@ try
         else
         {
             // set up the menu for console output
-            menu.ResizeBox(80);
             menu.AddSeparator();        // 1
             menu.AddSeparator(false);   // 2
             menu.AddSeparator(false);
@@ -354,13 +353,13 @@ try
             // generate
             DataHandler.GeneratePatches(menu);
         }
+
         ExitMenu();
     }
 
     if (chosenMode == ScriptMode.Apply)
     {
         // set up the menu for console output
-        menu.ResizeBox(80);
         menu.AddSeparator();        // 1
         menu.AddSeparator(false);   // 2
         menu.AddSeparator(false);
@@ -390,6 +389,8 @@ try
             // apply
             DataHandler.ApplyPatches(menu);
         }
+        
+        ExitMenu();
     }
 
     // Manage Data options
@@ -397,57 +398,32 @@ try
     // these are mostly convenience things
     // like switching between different
     // versions of data.win
-
     if (chosenMode == ScriptMode.LoadVanilla || chosenMode == ScriptMode.UpdateVanilla || chosenMode == ScriptMode.LoadBackup || chosenMode == ScriptMode.UpdateBackup)
     {
-        string sourceData = "";
-        string destData = "";
-        string message = "";
-
-        // get the start + end points depending on
-        // which mode is selected
-        switch (chosenMode)
+        if (allChapters)
         {
-            case ScriptMode.LoadVanilla:
-                sourceData = DataFile.vanilla;
-                destData = DataFile.active;
-                message = $"Successfully loaded Chapter {DataFile.chapter} from {Path.GetFileName(sourceData)}!";
-                break;
+            // set up the menu for console output
+            menu.ResizeBox(80);
+            menu.AddSeparator(false);
 
-            case ScriptMode.UpdateVanilla:
-                sourceData = DataFile.active;
-                destData = DataFile.vanilla;
-                message = $"Successfully updated {Path.GetFileName(destData)} for Chapter {DataFile.chapter}!";
-                break;
-                
-            case ScriptMode.LoadBackup:
-                sourceData = DataFile.backup;
-                destData = DataFile.active;
-                message = $"Successfully loaded Chapter {DataFile.chapter} from {Path.GetFileName(sourceData)}!";
-                break;
-                
-            case ScriptMode.UpdateBackup:
-                sourceData = DataFile.active;
-                destData = DataFile.backup;
-                message = $"Successfully updated {Path.GetFileName(destData)} for Chapter {DataFile.chapter}!";
-                break;
+            // loop through chapters
+            for (int i = 1; i <= chapters.Length; i++)
+            {
+                DataFile.chapter = i;
+                DataHandler.ManageDataFiles(menu, chosenMode, true);
+            }
+
+            // exit patchthingy prompt
+            menu.AddSeparator(false);
+            menu.MessagePopup(PopupType.Message, []);
+            
+        }
+        else
+        {
+            DataHandler.ManageDataFiles(menu, chosenMode);
         }
 
-        // try to copy, otherwise make an error for the menu
-        try
-        {
-            File.Copy(sourceData, destData, true);
-        }
-        catch (FileNotFoundException)
-        {
-            string error = $"Could not find {Path.GetFileName(sourceData)} for Chapter {DataFile.chapter}.";
-            menu.MessagePopup(PopupType.Error, [error]);
-            ExitMenu();
-            return; // for compiler
-        }
-
-        // success popup
-        menu.MessagePopup(PopupType.Success, [message]);
+        ExitMenu();
     }
 
     if (chosenMode == ScriptMode.ConvertPatches)

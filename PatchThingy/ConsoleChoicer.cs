@@ -324,14 +324,23 @@ public partial class ConsoleMenu
         int result;
 
         // add separated section with choicer
-        AddSeparator();
+        if (start > 1)
+        {
+            // dont add separator if this
+            // is the only thing in the menu
+            AddSeparator();
+        }
         AddSeparator(false);
+
         foreach (string line in message)
         {
             AddText(line, Alignment.Center);
         }
 
-        AddSeparator(false);
+        if (message.Length > 1)
+        {
+            AddSeparator(false);
+        }
         
         int choicer = AddChoicer(ChoicerType.Grid, choices);
         AddSeparator(false);
@@ -353,7 +362,12 @@ public partial class ConsoleMenu
         string[] choices;
 
         // add separated section with choicer
-        AddSeparator();
+        if (start > 1)
+        {
+            // dont add separator if this
+            // is the only thing in the menu
+            AddSeparator();
+        }
         AddSeparator(false);
 
         switch (type)
@@ -373,6 +387,10 @@ public partial class ConsoleMenu
                 choices = ["Exit PatchThingy"];
                 break;
 
+            case PopupType.Message:
+                choices = ["Exit PatchThingy"];
+                break;
+
             default:
                 // make sure this is initialized (and tell me if its not)
                 choices = ["Something went wrong."];
@@ -384,7 +402,11 @@ public partial class ConsoleMenu
             AddText(line, Alignment.Center);
         }
         
-        AddSeparator(false);
+        // correct spacing for a messageless popup
+        if (message.Length > 0)
+        {
+            AddSeparator(false);
+        }
 
         int choicer = AddChoicer(ChoicerType.Grid, choices);
         AddSeparator(false);
@@ -407,5 +429,6 @@ public enum PopupType
 {
     Error,
     Warning,
-    Success
+    Success,
+    Message,
 }
