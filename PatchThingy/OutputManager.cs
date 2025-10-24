@@ -176,6 +176,11 @@ partial class DataHandler
 
             File.WriteAllText(path, queueFile.Text);
         }
+
+        // after done, clear fileQueue so it doesnt
+        // carry over to the next chapter, but keep
+        // global patches in queue maybe?
+        FileQueue.RemoveAll(file => (file.Chapter != 0));
     }
 
     // for ApplyPatches
@@ -194,18 +199,24 @@ partial class DataHandler
             Directory.CreateDirectory(fullPath);
         }
 
-        // exit early if told to
-        if (keepFiles)
-        {
-            return;
-        }
-
         // Empty folder of all files of a given type
         foreach (string file in Directory.EnumerateFiles(fullPath))
         {
             if (file.EndsWith(toDelete))
             {
-                File.Delete(file);
+                if (keepFiles)
+                {
+                    // only delete files that arent in the queue so
+                    // we dont keep anything i got rid of or smthn
+                    if (!FileQueue.Exists(queueFile => (queueFile.Name == Path.GetFileName(file))))
+                    {
+                        File.Delete(file);
+                    }
+                }
+                else
+                {
+                    File.Delete(file);
+                }
             }
         }
     }

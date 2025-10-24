@@ -77,7 +77,7 @@ class DataFile
             // if it somehow tries finding Chapter 58
             //
             // itll prob crash anyway later
-            throw new Exception("Attempted to load nonexistent chapter.");
+            throw new Exception($"Attempted to load nonexistent Chapter {DataFile.chapter}.");
         }
 
         // TODO: support other versions of Deltarune.

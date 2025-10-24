@@ -42,7 +42,7 @@ if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 // a chapter and mode.
 ScriptMode? chosenMode = null;
 string[] chapters = ["Chapter 1", "Chapter 2", "Chapter 3", "Chapter 4"];
-string[] chapterChoices = ["Chapter 1", "Chapter 2", "Chapter 3", "Chapter 4", "All Chapters"];
+string[] chapterChoices = ["All Chapters", "Chapter 1", "Chapter 2", "Chapter 3", "Chapter 4"];
 string[] scriptModes = ["Generate new patches", "Apply existing patches", "File Management"];
 
 // if true, loop through each chapter for any mode
@@ -53,7 +53,7 @@ bool allChapters = false;
 if (Debugger.IsAttached)
 {
     chosenMode = ScriptMode.Apply;
-    DataFile.chapter = 4;
+    allChapters = true;
 }
 #endif
 
@@ -107,6 +107,7 @@ try
     importSourceMessage[1] = "without interfering with other parts of the game.";
 
     int curChoicer = chapterChoicer;
+    int choice = -1;
     menu.Draw();
 
     // so i can loop back to chap.select menu
@@ -116,37 +117,29 @@ try
         {
             // reset text
             menu.SetText(2, "Select a Deltarune chapter to patch.");
+            choice = menu.PromptChoicer(chapterChoicer);
 
-            switch (menu.PromptChoicer(chapterChoicer))
+            switch (choice)
             {
+                // All Chapters
                 case 0:
-                    DataFile.chapter = 1;
-                    curChoicer = modeChoicer;
-                    break;
-                case 1:
-                    DataFile.chapter = 2;
-                    curChoicer = modeChoicer;
-                    break;
-                case 2:
-                    DataFile.chapter = 3;
-                    curChoicer = modeChoicer;
-                    break;
-                case 3:
-                    DataFile.chapter = 4;
-                    curChoicer = modeChoicer;
-                    break;
-                case 4:
                     allChapters = true;
                     curChoicer = modeChoicer;
                     break;
 
-                default:
+                // Cancel pressed
+                case -1:
                     if (menu.ConfirmChoicer(exitMessage) == 0)
                     {
                         ExitMenu();
                     }
-
                     break; // for compiler
+
+                // Individual Chapters
+                default:
+                    DataFile.chapter = choice;
+                    curChoicer = modeChoicer;
+                    break;
             }
         }
 
@@ -182,7 +175,7 @@ try
                 case 1:
                     // dont prompt if theres no vanilla
                     // (assumes this is an unmodified game)
-                    if (File.Exists(DataFile.vanilla))
+                    if (!allChapters && File.Exists(DataFile.vanilla))
                     {
                         if (menu.ConfirmChoicer(applyMessage) == 0)
                         {
@@ -293,12 +286,17 @@ try
             while (globalChapter < 1)
             {
                 // select a preferred chapter
-                int choice = menu.PromptChoicer(globalPatchChoicer) + 1;
+                choice = menu.PromptChoicer(globalPatchChoicer) + 1;
 
                 // confirm selection, then update the globalChapter variable
                 if (choice > 0 && menu.ConfirmChoicer([$"Use Chapter {choice} to generate Global Patches?"], ["Yes", "No"]) == 0)
                 {
                     globalChapter = choice;
+                }
+                else if (menu.ConfirmChoicer(exitMessage) == 0)
+                {
+                    ExitMenu();
+                    return;
                 }
             }
             // clear menu again
@@ -361,28 +359,37 @@ try
 
     if (chosenMode == ScriptMode.Apply)
     {
-        // check if Vanilla Data exists. If not, assume
-        // Active Data is an unmodified version of Deltarune.
-        if (!File.Exists(DataFile.vanilla))
+        // set up the menu for console output
+        menu.ResizeBox(80);
+        menu.AddSeparator();        // 1
+        menu.AddSeparator(false);   // 2
+        menu.AddSeparator(false);
+        menu.AddSeparator(false);
+        menu.AddSeparator(false);
+        menu.AddSeparator(false);
+        menu.AddSeparator(false);
+        menu.AddSeparator(false);
+        menu.AddSeparator(false);   // 9
+        menu.AddSeparator();        // 10
+
+        // set up last text beforehand so i can
+        // use ReplaceText instead so multi-chapters reuse it
+        menu.AddText("bepis");
+
+        if (allChapters)
         {
-            // If Active Data ALSO doesn't exist, then panic.
-            if (!File.Exists(DataFile.active))
+            // loop through & apply
+            for (int i = 1; i <= chapters.Length; i++)
             {
-                menu.MessagePopup(PopupType.Error, ["Could not find game data."]);
-                ExitMenu();
-                return; // for compiler
+                DataFile.chapter = i;
+                DataHandler.ApplyPatches(menu,(i == chapters.Count()));
             }
-
-            // Rename Active Data to create Vanilla Data.
-            // 
-            // Vanilla Data is used to apply patches so I
-            // don't generate patches for the modified version.
-            File.Move(DataFile.active, DataFile.vanilla);
         }
-
-        // Apply patches to Vanilla Data, then save changes to Active Data.
-        DataFile data = new(DataFile.vanilla);
-        DataHandler.ApplyPatches(menu, data);
+        else
+        {
+            // apply
+            DataHandler.ApplyPatches(menu);
+        }
     }
 
     // Manage Data options

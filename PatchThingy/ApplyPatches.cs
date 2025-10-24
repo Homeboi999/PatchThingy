@@ -14,23 +14,30 @@ using System.Diagnostics;
 // patches in the output folder to the Active Data.
 partial class DataHandler
 {
-    public static void ApplyPatches(ConsoleMenu menu, DataFile vandatailla) // typo but it was funny lmao
+    public static void ApplyPatches(ConsoleMenu menu, bool lastChapter = true) // typo but it was funny lmao
     {
-        bool warned = false;
+        // check if Vanilla Data exists. If not, assume
+        // Active Data is an unmodified version of Deltarune.
+        if (!File.Exists(DataFile.vanilla))
+        {
+            // If Active Data ALSO doesn't exist, then panic.
+            if (!File.Exists(DataFile.active))
+            {
+                menu.MessagePopup(PopupType.Error, ["Could not find game data."]);
+                return; // for compiler
+            }
 
-        // set up the menu for console output
-        menu.ResizeBox(80);
-        menu.AddSeparator();        // 1
-        menu.AddSeparator(false);   // 2
-        menu.AddSeparator(false);
-        menu.AddSeparator(false);
-        menu.AddSeparator(false);
-        menu.AddSeparator(false);
-        menu.AddSeparator(false);
-        menu.AddSeparator(false);
-        menu.AddSeparator(false);   // 9
-        menu.AddSeparator();        // 10
-        menu.AddText($"Deltarune Chapter {DataFile.chapter} - Applying Patches...", Alignment.Center);
+            // Rename Active Data to create Vanilla Data.
+            // 
+            // Vanilla Data is used to apply patches so I
+            // don't generate patches for the modified version.
+            File.Move(DataFile.active, DataFile.vanilla);
+        }
+
+        // Apply patches to Vanilla Data, then save changes to Active Data.
+        DataFile vandatailla = new(DataFile.vanilla);
+
+        menu.ReplaceText(11, $"Deltarune Chapter {DataFile.chapter} - Applying Patches...", Alignment.Center);
         menu.Draw();
 
         // Don't try to apply patches that don't exist.
@@ -49,29 +56,17 @@ partial class DataHandler
 
         // use new functions to add global patches
         // after chapter-specific ones
-        LoadPatchesFromFiles(DataFile.chapter, menu, vandatailla, importGroup, warned);
-        LoadPatchesFromFiles(0, menu, vandatailla, importGroup, warned);
+        LoadPatchesFromFiles(DataFile.chapter, menu, vandatailla, importGroup);
+        LoadPatchesFromFiles(0, menu, vandatailla, importGroup);
 
-        if (warned)
-        {
-            // build error message
-            string[] errorMessage = ["Some patches failed to apply cleanly, possibly making the game unstable."];
-            
-
-            if (!menu.MessagePopup(PopupType.Warning, errorMessage))
-            {
-                menu.ReplaceText(11, "Patches were not applied.", Alignment.Center);
-                menu.AddChoicer(ChoicerType.List, ["Exit PatchThingy"]);
-                menu.Draw();
-                menu.PromptChoicer(12);
-                return;
-            }
-        }
         importGroup.Import();
         vandatailla.SaveChanges(Path.Combine(Config.current.GamePath, DataFile.GetPath(), "data.win"));
 
-        // success popup
-        menu.MessagePopup(PopupType.Success, ["Successfully applied patches!"]);
+        if (lastChapter)
+        {
+            // success popup
+            menu.MessagePopup(PopupType.Success, ["Successfully applied patches!"]);
+        }
     }
 
     // moved all this code out to a separate function
@@ -79,7 +74,7 @@ partial class DataHandler
     // without separating the logic for each set of files
     //
     // this seems stupid, i hope it works first try
-    static void LoadPatchesFromFiles(int chapter, ConsoleMenu menu, DataFile vandatailla, CodeImportGroup importGroup, bool warned)
+    static void LoadPatchesFromFiles(int chapter, ConsoleMenu menu, DataFile vandatailla, CodeImportGroup importGroup)
     {
         string curPath;
 
@@ -183,15 +178,9 @@ partial class DataHandler
                 }
                 catch
                 {
-                    // build error message
-                    menu.MessagePopup(PopupType.Error, [$"Unable to load patches from {Path.GetFileNameWithoutExtension(filePath)}"]);
-
                     // give option to continue anyway
-                    if (menu.PromptChoicer(14) == 1)
+                    if (menu.MessagePopup(PopupType.Warning, [$"Unable to load patches from {Path.GetFileNameWithoutExtension(filePath)}"]))
                     {
-                        warned = true;
-                        menu.Remove(12, 14);
-                        menu.ReplaceText(11, $"{vandatailla.Data.GeneralInfo.DisplayName.Content} - Applying Patches...", Alignment.Center);
                         continue; // keep importing
                     }
                     else
@@ -214,15 +203,9 @@ partial class DataHandler
                     // in any patches fail to apply here, print a warning.
                     if (patcher.Results.Any(result => !result.success))
                     {
-                        // build error message
-                        menu.MessagePopup(PopupType.Error, [$"Unable to cleanly apply patches for  {patchDest}"]);
-
                         // give option to continue anyway
-                        if (menu.PromptChoicer(14) == 1)
+                        if (menu.MessagePopup(PopupType.Warning, [$"Unable to cleanly apply patches for  {patchDest}"]))
                         {
-                            warned = true;
-                            menu.Remove(12, 14);
-                            menu.ReplaceText(11, $"{vandatailla.Data.GeneralInfo.DisplayName.Content} - Applying Patches...", Alignment.Center);
                             continue; // keep importing
                         }
                         else

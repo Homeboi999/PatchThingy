@@ -350,7 +350,7 @@ public partial class ConsoleMenu
         // remember the starting index
         int start = MenuWidgets.Count;
         bool result;
-        string[] choices = ["Exit PatchThingy"];;
+        string[] choices;
 
         // add separated section with choicer
         AddSeparator();
@@ -360,6 +360,7 @@ public partial class ConsoleMenu
         {
             case PopupType.Error:
                 AddText("! ERROR !", Alignment.Center, ConsoleColor.Red);
+                choices = ["Exit PatchThingy"];
                 break;
 
             case PopupType.Warning:
@@ -369,6 +370,12 @@ public partial class ConsoleMenu
 
             case PopupType.Success:
                 AddText("Success!", Alignment.Center, ConsoleColor.Yellow);
+                choices = ["Exit PatchThingy"];
+                break;
+
+            default:
+                // make sure this is initialized (and tell me if its not)
+                choices = ["Something went wrong."];
                 break;
         }
 
