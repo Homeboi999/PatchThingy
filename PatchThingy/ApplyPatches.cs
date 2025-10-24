@@ -14,7 +14,7 @@ using System.Diagnostics;
 // patches in the output folder to the Active Data.
 partial class DataHandler
 {
-    public static void ApplyPatches(ConsoleMenu menu, bool lastChapter = true) // typo but it was funny lmao
+    public static void ApplyPatches(ConsoleMenu menu, bool sourceCodeOnly = false, bool lastChapter = true) // typo but it was funny lmao
     {
         // check if Vanilla Data exists. If not, assume
         // Active Data is an unmodified version of Deltarune.
@@ -34,8 +34,23 @@ partial class DataHandler
             File.Move(DataFile.active, DataFile.vanilla);
         }
 
+        DataFile vandatailla;
         // Apply patches to Vanilla Data, then save changes to Active Data.
-        DataFile vandatailla = new(DataFile.vanilla);
+        if (sourceCodeOnly)
+        {
+            // If Active Data doesn't exist, then panic.
+            if (!File.Exists(DataFile.active))
+            {
+                menu.MessagePopup(PopupType.Error, [$"Could not find game data for chapter {DataFile.chapter}."]);
+                return; // for compiler
+            }
+
+            vandatailla = new(DataFile.active);
+        }
+        else
+        {
+            vandatailla = new(DataFile.vanilla);
+        }
 
         menu.ReplaceText(11, $"Deltarune Chapter {DataFile.chapter} - Applying Patches...", Alignment.Center);
         menu.Draw();
@@ -56,8 +71,8 @@ partial class DataHandler
 
         // use new functions to add global patches
         // after chapter-specific ones
-        LoadPatchesFromFiles(DataFile.chapter, menu, vandatailla, importGroup);
-        LoadPatchesFromFiles(0, menu, vandatailla, importGroup);
+        LoadPatchesFromFiles(DataFile.chapter, menu, vandatailla, importGroup, sourceCodeOnly);
+        LoadPatchesFromFiles(0, menu, vandatailla, importGroup, sourceCodeOnly);
 
         importGroup.Import();
         vandatailla.SaveChanges(Path.Combine(Config.current.GamePath, DataFile.GetPath(), "data.win"));
@@ -74,35 +89,39 @@ partial class DataHandler
     // without separating the logic for each set of files
     //
     // this seems stupid, i hope it works first try
-    static void LoadPatchesFromFiles(int chapter, ConsoleMenu menu, DataFile vandatailla, CodeImportGroup importGroup)
+    static void LoadPatchesFromFiles(int chapter, ConsoleMenu menu, DataFile vandatailla, CodeImportGroup importGroup, bool sourceCodeOnly)
     {
         string curPath;
 
-        // Game Object Definitions
-        // (must come before code definitions so we dont make them from code files)
-        curPath = Path.Combine(GetPath(chapter), objectFolder);
-        if (Path.Exists(curPath))
+        // skip if only code files
+        if (!sourceCodeOnly)
         {
-            foreach (string filePath in Directory.EnumerateFiles(curPath))
+            // Game Object Definitions
+            // (must come before code definitions so we dont make them from code files)
+            curPath = Path.Combine(GetPath(chapter), objectFolder);
+            if (Path.Exists(curPath))
             {
-                // load the script definition from JSON
-                GameObjectDefinition objectDef = JsonSerializer.Deserialize<GameObjectDefinition>(File.ReadAllText(filePath))!;
-
-                // if the definition couldn't be loaded for whatever reason
-                if (objectDef is null)
+                foreach (string filePath in Directory.EnumerateFiles(curPath))
                 {
-                    // build error message
-                    menu.MessagePopup(PopupType.Error, [$"Failed to load game object definition for {Path.GetFileNameWithoutExtension(filePath)}"]);
-                    return; // stop trying to import
+                    // load the script definition from JSON
+                    GameObjectDefinition objectDef = JsonSerializer.Deserialize<GameObjectDefinition>(File.ReadAllText(filePath))!;
+
+                    // if the definition couldn't be loaded for whatever reason
+                    if (objectDef is null)
+                    {
+                        // build error message
+                        menu.MessagePopup(PopupType.Error, [$"Failed to load game object definition for {Path.GetFileNameWithoutExtension(filePath)}"]);
+                        return; // stop trying to import
+                    }
+
+                    // add script definition to data
+                    vandatailla.Data.GameObjects.Add(objectDef.Save(vandatailla.Data));
+
+                    // scroll log output in menu
+                    menu.Remove(2);
+                    menu.InsertText(9, $"Defined script {objectDef.Name}");
+                    menu.Draw();
                 }
-
-                // add script definition to data
-                vandatailla.Data.GameObjects.Add(objectDef.Save(vandatailla.Data));
-
-                // scroll log output in menu
-                menu.Remove(2);
-                menu.InsertText(9, $"Defined script {objectDef.Name}");
-                menu.Draw();
             }
         }
 
@@ -134,6 +153,12 @@ partial class DataHandler
                 menu.InsertText(9, $"Added code {Path.GetFileName(filePath)}");
                 menu.Draw();
             }
+        }
+
+        // stop here if only source code
+        if (sourceCodeOnly)
+        {
+            return;
         }
 
         // Script Definitions

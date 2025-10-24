@@ -47,6 +47,7 @@ string[] scriptModes = ["Generate new patches", "Apply existing patches", "File 
 
 // if true, loop through each chapter for any mode
 bool allChapters = false;
+int globalChapter = 0;
 
 // debugger crashes on readkey, so just bypass it as much as i can
 #if DEBUG
@@ -82,6 +83,7 @@ try
     int chapterChoicer = menu.AddChoicer(ChoicerType.Grid, chapterChoices); // 6
     int modeChoicer = menu.AddChoicer(ChoicerType.List, scriptModes); // 7
     int fileChoicer = menu.AddChoicer(ChoicerType.Grid, fileOptions); // 8
+    int globalPatchChoicer = menu.AddChoicer(ChoicerType.Grid, chapters); // 9
     menu.AddSeparator(false);
 
     // script mode confirm messages
@@ -159,7 +161,7 @@ try
             {
                 case 0:
                     // don't confirm choice if there isnt already patches
-                    if (Directory.Exists(Config.current.OutputPath))
+                    if (!allChapters && Directory.Exists(Config.current.OutputPath))
                     {
                         if (menu.ConfirmChoicer(generateMessage) == 0)
                         {
@@ -262,6 +264,46 @@ try
                     continue;
             }
         }
+
+        // choose a chapter to use for global patches
+        if (allChapters && (chosenMode == ScriptMode.Generate || chosenMode == ScriptMode.ConvertPatches))
+        {
+            menu.SetText(2, "Which chapter should Global Patches be generated from?");
+
+            // make sure a chapter gets selected,
+            // unless the user backs out
+            while (globalChapter < 1 && chosenMode is not null)
+            {
+                // select a preferred chapter
+                choice = menu.PromptChoicer(globalPatchChoicer) + 1;
+
+                switch (choice)
+                {
+                    // cancel pressed
+                    case 0:
+                        chosenMode = null;
+                        break;
+                    
+                    // chapter selected
+                    default:
+                        // update the globalChapter variable
+                        if (chosenMode == ScriptMode.Generate && Directory.Exists(Config.current.OutputPath))
+                        {
+                            // move generate message here so it flows nicer
+                            if (menu.ConfirmChoicer(generateMessage) == 0)
+                            {
+                                globalChapter = choice;
+                            }
+                        }
+                        else
+                        {
+                            globalChapter = choice;
+                        }
+                        // if not confirmed, loop again to prompt the og choicer
+                        break;
+                }
+            }
+        }
     }
 
     // clear menu
@@ -273,33 +315,6 @@ try
         // generate patches
         if (allChapters)
         {
-            // menu setup
-            menu.AddSeparator(false);
-            menu.AddText("Which chapter should Global Patches be generated from?", Alignment.Center);
-            menu.AddSeparator(false);
-            menu.AddSeparator();
-            menu.AddSeparator(false);
-            int globalPatchChoicer = menu.AddChoicer(ChoicerType.Grid, chapters);
-            menu.AddSeparator(false);
-            int globalChapter = 0;
-
-            // make sure a chapter gets selected.
-            while (globalChapter < 1)
-            {
-                // select a preferred chapter
-                choice = menu.PromptChoicer(globalPatchChoicer) + 1;
-
-                // confirm selection, then update the globalChapter variable
-                if (choice > 0 && menu.ConfirmChoicer([$"Use Chapter {choice} to generate Global Patches?"], ["Yes", "No"]) == 0)
-                {
-                    globalChapter = choice;
-                }
-                else if (menu.ConfirmChoicer(exitMessage) == 0)
-                {
-                    ExitMenu();
-                    return;
-                }
-            }
             // clear menu again
             menu.RemoveAll();
 
@@ -357,7 +372,7 @@ try
         ExitMenu();
     }
 
-    if (chosenMode == ScriptMode.Apply)
+    if (chosenMode == ScriptMode.Apply || chosenMode == ScriptMode.ImportSource)
     {
         // set up the menu for console output
         menu.AddSeparator();        // 1
@@ -381,13 +396,13 @@ try
             for (int i = 1; i <= chapters.Length; i++)
             {
                 DataFile.chapter = i;
-                DataHandler.ApplyPatches(menu,(i == chapters.Count()));
+                DataHandler.ApplyPatches(menu, (chosenMode == ScriptMode.ImportSource),(i == chapters.Count()));
             }
         }
         else
         {
             // apply
-            DataHandler.ApplyPatches(menu);
+            DataHandler.ApplyPatches(menu, (chosenMode == ScriptMode.ImportSource));
         }
         
         ExitMenu();
@@ -429,35 +444,91 @@ try
     if (chosenMode == ScriptMode.ConvertPatches)
     {
         DataFile modded;
-        int chapterCount = 0;
         int globalCount = 0;
-
-        try
-        {
-            modded = new DataFile(DataFile.active);
-            chapterCount = DataHandler.ConvertPatches(modded, DataFile.chapter);
-            globalCount = DataHandler.ConvertPatches(modded, 0);
-        }
-        catch (FileNotFoundException)
-        {
-            menu.MessagePopup(PopupType.Error, [$"Could not find {Path.GetFileName(DataFile.active)} for Chapter {DataFile.chapter}."]);
-            ExitMenu();
-            return; // for compiler
-        }
+        int chapterCount = 0;
 
         string message;
-        string chapterMessage = $"{chapterCount} Chapter {DataFile.chapter} patches";
-        string globalMessage = $"{globalCount} Global patches";
+        string chapterMessage = "";
+        string globalMessage = "";
+
+        if (allChapters)
+        {
+            // menu setup
+            menu.AddSeparator(false);
+
+            // keep track of chapter counts separately
+            int chapterTotal = 0;
+
+            for (int i = 1; i <= chapters.Length; i++)
+            {
+                DataFile.chapter = i;
+
+                try
+                {
+                    modded = new DataFile(DataFile.active);
+                }
+                catch (FileNotFoundException)
+                {
+                    menu.MessagePopup(PopupType.Error, [$"Could not find {Path.GetFileName(DataFile.active)} for Chapter {DataFile.chapter}."]);
+                    return;
+                }
+
+                chapterCount = DataHandler.PatchesToCode(menu, modded, DataFile.chapter);
+                chapterTotal += chapterCount;
+
+                if (globalChapter == DataFile.chapter)
+                {
+                    globalCount = DataHandler.PatchesToCode(menu, modded, 0);
+                }
+
+                if (chapterCount > 0)
+                {
+                    menu.AddText($"Chapter {DataFile.chapter}: Converted {chapterCount} Patches");
+                }
+            }
+
+            chapterMessage = $"{chapterTotal} Chapter-Specific patches";
+            globalMessage = $"{globalCount} Global patches";
+
+            // we're done with the per-chapter
+            // count, and that string is used
+            // in the success message.
+            chapterCount = chapterTotal;
+        }
+        else
+        {
+            try
+            {
+                modded = new DataFile(DataFile.active);
+            }
+            catch (FileNotFoundException)
+            {
+                menu.MessagePopup(PopupType.Error, [$"Could not find {Path.GetFileName(DataFile.active)} for Chapter {DataFile.chapter}."]);
+                return;
+            }
+
+            chapterCount = DataHandler.PatchesToCode(menu, modded, DataFile.chapter);
+            globalCount = DataHandler.PatchesToCode(menu, modded, 0);
+
+            chapterMessage = $"{chapterCount} Chapter {DataFile.chapter} patches";
+            globalMessage = $"{globalCount} Global patches";
+        }
+
+        if (chapterCount + globalCount > 0)
+        {
+            menu.AddSeparator(false);
+        }
 
         // set output message based on how many
         // patches of each type were converted
         if (chapterCount == 0 && globalCount == 0)
         {
-            // print error if nothing happened
-            // not an error but idk what else to call it
-            menu.MessagePopup(PopupType.Error, ["No patches detected. (Move desired patches to Source/Code)"]);
+            // make different popup if nothing happened
+            message = "No patches detected. (Move desired patches to the Code folder)";
+            menu.MessagePopup(PopupType.Message, [message]);
+            
             ExitMenu();
-            return; // for compiler
+            return;
         }
         else if (chapterCount > 0 && globalCount == 0)
         {
@@ -474,113 +545,8 @@ try
 
         // success popup
         menu.MessagePopup(PopupType.Success, [message]);
-    }
 
-    if (chosenMode == ScriptMode.ImportSource)
-    {
-        // make sure data.win exists
-        if (!File.Exists(DataFile.active))
-        {
-            menu.MessagePopup(PopupType.Error, ["Could not find game data."]);
-            ExitMenu();
-            return; // for compiler
-        }
-
-        // set up the menu for console output
-        menu.ResizeBox(80);
-        menu.AddSeparator();        // 1
-        menu.AddSeparator(false);   // 2
-        menu.AddSeparator(false);
-        menu.AddSeparator(false);
-        menu.AddSeparator(false);
-        menu.AddSeparator(false);
-        menu.AddSeparator(false);
-        menu.AddSeparator(false);
-        menu.AddSeparator(false);   // 9
-        menu.AddSeparator();        // 10
-        menu.AddText($"Deltarune Chapter {DataFile.chapter} - Importing Code...", Alignment.Center);
-        menu.Draw();
-
-        // load Active Data.
-        DataFile data = new(DataFile.active);
-        CodeImportGroup importGroup = new(data.Data);
-
-        // chapter code
-        string codePath = Path.Combine(DataHandler.GetPath(DataFile.chapter), DataHandler.codeFolder);
-        if (Path.Exists(codePath))
-        {
-            foreach (string filePath in Directory.EnumerateFiles(codePath))
-            {
-                // read code from file
-                var codeFile = File.ReadAllText(filePath);
-                string codeName = Path.GetFileNameWithoutExtension(filePath);
-
-                // add file to data
-                try
-                {
-                    importGroup.QueueReplace(codeName, codeFile);
-                }
-                catch (Exception error) when (error.Message == $"Collision event cannot be automatically resolved; must attach to object manually ({Path.GetFileNameWithoutExtension(filePath)})")
-                {
-                    // build error message
-                    string[] errorMessage = [
-                        $"Failed to import code file {Path.GetFileNameWithoutExtension(filePath)}",
-                        $"Collision event cannot be automatically resolved; must attach to object manually."
-                        ];
-                        
-                    // option to continue importing.
-                    if (menu.MessagePopup(PopupType.Warning, errorMessage))
-                    {
-                        ExitMenu();
-                    }
-
-                    return; // stop trying to import
-                }
-
-                // scroll log output in menu
-                menu.Remove(2);
-                menu.InsertText(9, $"Added code {Path.GetFileName(filePath)}");
-                menu.Draw();
-            }
-        }
-
-        // global code
-        codePath = Path.Combine(DataHandler.GetPath(0), DataHandler.codeFolder);
-        if (Path.Exists(codePath))
-        {
-            foreach (string filePath in Directory.EnumerateFiles(codePath))
-            {
-                // read code from file
-                var codeFile = File.ReadAllText(filePath);
-                string codeName = Path.GetFileNameWithoutExtension(filePath);
-
-                // add file to data
-                try
-                {
-                    importGroup.QueueReplace(codeName, codeFile);
-                }
-                catch (Exception error) when (error.Message == $"Collision event cannot be automatically resolved; must attach to object manually ({Path.GetFileNameWithoutExtension(filePath)})")
-                {
-                    // build error message
-                    string[] errorMessage = [$"Failed to import code file {Path.GetFileNameWithoutExtension(filePath)}", "Collision event cannot be automatically resolved; must attach to object manually."];
-                    if (menu.MessagePopup(PopupType.Warning, errorMessage))
-
-                    return; // stop trying to import
-                }
-
-                // scroll log output in menu
-                menu.Remove(2);
-                menu.InsertText(9, $"Added code {Path.GetFileName(filePath)}");
-                menu.Draw();
-            }
-        }
-
-        // save file
-        importGroup.Import();
-        data.SaveChanges(Path.Combine(Config.current.GamePath, DataFile.GetPath(), "data.win"));
-
-        // success popup
-        menu.MessagePopup(PopupType.Success, ["Successfully updated code!"]);
+        ExitMenu();
     }
 }
 catch (Exception error) // show crashes in main terminal output

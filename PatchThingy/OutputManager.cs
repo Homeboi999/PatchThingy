@@ -221,7 +221,7 @@ partial class DataHandler
         }
     }
 
-    public static int ConvertPatches(DataFile data, int chapter)
+    public static int PatchesToCode(ConsoleMenu menu, DataFile data, int chapter)
     {
         int count = 0;
 
@@ -229,7 +229,6 @@ partial class DataHandler
         {
             if (!Path.GetFileName(filePath).EndsWith(".gml.patch"))
             {
-                Console.WriteLine($"Skipping {Path.GetFileName(filePath)}");
                 continue; // exit if not a patch file
             }
 
@@ -240,7 +239,6 @@ partial class DataHandler
 
             if (code is null)
             {
-                Console.WriteLine($"No code for {codeName}");
                 continue; // exit if code doesnt exist
             }
 
