@@ -54,7 +54,8 @@ int globalChapter = 0;
 if (Debugger.IsAttached)
 {
     chosenMode = ScriptMode.Apply;
-    allChapters = true;
+    DataFile.chapter = 1;
+    allChapters = false;
 }
 #endif
 

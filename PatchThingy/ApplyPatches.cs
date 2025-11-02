@@ -34,7 +34,9 @@ partial class DataHandler
             File.Move(DataFile.active, DataFile.vanilla);
         }
 
+        // set up data variable
         DataFile vandatailla;
+
         // Apply patches to Vanilla Data, then save changes to Active Data.
         if (sourceCodeOnly)
         {
@@ -71,8 +73,23 @@ partial class DataHandler
 
         // use new functions to add global patches
         // after chapter-specific ones
-        LoadPatchesFromFiles(DataFile.chapter, menu, vandatailla, importGroup, sourceCodeOnly);
-        LoadPatchesFromFiles(0, menu, vandatailla, importGroup, sourceCodeOnly);
+        bool success = true;
+
+        success = LoadPatchesFromFiles(DataFile.chapter, menu, vandatailla, importGroup, sourceCodeOnly);
+
+        // silently exit if failed
+        if (!success)
+        {
+            // error popups happened already
+            return;
+        }
+
+        success = LoadPatchesFromFiles(0, menu, vandatailla, importGroup, sourceCodeOnly);
+
+        if (!success)
+        {
+            return;
+        }
 
         importGroup.Import();
         vandatailla.SaveChanges(Path.Combine(Config.current.GamePath, DataFile.GetPath(), "data.win"));
@@ -89,7 +106,7 @@ partial class DataHandler
     // without separating the logic for each set of files
     //
     // this seems stupid, i hope it works first try
-    static void LoadPatchesFromFiles(int chapter, ConsoleMenu menu, DataFile vandatailla, CodeImportGroup importGroup, bool sourceCodeOnly)
+    static bool LoadPatchesFromFiles(int chapter, ConsoleMenu menu, DataFile vandatailla, CodeImportGroup importGroup, bool sourceCodeOnly)
     {
         string curPath;
 
@@ -111,7 +128,7 @@ partial class DataHandler
                     {
                         // build error message
                         menu.MessagePopup(PopupType.Error, [$"Failed to load game object definition for {Path.GetFileNameWithoutExtension(filePath)}"]);
-                        return; // stop trying to import
+                        return false; // stop trying to import
                     }
 
                     // add script definition to data
@@ -144,8 +161,7 @@ partial class DataHandler
                 {
                     // build error message
                     menu.MessagePopup(PopupType.Error, [$"Failed to import code file {Path.GetFileNameWithoutExtension(filePath)}", $"Collision event cannot be automatically resolved; must attach to object manually."]);
-
-                    return; // stop trying to import
+                    return false; // stop trying to import
                 }
 
                 // scroll log output in menu
@@ -158,7 +174,7 @@ partial class DataHandler
         // stop here if only source code
         if (sourceCodeOnly)
         {
-            return;
+            return true;
         }
 
         // Script Definitions
@@ -175,7 +191,7 @@ partial class DataHandler
                 {
                     // build error message
                     menu.MessagePopup(PopupType.Error, [$"Failed to load script definition for {Path.GetFileNameWithoutExtension(filePath)}"]);
-                    return; // stop trying to import
+                    return false; // stop trying to import
                 }
 
                 // add script definition to data
@@ -229,13 +245,13 @@ partial class DataHandler
                     if (patcher.Results.Any(result => !result.success))
                     {
                         // give option to continue anyway
-                        if (menu.MessagePopup(PopupType.Warning, [$"Unable to cleanly apply patches for  {patchDest}"]))
+                        if (!menu.MessagePopup(PopupType.Warning, [$"Unable to cleanly apply patches for  {patchDest}"]))
                         {
                             continue; // keep importing
                         }
                         else
                         {
-                            return; // stop trying to import
+                            return false; // stop trying to import
                         }
                     }
 
@@ -272,7 +288,7 @@ partial class DataHandler
                     // build error message
                     menu.MessagePopup(PopupType.Error, [$"Failed to load sprite definition for {Path.GetFileNameWithoutExtension(filePath)}"]);
 
-                    return; // stop trying to import
+                    return false; // stop trying to import
                 }
 
                 string imagePath = Path.Combine(GetPath(DataFile.chapter), spriteFolder, spriteDef.ImageFile);
@@ -282,7 +298,7 @@ partial class DataHandler
                 {
                     // build error message
                     menu.MessagePopup(PopupType.Error, [$"Failed to load sprite image for {spriteDef.Name}"]);
-                    return; // stop trying to import
+                    return false; // stop trying to import
                 }
 
                 // add sprite definition to atlas
@@ -311,5 +327,8 @@ partial class DataHandler
             menu.InsertText(9, $"Added sprite {spriteDef.Name}");
             menu.Draw();
         }
+
+        // return success
+        return true;
     }
 }
