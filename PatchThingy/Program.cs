@@ -64,7 +64,8 @@ string[] fileOptions = [
     "Vanilla Data",
     "Mod Backup",
     "Convert Patch to Source",
-    "Update Source Code"
+    "Update Source Code",
+    "Build xdelta"
     ];
 
 string[] dataOptions = ["Restore", "Update"];
@@ -108,6 +109,10 @@ try
     string[] importSourceMessage = ["", ""];
     importSourceMessage[0] = "Updates the .gml code present in the Active Data";
     importSourceMessage[1] = "without interfering with other parts of the game.";
+
+    string[] xdeltaBuildMessage = ["", ""];
+    xdeltaBuildMessage[0] = "Creates .xdelta Patches using Active Data and Vanilla Data.";
+    xdeltaBuildMessage[1] = "Builds my changes into the format used by mod managers.";
 
     int curChoicer = chapterChoicer;
     int choice = -1;
@@ -256,6 +261,15 @@ try
                     if (menu.ConfirmChoicer(importSourceMessage) == 0)
                     {
                         chosenMode = ScriptMode.ImportSource;
+                    }
+
+                    break;
+
+                case 4:
+
+                    if (menu.ConfirmChoicer(xdeltaBuildMessage) == 0)
+                    {
+                        chosenMode = ScriptMode.BuildRelease;
                     }
 
                     break;
@@ -471,7 +485,8 @@ try
                 catch (FileNotFoundException)
                 {
                     menu.MessagePopup(PopupType.Error, [$"Could not find {Path.GetFileName(DataFile.active)} for Chapter {DataFile.chapter}."]);
-                    return;
+                    ExitMenu();
+                    return; // for editor
                 }
 
                 chapterCount = DataHandler.PatchesToCode(menu, modded, DataFile.chapter);
@@ -549,6 +564,27 @@ try
 
         ExitMenu();
     }
+
+    // Generate xdeltas for release
+    if (chosenMode == ScriptMode.BuildRelease)
+    {
+        if (allChapters)
+        {
+            // loop through & compile
+            for (int i = 1; i <= chapters.Length; i++)
+            {
+                DataFile.chapter = i;
+                DataHandler.ReleasePatches(menu,(i == chapters.Count()), true);
+            }
+        }
+        else
+        {
+            // apply
+            DataHandler.ReleasePatches(menu);
+        }
+        
+        ExitMenu();
+    }
 }
 catch (Exception error) // show crashes in main terminal output
 {
@@ -598,4 +634,5 @@ enum ScriptMode
     UpdateBackup,
     ConvertPatches,
     ImportSource,
+    BuildRelease
 }
