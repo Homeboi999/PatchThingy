@@ -94,25 +94,30 @@ try
     string[] generateMessage = ["This will overwrite local patches. Continue?"];
     string[] applyMessage = ["This will discard all unsaved modifications. Continue?"];
 
-    string[] vanillaEditMessage = ["", ""];
-    vanillaEditMessage[0] = "Copy the Vanilla Data to/from the Active Data.";
-    vanillaEditMessage[1] = "Used to update Deltarune or unload current patches.";
+    string[] vanillaEditMessage = [
+        "Copy the Vanilla Data to/from the Active Data.",
+        "Used to update Deltarune or unload current patches."
+    ];
 
-    string[] backupEditMessage = ["", ""];
-    backupEditMessage[0] = "Copy the Backup Data to/from the Active Data.";
-    backupEditMessage[1] = "Used to save/load a patched version of Deltarune.";
+    string[] backupEditMessage = [
+        "Copy the Backup Data to/from the Active Data.",
+        "Used to save/load a patched version of Deltarune."
+    ];
 
-    string[] convertPatchesMessage = ["", ""];
-    convertPatchesMessage[0] = "Converts .patch files placed the Source/Code folder";
-    convertPatchesMessage[1] = "into the full GML code. (Directly from data.win)";
+    string[] convertPatchesMessage = [
+        "Converts .patch files placed the Source/Code folder",
+        "into the full GML code. (Directly from data.win)"
+    ];
 
-    string[] importSourceMessage = ["", ""];
-    importSourceMessage[0] = "Updates the .gml code present in the Active Data";
-    importSourceMessage[1] = "without interfering with other parts of the game.";
+    string[] importSourceMessage = [
+        "Updates the .gml code present in the Active Data",
+        "without interfering with other parts of the game."
+    ];
 
-    string[] xdeltaBuildMessage = ["", ""];
-    xdeltaBuildMessage[0] = "Creates .xdelta Patches using Active Data and Vanilla Data.";
-    xdeltaBuildMessage[1] = "Builds my changes into the format used by mod managers.";
+    string[] xdeltaBuildMessage = [
+        "Creates .xdelta Patches using Active Data and Vanilla Data.",
+        "Builds my changes into the format used by mod managers."
+    ];
 
     int curChoicer = chapterChoicer;
     int choice = -1;
