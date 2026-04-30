@@ -72,10 +72,11 @@ partial class DataHandler
         CodeImportGroup importGroup = new(vandatailla.Data);
 
         // use new functions to add global patches
-        // after chapter-specific ones
+        // before chapter-specific ones, so that
+        // chapter-specific patches take priority
         bool success = true;
 
-        success = LoadPatchesFromFiles(DataFile.chapter, menu, vandatailla, importGroup, sourceCodeOnly);
+        success = LoadPatchesFromFiles(0, menu, vandatailla, importGroup, sourceCodeOnly);
 
         // silently exit if failed
         if (!success)
@@ -84,7 +85,7 @@ partial class DataHandler
             return;
         }
 
-        success = LoadPatchesFromFiles(0, menu, vandatailla, importGroup, sourceCodeOnly);
+        success = LoadPatchesFromFiles(DataFile.chapter, menu, vandatailla, importGroup, sourceCodeOnly);
 
         if (!success)
         {
@@ -245,12 +246,16 @@ partial class DataHandler
                     if (patcher.Results.Any(result => !result.success))
                     {
                         // give option to continue anyway
-                        if (!menu.MessagePopup(PopupType.Warning, [$"Unable to cleanly apply patches for  {patchDest}"]))
+                        if (!menu.MessagePopup(PopupType.Warning, [$"Unable to cleanly apply patches for {patchDest}"]))
                         {
                             continue; // keep importing
                         }
                         else
                         {
+                            // scroll log output in menu
+                            menu.Remove(2);
+                            menu.InsertText(9, $"Skipped code {Path.GetFileName(patchFile.basePath)}", Alignment.Left, ConsoleColor.Yellow);
+                            menu.Draw();
                             return false; // stop trying to import
                         }
                     }

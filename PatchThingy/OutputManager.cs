@@ -101,8 +101,10 @@ partial class DataHandler
             return false;
         }
 
+        bool isGlobal = File.Exists(Path.Combine(GetPath(0), typeFolder)) && !File.Exists(Path.Combine(GetPath(queueFile.Chapter), typeFolder));
+
         // save if the chapter is global or not
-        if (File.Exists(Path.Combine(GetPath(0), typeFolder)) && fileType != FileType.Patch)
+        if (isGlobal)
         {
             queueFile.Chapter = 0;
         }
@@ -155,15 +157,10 @@ partial class DataHandler
                     break;
             }
 
-            if (File.Exists(Path.Combine(GetPath(0), typeFolder)))
+            // Skip global patches if not chosen chapter
+            if (queueFile.Chapter == 0 && skipGlobal)
             {
-                queueFile.Chapter = 0;
-
-                // Skip global patches if not chosen chapter
-                if (skipGlobal)
-                {
-                    continue;
-                }
+                continue;
             }
 
             path = Path.Combine(GetPath(queueFile.Chapter), typeFolder);

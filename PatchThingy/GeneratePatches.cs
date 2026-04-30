@@ -61,21 +61,23 @@ partial class DataHandler
                 }
 
                 // add to queue
-                QueueFile(modCode.Name.Content, modChanges.ToString(), FileType.Patch);
-
-                // scroll log output in menu
-                menu.Remove(2);
-                menu.InsertText(9, $"Generated patches for {modCode.Name.Content}.gml");
-                menu.Draw();
+                if (QueueFile(modCode.Name.Content, modChanges.ToString(), FileType.Patch))
+                {
+                    // scroll log output in menu if patched
+                    menu.Remove(2);
+                    menu.InsertText(9, $"Generated patches for {modCode.Name.Content}.gml");
+                    menu.Draw();
+                }
             }
             // if it's a new file, export entire file to the Source folder
             else if (vanillaCode is null)
             {
                 string fileText = string.Join("\n", modded.DecompileCode(modCode));
 
-                // scroll log output in menu
+                // add to queue
                 if (QueueFile(modCode.Name.Content, fileText, FileType.Code))
                 {
+                    // scroll log output in menu if patched
                     menu.Remove(2);
                     menu.InsertText(9, $"Created source code for {modCode.Name.Content}.gml");
                     menu.Draw();
@@ -95,9 +97,10 @@ partial class DataHandler
                 objectDef = GameObjectDefinition.Load(modObject);
                 string jsonText = JsonSerializer.Serialize(objectDef, defOptions);
 
-                // scroll log output in menu
+                // add to queue
                 if (QueueFile(objectDef.Name, jsonText, FileType.GameObject))
                 {
+                    // scroll log output in menu if patched
                     menu.Remove(2);
                     menu.InsertText(9, $"Created game object definition for {objectDef.Name}");
                     menu.Draw();
@@ -108,11 +111,10 @@ partial class DataHandler
         // script definitions
         foreach (UndertaleScript modScript in modded.Data.Scripts)
         {
-            // ignore definition if a part is null,
-            // but still print a warning in case so
-            // i can check if it causes problems afterwards
+            // ignore definition if a part is null
             if (modScript.Name is null || modScript.Code is null)
             {
+                // but still print a warning just in case
                 menu.Remove(2);
                 menu.InsertText(9, $"Skipped definition containing a null value", Alignment.Left, ConsoleColor.Yellow);
                 menu.Draw();
@@ -130,15 +132,15 @@ partial class DataHandler
 
             // if the script isnt in vanilla and this is where we're getting, 
             // make a definition for it when applying
-            if (vanillaScript is null && !skipGlobal)
+            if (vanillaScript is null)
             {
                 scriptDef = ScriptDefinition.Load(modScript);
                 string jsonText = JsonSerializer.Serialize(scriptDef, defOptions);
 
-                
-
+                // add to queue
                 if (QueueFile(scriptDef.Name, jsonText, FileType.Script))
                 {
+                    // scroll log output in menu if patched
                     menu.Remove(2);
                     menu.InsertText(9, $"Created script definition for {scriptDef.Name}");
                     menu.Draw();
@@ -152,14 +154,16 @@ partial class DataHandler
             UndertaleSprite vanillaSprite = vanilla.Data.Sprites.ByName(modSprite.Name.Content);
             SpriteDefinition spriteDef;
 
-            if (vanillaSprite is null && !skipGlobal)
+            if (vanillaSprite is null)
             {
                 // assemble sprite definition
                 spriteDef = SpriteDefinition.Load(modSprite);
                 string jsonText = JsonSerializer.Serialize(spriteDef, defOptions);
 
+                // add to queue
                 if (QueueFile(spriteDef.Name, jsonText, FileType.Sprite))
                 {
+                    // scroll log output in menu if patched
                     menu.Remove(2);
                     menu.InsertText(9, $"Created sprite definition for {spriteDef.Name}");
                     menu.Draw();
