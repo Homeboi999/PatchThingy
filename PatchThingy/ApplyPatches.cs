@@ -315,22 +315,23 @@ partial class DataHandler
         // dont make an atlas if theres no sprites lmao
         if (spriteList.Count > 0)
         {
+            spriteList.Sort();
             // pack sprites to atlas, and add to data
             atlas.Save(vandatailla.Data);
-        }
 
-        foreach (SpriteDefinition spriteDef in spriteList)
-        {
-            // add texture entries to data
-            spriteDef.AddFrames(atlas, vandatailla.Data);
+            foreach (SpriteDefinition spriteDef in spriteList)
+            {
+                // add texture entries to data
+                spriteDef.AddFrames(atlas, vandatailla.Data);
 
-            // add sprite definition to data
-            vandatailla.Data.Sprites.Add(spriteDef.Save(vandatailla.Data));
+                // add sprite definition to data
+                vandatailla.Data.Sprites.Add(spriteDef.Save(vandatailla.Data));
 
-            // scroll log output in menu
-            menu.Remove(2);
-            menu.InsertText(9, $"Added sprite {spriteDef.Name}");
-            menu.Draw();
+                // scroll log output in menu
+                menu.Remove(2);
+                menu.InsertText(9, $"Added sprite {spriteDef.Name} - index = {spriteDef.index}");
+                menu.Draw();
+            }
         }
 
         // return success

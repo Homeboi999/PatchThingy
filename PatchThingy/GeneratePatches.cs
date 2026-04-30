@@ -151,13 +151,17 @@ partial class DataHandler
         // sprite definitions
         foreach (UndertaleSprite modSprite in modded.Data.Sprites)
         {
+            // get equivalent in Vanilla Data 
             UndertaleSprite vanillaSprite = vanilla.Data.Sprites.ByName(modSprite.Name.Content);
             SpriteDefinition spriteDef;
+
+            // get the index of the Sprite
+            int spriteIndex = modded.Data.Sprites.IndexOfName(modSprite.Name.Content);
 
             if (vanillaSprite is null)
             {
                 // assemble sprite definition
-                spriteDef = SpriteDefinition.Load(modSprite);
+                spriteDef = SpriteDefinition.Load(modSprite, spriteIndex);
                 string jsonText = JsonSerializer.Serialize(spriteDef, defOptions);
 
                 // add to queue

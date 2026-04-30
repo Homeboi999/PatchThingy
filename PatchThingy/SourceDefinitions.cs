@@ -40,6 +40,7 @@ public record ScriptDefinition (string Name, string Code)
 public record SpriteDefinition
 (
     string Name,
+    int index,
     string ImageFile,
     int FrameCount,
 
@@ -50,7 +51,7 @@ public record SpriteDefinition
 
     float playbackSpeed,
     AnimSpeedType playbackType = AnimSpeedType.FramesPerGameFrame
-)
+) : IComparable<SpriteDefinition> // so that I can sort by Index
 {
     // EVERY SPRITE IN DELTARUNE HAS
     // THE FOLLOWING PROPERTIES:
@@ -61,7 +62,7 @@ public record SpriteDefinition
     //
     // (as seen in UndertaleModTool)
 
-    public static SpriteDefinition Load (UndertaleSprite sprite)
+    public static SpriteDefinition Load (UndertaleSprite sprite, int spriteIndex)
     {
         string fileName;
 
@@ -94,6 +95,7 @@ public record SpriteDefinition
         return new SpriteDefinition
         (
             sprite.Name.Content,
+            spriteIndex,
             fileName,
             sprite.Textures.Count,
 
@@ -105,6 +107,18 @@ public record SpriteDefinition
             sprite.GMS2PlaybackSpeed,
             speedType
         );
+    }
+
+    public int CompareTo(SpriteDefinition? compareSprite)
+    {
+        if (compareSprite is null)
+        {
+            return 1;
+        }
+        else
+        {
+            return (this.index.CompareTo(compareSprite.index));
+        }
     }
 
     UndertaleSimpleList<UndertaleSprite.TextureEntry> Textures = [];
