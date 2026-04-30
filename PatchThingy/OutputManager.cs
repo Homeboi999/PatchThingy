@@ -96,17 +96,19 @@ partial class DataHandler
         }
 
         // check for duplicate entries
-        if (FileQueue.Exists(file => (file.Name == queueFile.Name)))
+        if (FileQueue.Exists(file => (file.Name == queueFile.Name && file.Type == queueFile.Type)))
         {
             return false;
         }
 
-        bool isGlobal = File.Exists(Path.Combine(GetPath(0), typeFolder)) && !File.Exists(Path.Combine(GetPath(queueFile.Chapter), typeFolder));
+        string path = Path.Combine(GetPath(queueFile.Chapter), typeFolder);
+        bool isGlobal = File.Exists(Path.Combine(GetPath(0), typeFolder)) && !File.Exists(path);
 
         // save if the chapter is global or not
         if (isGlobal)
         {
             queueFile.Chapter = 0;
+            path = Path.Combine(GetPath(0), typeFolder);
         }
 
         // add to queue
@@ -128,6 +130,12 @@ partial class DataHandler
         string path;
         foreach (TempFile queueFile in FileQueue)
         {
+            // Skip global patches if not chosen chapter
+            if (queueFile.Chapter == 0 && skipGlobal)
+            {
+                continue;
+            }
+
             string typeFolder = "";
 
             switch(queueFile.Type)
@@ -155,12 +163,6 @@ partial class DataHandler
                 // get the compiler to shut up
                 default:
                     break;
-            }
-
-            // Skip global patches if not chosen chapter
-            if (queueFile.Chapter == 0 && skipGlobal)
-            {
-                continue;
             }
 
             path = Path.Combine(GetPath(queueFile.Chapter), typeFolder);
@@ -205,7 +207,7 @@ partial class DataHandler
                 {
                     // only delete files that arent in the queue so
                     // we dont keep anything i got rid of or smthn
-                    if (!FileQueue.Exists(queueFile => (queueFile.Name == Path.GetFileName(file))))
+                    if (!FileQueue.Exists(queueFile => (queueFile.Name == Path.GetFileNameWithoutExtension(file))))
                     {
                         File.Delete(file);
                     }

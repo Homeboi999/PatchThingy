@@ -53,8 +53,8 @@ int globalChapter = 0;
 #if DEBUG
 if (Debugger.IsAttached)
 {
-    chosenMode = ScriptMode.Apply;
-    DataFile.chapter = 1;
+    chosenMode = ScriptMode.Generate;
+    DataFile.chapter = 2;
     allChapters = false;
 }
 #endif

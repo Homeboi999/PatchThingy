@@ -329,7 +329,7 @@ partial class DataHandler
 
                 // scroll log output in menu
                 menu.Remove(2);
-                menu.InsertText(9, $"Added sprite {spriteDef.Name} - index = {spriteDef.index}");
+                menu.InsertText(9, $"Added sprite {spriteDef.Name}");
                 menu.Draw();
             }
         }
