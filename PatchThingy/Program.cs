@@ -438,7 +438,6 @@ try
         if (allChapters)
         {
             // set up the menu for console output
-            menu.ResizeBox(80);
             menu.AddSeparator(false);
 
             // loop through chapters
@@ -575,12 +574,19 @@ try
     {
         if (allChapters)
         {
+            // set up menu for console output
+            menu.AddSeparator(false);
+
             // loop through & compile
             for (int i = 1; i <= chapters.Length; i++)
             {
                 DataFile.chapter = i;
-                DataHandler.ReleasePatches(menu,(i == chapters.Count()), true);
+                DataHandler.ReleasePatches(menu, true);
             }
+
+            // exit patchthingy prompt
+            menu.AddSeparator(false);
+            menu.MessagePopup(PopupType.Message, []);
         }
         else
         {
