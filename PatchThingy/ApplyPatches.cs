@@ -114,6 +114,70 @@ partial class DataHandler
         // skip if only code files
         if (!sourceCodeOnly)
         {
+            // Sprite Definitions
+            // (must come before Game Objects so that sprite IDs exist)
+            List<SpriteDefinition> spriteList = [];
+            TextureAtlas atlas = new TextureAtlas();
+
+            curPath = Path.Combine(GetPath(chapter), spriteFolder);
+            if (Path.Exists(curPath))
+            {
+                foreach (string filePath in Directory.EnumerateFiles(curPath))
+                {
+                    if (!filePath.EndsWith(".json"))
+                    {
+                        continue; // images are loaded when saved.
+                    }
+
+                    SpriteDefinition spriteDef = JsonSerializer.Deserialize<SpriteDefinition>(File.ReadAllText(filePath))!;
+
+                    // if the definition couldn't be loaded for whatever reason
+                    if (spriteDef is null)
+                    {
+                        // build error message
+                        menu.MessagePopup(PopupType.Error, [$"Failed to load sprite definition for {Path.GetFileNameWithoutExtension(filePath)}"]);
+
+                        return false; // stop trying to import
+                    }
+
+                    string imagePath = Path.Combine(GetPath(DataFile.chapter), spriteFolder, spriteDef.ImageFile);
+
+                    // check if the image exists
+                    if (!File.Exists(imagePath))
+                    {
+                        // build error message
+                        menu.MessagePopup(PopupType.Error, [$"Failed to load sprite image for {spriteDef.Name}"]);
+                        return false; // stop trying to import
+                    }
+
+                    // add sprite definition to atlas
+                    atlas.Add(spriteDef, imagePath);
+                    spriteList.Add(spriteDef);
+                }
+            }
+
+            // dont make an atlas if theres no sprites lmao
+            if (spriteList.Count > 0)
+            {
+                spriteList.Sort();
+                // pack sprites to atlas, and add to data
+                atlas.Save(vandatailla.Data);
+
+                foreach (SpriteDefinition spriteDef in spriteList)
+                {
+                    // add texture entries to data
+                    spriteDef.AddFrames(atlas, vandatailla.Data);
+
+                    // add sprite definition to data
+                    vandatailla.Data.Sprites.Add(spriteDef.Save(vandatailla.Data));
+
+                    // scroll log output in menu
+                    menu.Remove(2);
+                    menu.InsertText(9, $"Added sprite {spriteDef.Name}");
+                    menu.Draw();
+                }
+            }
+            
             // Game Object Definitions
             // (must come before code definitions so we dont make them from code files)
             curPath = Path.Combine(GetPath(chapter), objectFolder);
@@ -268,69 +332,6 @@ partial class DataHandler
                     menu.InsertText(9, $"Patched code {Path.GetFileName(patchFile.basePath)}");
                     menu.Draw();
                 }
-            }
-        }
-
-        // sprite loading
-        List<SpriteDefinition> spriteList = [];
-        TextureAtlas atlas = new TextureAtlas();
-
-        curPath = Path.Combine(GetPath(chapter), spriteFolder);
-        if (Path.Exists(curPath))
-        {
-            foreach (string filePath in Directory.EnumerateFiles(curPath))
-            {
-                if (!filePath.EndsWith(".json"))
-                {
-                    continue; // images are loaded when saved.
-                }
-
-                SpriteDefinition spriteDef = JsonSerializer.Deserialize<SpriteDefinition>(File.ReadAllText(filePath))!;
-
-                // if the definition couldn't be loaded for whatever reason
-                if (spriteDef is null)
-                {
-                    // build error message
-                    menu.MessagePopup(PopupType.Error, [$"Failed to load sprite definition for {Path.GetFileNameWithoutExtension(filePath)}"]);
-
-                    return false; // stop trying to import
-                }
-
-                string imagePath = Path.Combine(GetPath(DataFile.chapter), spriteFolder, spriteDef.ImageFile);
-
-                // check if the image exists
-                if (!File.Exists(imagePath))
-                {
-                    // build error message
-                    menu.MessagePopup(PopupType.Error, [$"Failed to load sprite image for {spriteDef.Name}"]);
-                    return false; // stop trying to import
-                }
-
-                // add sprite definition to atlas
-                atlas.Add(spriteDef, imagePath);
-                spriteList.Add(spriteDef);
-            }
-        }
-
-        // dont make an atlas if theres no sprites lmao
-        if (spriteList.Count > 0)
-        {
-            spriteList.Sort();
-            // pack sprites to atlas, and add to data
-            atlas.Save(vandatailla.Data);
-
-            foreach (SpriteDefinition spriteDef in spriteList)
-            {
-                // add texture entries to data
-                spriteDef.AddFrames(atlas, vandatailla.Data);
-
-                // add sprite definition to data
-                vandatailla.Data.Sprites.Add(spriteDef.Save(vandatailla.Data));
-
-                // scroll log output in menu
-                menu.Remove(2);
-                menu.InsertText(9, $"Added sprite {spriteDef.Name}");
-                menu.Draw();
             }
         }
 

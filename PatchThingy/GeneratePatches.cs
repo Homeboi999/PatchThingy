@@ -92,7 +92,7 @@ partial class DataHandler
             GameObjectDefinition objectDef;
 
             // ofc, only save new objects
-            if (vanillaObject is null && !skipGlobal)
+            if (vanillaObject is null)
             {
                 objectDef = GameObjectDefinition.Load(modObject);
                 string jsonText = JsonSerializer.Serialize(objectDef, defOptions);
