@@ -41,7 +41,7 @@ if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 // create variables used to select a chapter and mode.
 // (Ch5 is in the first choicer for later, but should be excluded from All Chapter for now.)
 ScriptMode? chosenMode = null;
-string[] chapters = ["Chapter 1", "Chapter 2", "Chapter 3", "Chapter 4"];
+string[] chapters = ["Chapter 1", "Chapter 2", "Chapter 3", "Chapter 4", "Chapter 5"];
 string[] chapterChoices = ["All Chapters", "Chapter 1", "Chapter 2", "Chapter 3", "Chapter 4", "Chapter 5"];
 string[] scriptModes = ["Generate new patches", "Apply existing patches", "File Management"];
 
