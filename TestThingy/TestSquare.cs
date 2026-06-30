@@ -1,7 +1,7 @@
 
 namespace TestThingy;
 
-class TestHeart : TestInterface
+class TestSquare : TestInterface
 {
     (int X, int Y) pos = (0, 0);
 
@@ -31,6 +31,6 @@ class TestHeart : TestInterface
     {
         Console.Clear();
         Console.SetCursorPosition(pos.X, pos.Y);
-        Console.Write("♥️");
+        Console.Write("🟥");
     }
 }

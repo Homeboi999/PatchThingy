@@ -4,6 +4,13 @@ using TestThingy;
 Console.Write("\x1b[?1049h"); // Enable Alternate Buffer
 Console.Write("\x1b[?25l"); // Hide Cursor
 
+int index = 0;
+TestInterface[] hearts = 
+[
+    new TestHeart(),
+    new TestSquare()
+];
+
 while (true)
 {
     ConsoleKeyInfo input = Console.ReadKey(true);
@@ -13,8 +20,13 @@ while (true)
         break;
     }
 
-    TestHeart.OnKeyInput(input.Key);
-    TestHeart.Draw();
+    if (input.Key == ConsoleKey.Z)
+    {
+        index = (index + 1) % 2;
+    }
+
+    hearts[index].OnKeyInput(input.Key);
+    hearts[index].Draw();
 }
 
 Console.Write("\x1b[?1049l"); // Disable Alternate Buffer
