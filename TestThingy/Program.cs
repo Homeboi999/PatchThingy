@@ -4,29 +4,20 @@ using TestThingy;
 Console.Write("\x1b[?1049h"); // Enable Alternate Buffer
 Console.Write("\x1b[?25l"); // Hide Cursor
 
-int index = 0;
-TestInterface[] hearts = 
-[
-    new TestHeart(),
-    new TestSquare()
-];
+PageManager pageManager = new PageManager();
+pageManager.AddPage(new TestHeart(pageManager));
 
 while (true)
 {
-    ConsoleKeyInfo input = Console.ReadKey(true);
-
-    if (input.Key == ConsoleKey.Escape)
+    if (pageManager.IsEmpty)
     {
         break;
     }
 
-    if (input.Key == ConsoleKey.Z)
-    {
-        index = (index + 1) % 2;
-    }
-
-    hearts[index].OnKeyInput(input.Key);
-    hearts[index].Draw();
+    ConsoleKeyInfo input = Console.ReadKey(true);
+    
+    pageManager.OnKeyInput(input.Key);
+    pageManager.DrawPage();
 }
 
 Console.Write("\x1b[?1049l"); // Disable Alternate Buffer

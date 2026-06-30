@@ -1,14 +1,24 @@
 
 namespace TestThingy;
 
-class TestHeart : TestInterface
+class TestHeart : IPage
 {
+    readonly PageManager manager;
     (int X, int Y) pos = (0, 0);
+
+    public TestHeart(PageManager manager)
+    {
+        this.manager = manager;
+    }
 
     public void OnKeyInput(ConsoleKey inputKey)
     {
         switch (inputKey)
         {
+            case ConsoleKey.Z:
+                manager.AddPage(new TestSquare(manager));
+                break;
+
             case ConsoleKey.LeftArrow:
                 pos.X = Math.Max(pos.X - 2, 0);
                 break;
