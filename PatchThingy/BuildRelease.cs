@@ -9,6 +9,8 @@ using xdelta3.net;
 using System.IO.Compression;
 using ICSharpCode.SharpZipLib.Zip;
 
+namespace PatchThingy;
+
 // One class to manage all changes to the data.win
 //
 // This file contains the functions used for xdelta

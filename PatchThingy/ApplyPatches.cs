@@ -8,6 +8,8 @@ using ImageMagick;
 using RectpackSharp;
 using System.Diagnostics;
 
+namespace PatchThingy;
+
 // One class to manage all changes to the data.win
 //
 // This file contains the functions that apply the

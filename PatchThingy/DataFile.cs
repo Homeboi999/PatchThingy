@@ -4,6 +4,8 @@ using UndertaleModLib.Decompiler;
 using CodeChicken.DiffPatch;
 using Underanalyzer.Decompiler;
 
+namespace PatchThingy;
+
 class DataFile
 {
     // find the relevant versions of data.win

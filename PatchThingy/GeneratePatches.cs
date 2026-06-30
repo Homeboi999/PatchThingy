@@ -4,6 +4,8 @@ using UndertaleModLib.Decompiler;
 using CodeChicken.DiffPatch;
 using System.Text.Json;
 
+namespace PatchThingy;
+
 // One class to manage all changes to the data.win
 //
 // This file contains the function that generates

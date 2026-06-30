@@ -6,6 +6,8 @@ using System.Text.Json;
 using System.Diagnostics;
 using ImageMagick;
 
+namespace PatchThingy;
+
 public partial class ConsoleMenu
 {
     class ChoicerWidget : IWidget

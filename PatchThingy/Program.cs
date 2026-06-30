@@ -11,6 +11,7 @@ using System.Reflection;
 using ImageMagick.Drawing;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
+using PatchThingy;
 
 Console.CancelKeyPress += (sender, eventArgs) => ExitMenu();
 

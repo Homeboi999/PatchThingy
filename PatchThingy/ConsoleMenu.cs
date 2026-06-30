@@ -7,6 +7,8 @@ using System.Diagnostics;
 using ImageMagick;
 using System.Reflection;
 
+namespace PatchThingy;
+
 // Class responisble for drawing the PatchThingy menus
 public partial class ConsoleMenu
 {
