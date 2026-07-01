@@ -1,24 +1,26 @@
 
 namespace TestThingy;
 
-class TestSquare : IPage
+class TestPage : Page
 {
-    readonly PageManager manager;
+    override public int MaxWidth => 60;
     (int X, int Y) pos = (0, 0);
 
-    public TestSquare(PageManager manager)
+    public TestPage(PageManager manager) : base(manager)
     {
-        this.manager = manager;
+        AddText("Test Page!!", Alignment.Center);
+
+        AddSeparator(visible: false);
+        AddSeparator(visible: true);
+        AddSeparator(visible: false);
+        AddText("wowie!", Alignment.Center);
+
     }
 
-    public void OnKeyInput(ConsoleKey inputKey)
+    override public void OnKeyInput(ConsoleKey inputKey)
     {
         switch (inputKey)
         {
-            case ConsoleKey.Z:
-                manager.AddPage(new TestHeart(manager));
-                break;
-
             case ConsoleKey.LeftArrow:
                 pos.X = Math.Max(pos.X - 2, 0);
                 break;
@@ -35,12 +37,5 @@ class TestSquare : IPage
                 pos.Y = Math.Min(pos.Y + 1, Console.BufferHeight - 1);
                 break;
         }
-    }
-
-    public void Draw()
-    {
-        Console.Clear();
-        Console.SetCursorPosition(pos.X, pos.Y);
-        Console.Write("🟥");
     }
 }

@@ -5,7 +5,7 @@ Console.Write("\x1b[?1049h"); // Enable Alternate Buffer
 Console.Write("\x1b[?25l"); // Hide Cursor
 
 PageManager pageManager = new PageManager();
-pageManager.AddPage(new TestHeart(pageManager));
+pageManager.AddPage(new TestPage(pageManager));
 
 while (true)
 {
@@ -14,10 +14,10 @@ while (true)
         break;
     }
 
-    ConsoleKeyInfo input = Console.ReadKey(true);
-    
-    pageManager.OnKeyInput(input.Key);
     pageManager.DrawPage();
+
+    ConsoleKeyInfo input = Console.ReadKey(true);    
+    pageManager.OnKeyInput(input.Key);
 }
 
 Console.Write("\x1b[?1049l"); // Disable Alternate Buffer

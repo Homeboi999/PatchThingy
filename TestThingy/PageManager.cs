@@ -2,7 +2,7 @@ namespace TestThingy;
 
 class PageManager
 {
-    List<IPage> pageList = [];
+    List<Page> pageList = [];
     public bool IsEmpty => pageList.Count == 0;
 
     public void OnKeyInput(ConsoleKey inputKey)
@@ -19,7 +19,7 @@ class PageManager
         }
     }
 
-    public void AddPage(IPage page)
+    public void AddPage(Page page)
     {
         pageList.Add(page);
     }
