@@ -1,8 +1,12 @@
+using System.Reflection;
+
 namespace TestThingy;
 
 class PageManager
 {
-    List<Page> pageList = [];
+    static string versionNum = typeof(Program).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "??";
+    public string mainTitle = $"╾─╴╴╴  PatchThingy Rewrite Test  ╶╶╶─╼";
+    List<Page.Page> pageList = [];
     public int pageCount => pageList.Count;
     public bool IsEmpty => pageList.Count == 0;
 
@@ -22,7 +26,7 @@ class PageManager
         }
     }
 
-    public void AddPage(Page page)
+    public void AddPage(Page.Page page)
     {
         pageList.Add(page);
     }

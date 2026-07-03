@@ -1,22 +1,27 @@
 using TestThingy.Widget;
 
-namespace TestThingy;
+namespace TestThingy.Page;
 
 class TestPage : Page
 {
     override public int MaxWidth => 60;
 
-    TextWidget testLabel = new TextWidget("Test Page!!", Alignment.Center);
+    TextWidget topText = new TextWidget("Test Page!!", Alignment.Center);
     ChoicerWidget testChoicer = new ChoicerWidget(["Yes", "Also Yes", "No", "Fuck You!!!!"]);
+    public TextWidget bottomText = new TextWidget("wowie!!", Alignment.Center);
 
     public TestPage(PageManager manager) : base(manager)
     {
+        AddWidget(new TextWidget(manager.mainTitle, Alignment.Center));
         AddWidget(new SeparatorWidget(visible: false));
-        AddWidget(testLabel);
+        AddWidget(topText);
+        AddWidget(new SeparatorWidget(visible: false));
         AddWidget(new SeparatorWidget(visible: true));
+        AddWidget(new SeparatorWidget(visible: false));
         AddWidget(testChoicer);
         AddWidget(new SeparatorWidget(visible: false));
-        AddWidget(new TextWidget("wowie!", Alignment.Center));
+        AddWidget(bottomText);
+        AddWidget(new SeparatorWidget(visible: false));
     }
 
     override public void OnKeyInput(ConsoleKey inputKey)
@@ -40,7 +45,7 @@ class TestPage : Page
                     case 0:
                     case 1:
                         TestPage newPage = new TestPage(manager);
-                        newPage.testLabel.content = "Page: " + (manager.pageCount + 1).ToString();
+                        newPage.bottomText.content = "Page: " + (manager.pageCount + 1).ToString();
                         manager.AddPage(newPage);
                         break;
 

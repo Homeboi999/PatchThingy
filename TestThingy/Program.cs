@@ -1,11 +1,12 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using TestThingy;
+using TestThingy.Page;
 
 Console.Write("\x1b[?1049h"); // Enable Alternate Buffer
 Console.Write("\x1b[?25l"); // Hide Cursor
 
 PageManager pageManager = new PageManager();
-pageManager.AddPage(new TestPage(pageManager));
+pageManager.AddPage(new ChaptersPage(pageManager));
 
 while (true)
 {

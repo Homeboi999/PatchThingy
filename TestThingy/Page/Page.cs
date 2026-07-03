@@ -1,6 +1,6 @@
 using TestThingy.Widget;
 
-namespace TestThingy;
+namespace TestThingy.Page;
 
 abstract class Page
 {

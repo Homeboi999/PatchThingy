@@ -13,7 +13,7 @@ public record DrawContext(int x, int y, int width, int height)
 
     // function to align the cursor along the current line
     // in preparation to write text of a given size
-    public int AlignPosition(Alignment align, int margin = 4)
+    public int AlignPosition(Alignment align, int margin = 8)
     {
         int destX = 0;
 
@@ -37,7 +37,7 @@ public record DrawContext(int x, int y, int width, int height)
     }
 
     // Find the desired x coordinate for Choicer columns
-    public int[] AlignColumns(int margin = 4)
+    public int[] AlignColumns(int margin = 8)
     {
         return [AlignPosition(Alignment.Left), AlignPosition(Alignment.Center) + margin / 2 + 1];
     }
