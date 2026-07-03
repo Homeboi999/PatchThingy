@@ -1,3 +1,5 @@
+using TestThingy.Widget;
+
 namespace TestThingy;
 
 abstract class Page
@@ -41,8 +43,6 @@ abstract class Page
         // draw box to screen
         Console.Write(boxString);
 
-        Console.Write("\x1b[?2026l"); // start display
-
         // Potential future version
         int line = 0;
         foreach (IWidget widget in widgets)
@@ -50,59 +50,29 @@ abstract class Page
             widget.Draw(box, line);
             line += widget.LineCount;
         }
-    }
 
-    #region Widget Management
+        Console.Write("\x1b[?2026l"); // start display
+    }
 
     // Add a text widget to the menu
-    public void AddText (string content, Alignment align = Alignment.Left, ConsoleColor? color = null)
+    public void AddWidget (IWidget newWidget)
     {
-        TextWidget newText = new(content);
-        newText.align = align;
-        newText.color = color;
-        widgets.Add(newText);
+        widgets.Add(newWidget);
     }
-    public void InsertText (int index, string content, Alignment align = Alignment.Left, ConsoleColor? color = null)
+    public void InsertWidget (int index, IWidget newWidget)
     {
         if (index > widgets.Count || index < 0)
         {
             return;
         }
-
-        TextWidget newText = new(content);
-        newText.align = align;
-        newText.color = color;
-        widgets.Insert(index, newText);
+        widgets.Insert(index, newWidget);
     }
-    public void ReplaceText(int index, string content, Alignment align = Alignment.Left, ConsoleColor? color = null)
+    public void ReplaceWidget(int index, IWidget newWidget)
     {
         if (index > widgets.Count || index < 0)
         {
             return;
         }
-
-        TextWidget newText = new(content);
-        newText.align = align;
-        newText.color = color;
-        widgets[index] = newText;
+        widgets[index] = newWidget;
     }
-    
-    // Adds a separator to the menu
-    public void AddSeparator(bool visible = true)
-    {
-        widgets.Add(new SeparatorWidget(visible));
-    }
-    public void InsertSeparator(int index, bool visible = true)
-    {
-        // adjust the line number of all subsequent widgets
-
-        widgets.Insert(index, new SeparatorWidget(visible));
-    }
-    public void ReplaceSeparator(int index, bool visible = true)
-    {
-        // adjust the line number of all subsequent widgets
-
-        widgets[index] = new SeparatorWidget(visible);
-    }
-    #endregion
 }

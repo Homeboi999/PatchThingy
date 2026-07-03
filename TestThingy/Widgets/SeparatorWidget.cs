@@ -1,19 +1,19 @@
-namespace TestThingy;
+namespace TestThingy.Widget;
 
 class SeparatorWidget : IWidget
 {
-    bool Visible;
+    bool visible;
 
-    public SeparatorWidget (bool Visible)
+    public SeparatorWidget (bool visible)
     {
-        this.Visible = Visible;
+        this.visible = visible;
     }
 
     public int LineCount => 1;
 
     public void Draw(DrawContext box, int line)
     {
-        if (Visible)
+        if (visible)
         {
             DrawContext.MoveCursor(0, box.y + line);
 

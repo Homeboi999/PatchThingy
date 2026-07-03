@@ -1,36 +1,37 @@
-namespace TestThingy;
+namespace TestThingy.Widget;
 
 class TextWidget : IWidget
 {
     public string content;
-    public ConsoleColor? color = null;
+    public ConsoleColor? color;
     public Alignment align;
 
-    public TextWidget (string content, Alignment align = Alignment.Left)
+    public TextWidget (string content, Alignment align = Alignment.Left, ConsoleColor? color = null)
     {
         this.content = content;
+        this.color = color;
         this.align = align;
     }
 
     public int LineCount => 1;
 
-    public void Draw(DrawContext menu, int line)
+    public void Draw(DrawContext box, int line)
     {
         int x = 0;
-        int y = menu.y + line;
+        int y = box.y + line;
 
         switch (align)
         {
             case Alignment.Left:
-                x = menu.AlignPosition(align);
+                x = box.AlignPosition(align);
                 break;
 
             case Alignment.Center:
-                x = menu.AlignPosition(align) - (content.Length / 2);
+                x = box.AlignPosition(align) - (content.Length / 2);
                 break;
 
             case Alignment.Right:
-                x = menu.AlignPosition(align) - content.Length;
+                x = box.AlignPosition(align) - content.Length;
                 break;
         }
 

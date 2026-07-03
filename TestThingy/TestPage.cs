@@ -1,40 +1,59 @@
+using TestThingy.Widget;
 
 namespace TestThingy;
 
 class TestPage : Page
 {
     override public int MaxWidth => 60;
-    (int X, int Y) pos = (0, 0);
+
+    TextWidget testLabel = new TextWidget("Test Page!!", Alignment.Center);
+    ChoicerWidget testChoicer = new ChoicerWidget(["Yes", "Also Yes", "No", "Fuck You!!!!"]);
 
     public TestPage(PageManager manager) : base(manager)
     {
-        AddText("Test Page!!", Alignment.Center);
-
-        AddSeparator(visible: false);
-        AddSeparator(visible: true);
-        AddSeparator(visible: false);
-        AddText("wowie!", Alignment.Center);
-
+        AddWidget(new SeparatorWidget(visible: false));
+        AddWidget(testLabel);
+        AddWidget(new SeparatorWidget(visible: true));
+        AddWidget(testChoicer);
+        AddWidget(new SeparatorWidget(visible: false));
+        AddWidget(new TextWidget("wowie!", Alignment.Center));
     }
 
     override public void OnKeyInput(ConsoleKey inputKey)
     {
         switch (inputKey)
         {
+            // Choicer Selection
             case ConsoleKey.LeftArrow:
-                pos.X = Math.Max(pos.X - 2, 0);
-                break;
-            
             case ConsoleKey.RightArrow:
-                pos.X = Math.Min(pos.X + 2, Console.BufferWidth - 1);
-                break;
-            
             case ConsoleKey.UpArrow:
-                pos.Y = Math.Max(pos.Y - 1, 0);
-                break;
-            
             case ConsoleKey.DownArrow:
-                pos.Y = Math.Min(pos.Y + 1, Console.BufferHeight - 1);
+                testChoicer.ChangeSelection(inputKey);
+                break;
+
+            // Confirm
+            case ConsoleKey.Z:
+            case ConsoleKey.Enter:
+                switch(testChoicer.curSelection)
+                {
+                    // "Yes"
+                    case 0:
+                    case 1:
+                        TestPage newPage = new TestPage(manager);
+                        newPage.testLabel.content = "Page: " + (manager.pageCount + 1).ToString();
+                        manager.AddPage(newPage);
+                        break;
+
+                    // "No"
+                    case 2:
+                        manager.RemovePage();
+                        break;
+
+                    // "Fuck You!!!!"
+                    case 3:
+                        manager.Exit();
+                        break;
+                }
                 break;
         }
     }

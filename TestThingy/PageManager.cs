@@ -3,8 +3,11 @@ namespace TestThingy;
 class PageManager
 {
     List<Page> pageList = [];
+    public int pageCount => pageList.Count;
     public bool IsEmpty => pageList.Count == 0;
 
+    // Handles Cancel button for now, may move
+    // that to a per-page thing.
     public void OnKeyInput(ConsoleKey inputKey)
     {
         switch (inputKey)
@@ -24,17 +27,22 @@ class PageManager
         pageList.Add(page);
     }
 
-    void RemovePage()
+    public void RemovePage()
     {
-        if (pageList.Count > 0)
+        if (pageCount > 0)
         {
             pageList.RemoveAt(pageList.Count - 1);
         }
     }
 
+    public void Exit()
+    {
+        pageList.Clear();
+    }
+
     void SendInput(ConsoleKey inputKey)
     {
-        if (pageList.Count > 0)
+        if (pageCount > 0)
         {
             pageList.Last().OnKeyInput(inputKey);
         }
@@ -42,12 +50,9 @@ class PageManager
 
     public void DrawPage()
     {
-        if (pageList.Count > 0)
+        if (pageCount > 0)
         {
             pageList.Last().Draw();
         }
-
-        Console.SetCursorPosition(0, 0);
-        Console.Write(pageList.Count);
     }
 }
