@@ -15,7 +15,7 @@ class ActionPage : Page
 
     ChoicerWidget actionChoicer = new ChoicerWidget(["Generate new patches", "Apply existing patches", "Manage Data Files"], ChoicerType.List);
 
-    public ActionPage(PageManager manager, int chapter) : base(manager)
+    public ActionPage(int chapter)
     {
         // check chapter number
         this.chapter = chapter;
@@ -30,9 +30,6 @@ class ActionPage : Page
             actionPrompt = actionPrompt + singleChapterText + chapter;
         }
 
-        // title
-        AddWidget(new TextWidget(manager.mainTitle, Alignment.Center));
-
         // main prompt
         AddWidget(new SeparatorWidget(visible: false));
         AddWidget(new TextWidget(actionPrompt, Alignment.Center));
@@ -46,8 +43,10 @@ class ActionPage : Page
         AddWidget(new SeparatorWidget(visible: false));
     }
 
-    override public void OnKeyInput(ConsoleKey inputKey)
+    override public PageControl OnKeyInput(ConsoleKey inputKey)
     {
+        PageControl result = PageControl.Continue;
+
         switch (inputKey)
         {
             // Choicer Selection
@@ -67,32 +66,40 @@ class ActionPage : Page
                     case 0:
                         if (allChapters)
                         {
-                            ChaptersPage newPage = new ChaptersPage(manager, true);
+                            ChaptersPage newPage = new ChaptersPage(true);
                             newPage.chapterPrompt.content = "Which chapter should Global Patches be generated from?";
-                            manager.AddPage(newPage);
+                            result = SwitchPage(newPage);
                         }
                         else
                         {
-                            TestPage newPage = new TestPage(manager);
+                            TestPage newPage = new TestPage();
                             newPage.bottomText.content = $"(Will start generating patches for Ch. {chapter})";
-                            manager.AddPage(newPage);
+                            result = SwitchPage(newPage);
                         }
                         break;
 
                     // Apply
                     case 1:
-                        TestPage newPage2 = new TestPage(manager);
+                        TestPage newPage2 = new TestPage();
                         newPage2.bottomText.content = $"(Will apply patches to Ch. {chapter})";
-                        manager.AddPage(newPage2);
+                        result = SwitchPage(newPage2);
                         break;
 
                     // Manage Data
                     case 2:
-                        ManageDataPage dataPage = new ManageDataPage(manager, chapter);
-                        manager.AddPage(dataPage);
+                        ManageDataPage dataPage = new ManageDataPage(chapter);
+                        result = SwitchPage(dataPage);
                         break;
                 }
                 break;
+
+            // Cancel
+            case ConsoleKey.X:
+            case ConsoleKey.Escape:
+                result = PageControl.GoToPrevious;
+                break;
         }
+
+        return result;
     }
 }

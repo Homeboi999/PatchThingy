@@ -25,14 +25,11 @@ class ChaptersPage : Page
         }
     }
 
-    public ChaptersPage(PageManager manager, bool onlyChapters = false) : base(manager)
+    public ChaptersPage(bool onlyChapters = false)
     {
         this.onlyChapters = onlyChapters;
         
         chapterChoicer = new ChoicerWidget(chapterArray);
-
-        // title
-        AddWidget(new TextWidget(manager.mainTitle, Alignment.Center));
 
         // main label
         AddWidget(new SeparatorWidget(visible: false));
@@ -47,8 +44,10 @@ class ChaptersPage : Page
         AddWidget(new SeparatorWidget(visible: false));
     }
 
-    override public void OnKeyInput(ConsoleKey inputKey)
+    override public PageControl OnKeyInput(ConsoleKey inputKey)
     {
+        PageControl result = PageControl.Continue;
+
         switch (inputKey)
         {
             // Choicer Selection
@@ -62,20 +61,27 @@ class ChaptersPage : Page
             // Confirm
             case ConsoleKey.Z:
             case ConsoleKey.Enter:
-
                 // TODO: make this better (prob a diff kind of page tbh)
                 if (onlyChapters)
                 {
-                    TestPage newPage = new TestPage(manager);
+                    TestPage newPage = new TestPage();
                     newPage.bottomText.content = "(Will start generating patches for all chapters)";
-                    manager.AddPage(newPage);
+                    result = SwitchPage(newPage);
                 }
                 else
                 {
-                    manager.AddPage(new ActionPage(manager, chapterChoicer.curSelection + (onlyChapters ? 1 : 0)));
+                    result = SwitchPage(new ActionPage(chapterChoicer.curSelection + (onlyChapters ? 1 : 0)));
                 }
 
                 break;
+
+            // Cancel
+            case ConsoleKey.X:
+            case ConsoleKey.Escape:
+                result = PageControl.GoToPrevious;
+                break;
         }
+
+        return result;
     }
 }

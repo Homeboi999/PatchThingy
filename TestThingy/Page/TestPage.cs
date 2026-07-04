@@ -5,14 +5,14 @@ namespace TestThingy.Page;
 class TestPage : Page
 {
     override public int MaxWidth => 60;
+    public int pageNum = 1;
 
     TextWidget topText = new TextWidget("Test Page!!", Alignment.Center);
     ChoicerWidget testChoicer = new ChoicerWidget(["Yes", "Also Yes", "No", "Fuck You!!!!"]);
     public TextWidget bottomText = new TextWidget("wowie!!", Alignment.Center);
 
-    public TestPage(PageManager manager) : base(manager)
+    public TestPage()
     {
-        AddWidget(new TextWidget(manager.mainTitle, Alignment.Center));
         AddWidget(new SeparatorWidget(visible: false));
         AddWidget(topText);
         AddWidget(new SeparatorWidget(visible: false));
@@ -24,8 +24,10 @@ class TestPage : Page
         AddWidget(new SeparatorWidget(visible: false));
     }
 
-    override public void OnKeyInput(ConsoleKey inputKey)
+    override public PageControl OnKeyInput(ConsoleKey inputKey)
     {
+        PageControl result = PageControl.Continue;
+
         switch (inputKey)
         {
             // Choicer Selection
@@ -44,22 +46,31 @@ class TestPage : Page
                     // "Yes"
                     case 0:
                     case 1:
-                        TestPage newPage = new TestPage(manager);
-                        newPage.bottomText.content = "Page: " + (manager.pageCount + 1).ToString();
-                        manager.AddPage(newPage);
+                        TestPage newPage = new TestPage();
+                        newPage.pageNum = pageNum + 1;
+                        newPage.bottomText.content = "Page: " + newPage.pageNum.ToString();
+                        result = SwitchPage(newPage);
                         break;
 
                     // "No"
                     case 2:
-                        manager.RemovePage();
+                        result = PageControl.GoToFirst;
                         break;
 
                     // "Fuck You!!!!"
                     case 3:
-                        manager.Exit();
+                        result = PageControl.ExitAll;
                         break;
                 }
                 break;
+
+            // Cancel
+            case ConsoleKey.X:
+            case ConsoleKey.Escape:
+                result = PageControl.GoToPrevious;
+                break;
         }
+
+        return result;
     }
 }

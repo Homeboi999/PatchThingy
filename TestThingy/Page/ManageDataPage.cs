@@ -15,7 +15,7 @@ class ManageDataPage : Page
 
     ChoicerWidget actionChoicer = new ChoicerWidget(["Vanilla Data", "Backup Data", "Convert Patch to Source", "Update Source Code", "Build xdeltas"]);
 
-    public ManageDataPage(PageManager manager, int chapter) : base(manager)
+    public ManageDataPage(int chapter)
     {
         // check chapter number
         this.chapter = chapter;
@@ -30,9 +30,6 @@ class ManageDataPage : Page
             actionPrompt = actionPrompt + singleChapterText + chapter;
         }
 
-        // title
-        AddWidget(new TextWidget(manager.mainTitle, Alignment.Center));
-
         // main prompt
         AddWidget(new SeparatorWidget(visible: false));
         AddWidget(new TextWidget(actionPrompt, Alignment.Center));
@@ -46,8 +43,10 @@ class ManageDataPage : Page
         AddWidget(new SeparatorWidget(visible: false));
     }
 
-    override public void OnKeyInput(ConsoleKey inputKey)
+    override public PageControl OnKeyInput(ConsoleKey inputKey)
     {
+        PageControl result = PageControl.Continue;
+
         switch (inputKey)
         {
             // Choicer Selection
@@ -61,10 +60,18 @@ class ManageDataPage : Page
             // Confirm
             case ConsoleKey.Z:
             case ConsoleKey.Enter:
-                TestPage newPage = new TestPage(manager);
+                TestPage newPage = new TestPage();
                 newPage.bottomText.content = "(Don't feel like coding placeholders for each option here yet)";
-                manager.AddPage(newPage);
+                result = SwitchPage(newPage);
+                break;
+
+            // Cancel
+            case ConsoleKey.X:
+            case ConsoleKey.Escape:
+                result = PageControl.GoToPrevious;
                 break;
         }
+
+        return result;
     }
 }
