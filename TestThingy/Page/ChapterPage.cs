@@ -2,38 +2,31 @@ using TestThingy.Widget;
 
 namespace TestThingy.Page;
 
-class ChaptersPage : Page
+abstract class ChapterPage : Page
 {
     override public int MaxWidth => 60;
     
-    public TextWidget chapterPrompt = new TextWidget("Select a Deltarune chapter to patch", Alignment.Center);
-    bool onlyChapters;
+    protected virtual string chapterPrompt => "Select a Deltarune chapter to patch";
+    readonly bool onlyChapters;
     
     ChoicerWidget chapterChoicer;
-    string[] chapterArray
-    {
-        get
-        {
-            List<string> chapterList = ["Chapter 1", "Chapter 2", "Chapter 3", "Chapter 4", "Chapter 5"];
 
-            if (!onlyChapters)
-            {
-                chapterList.Insert(0, "All Chapters");
-            }
-
-            return chapterList.ToArray();
-        }
-    }
-
-    public ChaptersPage(bool onlyChapters = false)
+    public ChapterPage(bool onlyChapters = false)
     {
         this.onlyChapters = onlyChapters;
+
+        List<string> chapterList = ["Chapter 1", "Chapter 2", "Chapter 3", "Chapter 4", "Chapter 5"];
+
+        if (!onlyChapters)
+        {
+            chapterList.Insert(0, "All Chapters");
+        }
         
-        chapterChoicer = new ChoicerWidget(chapterArray);
+        chapterChoicer = new ChoicerWidget(chapterList);
 
         // main label
         AddWidget(new SeparatorWidget(visible: false));
-        AddWidget(chapterPrompt);
+        AddWidget(new TextWidget(chapterPrompt, Alignment.Center));
         AddWidget(new SeparatorWidget(visible: false));
         
         AddWidget(new SeparatorWidget(visible: true));
@@ -61,18 +54,7 @@ class ChaptersPage : Page
             // Confirm
             case ConsoleKey.Z:
             case ConsoleKey.Enter:
-                // TODO: make this better (prob a diff kind of page tbh)
-                if (onlyChapters)
-                {
-                    TestPage newPage = new TestPage();
-                    newPage.bottomText.content = "(Will start generating patches for all chapters)";
-                    result = SwitchPage(newPage);
-                }
-                else
-                {
-                    result = SwitchPage(new ActionPage(chapterChoicer.curSelection + (onlyChapters ? 1 : 0)));
-                }
-
+                result = OnChapterSelected(chapterChoicer.curSelection + (onlyChapters ? 1 : 0));
                 break;
 
             // Cancel
@@ -84,4 +66,6 @@ class ChaptersPage : Page
 
         return result;
     }
+
+    protected abstract PageControl OnChapterSelected(int chapter);
 }

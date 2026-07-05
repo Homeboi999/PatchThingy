@@ -66,8 +66,7 @@ class ActionPage : Page
                     case 0:
                         if (allChapters)
                         {
-                            ChaptersPage newPage = new ChaptersPage(true);
-                            newPage.chapterPrompt.content = "Which chapter should Global Patches be generated from?";
+                            GlobalChapterPage newPage = new GlobalChapterPage();
                             result = SwitchPage(newPage);
                         }
                         else

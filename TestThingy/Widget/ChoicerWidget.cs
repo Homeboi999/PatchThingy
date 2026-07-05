@@ -3,14 +3,14 @@ namespace TestThingy.Widget;
 class ChoicerWidget : IWidget
 {
     ChoicerType type;
-    string[] choices = [];
+    IReadOnlyList<string> choices = [];
 
     public int curSelection = 0;
     public bool chosen = false;
     public bool focused = true;
     public bool visible = true;
 
-    public ChoicerWidget (string[] choices, ChoicerType type = ChoicerType.Grid)
+    public ChoicerWidget (IReadOnlyList<string> choices, ChoicerType type = ChoicerType.Grid)
     {
         this.choices = choices;
         this.type = type;
@@ -30,10 +30,10 @@ class ChoicerWidget : IWidget
             switch(type)
             {
                 case ChoicerType.List:
-                    return choices.Length;
+                    return choices.Count;
 
                 case ChoicerType.Grid:
-                    return choices.Length / 2 + (choices.Length % 2);
+                    return choices.Count / 2 + (choices.Count % 2);
                     
                 default:
                     return 1;
@@ -54,14 +54,14 @@ class ChoicerWidget : IWidget
         switch (type)
         {
             case ChoicerType.List:
-                for (int i = 0; i < choices.Length; i++)
+                for (int i = 0; i < choices.Count; i++)
                 {
                     WriteChoice(choices[i], columnPos[0], startLine + i, curSelection == i);
                 }
                 break;
 
             case ChoicerType.Grid:
-                for (int i = 0; i < choices.Length; i++)
+                for (int i = 0; i < choices.Count; i++)
                 {
                     WriteChoice(choices[i], columnPos[i % 2], startLine + (i / 2), curSelection == i);
                 }
@@ -111,7 +111,7 @@ class ChoicerWidget : IWidget
                 {
                     if (curSelection - 1 < 0)
                     {
-                        curSelection = choices.Length - 1;
+                        curSelection = choices.Count - 1;
                     }
                     else
                     {
@@ -130,7 +130,7 @@ class ChoicerWidget : IWidget
             case ConsoleKey.DownArrow:
                 if (type == ChoicerType.List)
                 {
-                    if (curSelection + 1 >= choices.Length)
+                    if (curSelection + 1 >= choices.Count)
                     {
                         curSelection = 0;
                     }
@@ -141,7 +141,7 @@ class ChoicerWidget : IWidget
                 }
                 else if (type == ChoicerType.Grid)
                 {
-                    if (curSelection + 2 < choices.Length)
+                    if (curSelection + 2 < choices.Count)
                     {
                         curSelection += 2;
                     }
@@ -163,7 +163,7 @@ class ChoicerWidget : IWidget
             case ConsoleKey.RightArrow:
                 if (type != ChoicerType.List)
                 {
-                    if (curSelection % 2 == 0 && curSelection + 1 < choices.Length)
+                    if (curSelection % 2 == 0 && curSelection + 1 < choices.Count)
                     {
                         curSelection++;
                     }

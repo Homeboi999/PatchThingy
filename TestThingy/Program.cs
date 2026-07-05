@@ -5,7 +5,7 @@ using TestThingy.Page;
 Console.Write("\x1b[?1049h"); // Enable Alternate Buffer
 Console.Write("\x1b[?25l"); // Hide Cursor
 
-ChaptersPage startPage = new ChaptersPage();
+MainChapterPage startPage = new MainChapterPage();
 startPage.RunLoop();
 
 Console.Write("\x1b[?1049l"); // Disable Alternate Buffer
