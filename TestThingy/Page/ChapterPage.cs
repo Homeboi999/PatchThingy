@@ -35,6 +35,7 @@ abstract class ChapterPage : Page
         AddWidget(new SeparatorWidget(visible: false));
         AddWidget(chapterChoicer);
         AddWidget(new SeparatorWidget(visible: false));
+        SetFocusedWidget(chapterChoicer);
     }
 
     override public PageControl OnKeyInput(ConsoleKey inputKey)
@@ -46,6 +47,7 @@ abstract class ChapterPage : Page
             // Confirm
             case ChoicerResult.Confirm:
                 result = OnChapterSelected(chapterChoicer.curSelection + (onlyChapters ? 1 : 0));
+                chapterChoicer.chosen = false;
                 break;
 
             // Cancel

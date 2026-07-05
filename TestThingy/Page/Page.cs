@@ -11,7 +11,8 @@ abstract class Page
     public readonly string mainTitle = $"╾─╴╴╴  PatchThingy Rewrite Test  ╶╶╶─╼";
 
     // Variables that each page will need
-    List<IWidget> widgets = [];
+    List<Widget.Widget> widgets = [];
+    Widget.Widget? focusedWidget = null;
     Page? lastPage;
 
     public Page(Page? lastPage = null)
@@ -49,6 +50,17 @@ abstract class Page
     }
 
     public abstract PageControl OnKeyInput(ConsoleKey inputKey);
+
+    public void SetFocusedWidget(Widget.Widget newWidget)
+    {
+        if (focusedWidget is not null)
+        {
+            focusedWidget.focused = false;
+        }
+
+        focusedWidget = newWidget;
+        focusedWidget.focused = true;
+    }
 
     public PageControl SwitchPage(Page nextPage)
     {
@@ -90,7 +102,7 @@ abstract class Page
 
         // Potential future version
         int line = 1;
-        foreach (IWidget widget in widgets)
+        foreach (Widget.Widget widget in widgets)
         {
             widget.Draw(box, line);
             line += widget.LineCount;
@@ -100,11 +112,11 @@ abstract class Page
     }
 
     // Add a text widget to the menu
-    public void AddWidget (IWidget newWidget)
+    public void AddWidget (Widget.Widget newWidget)
     {
         widgets.Add(newWidget);
     }
-    public void InsertWidget (int index, IWidget newWidget)
+    public void InsertWidget (int index, Widget.Widget newWidget)
     {
         if (index > widgets.Count || index < 0)
         {
@@ -112,7 +124,7 @@ abstract class Page
         }
         widgets.Insert(index, newWidget);
     }
-    public void ReplaceWidget(int index, IWidget newWidget)
+    public void ReplaceWidget(int index, Widget.Widget newWidget)
     {
         if (index > widgets.Count || index < 0)
         {

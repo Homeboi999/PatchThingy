@@ -41,6 +41,7 @@ class ManageDataPage : Page
         AddWidget(new SeparatorWidget(visible: false));
         AddWidget(actionChoicer);
         AddWidget(new SeparatorWidget(visible: false));
+        SetFocusedWidget(actionChoicer);
     }
 
     override public PageControl OnKeyInput(ConsoleKey inputKey)

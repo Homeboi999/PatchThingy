@@ -1,8 +1,8 @@
 namespace TestThingy.Widget;
 
-public class WidgetGroup : IWidget
+public class WidgetGroup : Widget
 {
-    List<IWidget> widgets = [];
+    List<Widget> widgets = [];
     public bool visible;
 
     public WidgetGroup(bool visible = false)
@@ -10,13 +10,13 @@ public class WidgetGroup : IWidget
         this.visible = visible;
     }
 
-    public void Draw(DrawContext box, int line)
+    public override void Draw(DrawContext box, int line)
     {
         if (visible)
         {
             int curLine = line;
 
-            foreach (IWidget widget in widgets)
+            foreach (Widget widget in widgets)
             {
                 widget.Draw(box, curLine);
                 curLine += widget.LineCount;
@@ -24,7 +24,7 @@ public class WidgetGroup : IWidget
         }
     }
 
-    public int LineCount
+    public override int LineCount
     {
         get
         {
@@ -32,7 +32,7 @@ public class WidgetGroup : IWidget
             
             if (visible)
             {
-                foreach (IWidget widget in widgets)
+                foreach (Widget widget in widgets)
                 {
                     lineTotal += widget.LineCount;
                 }   
@@ -43,11 +43,11 @@ public class WidgetGroup : IWidget
     }
 
     // Add a widget to the group
-    public void AddWidget (IWidget newWidget)
+    public void AddWidget (Widget newWidget)
     {
         widgets.Add(newWidget);
     }
-    public void InsertWidget (int index, IWidget newWidget)
+    public void InsertWidget (int index, Widget newWidget)
     {
         if (index > widgets.Count || index < 0)
         {
@@ -55,7 +55,7 @@ public class WidgetGroup : IWidget
         }
         widgets.Insert(index, newWidget);
     }
-    public void ReplaceWidget(int index, IWidget newWidget)
+    public void ReplaceWidget(int index, Widget newWidget)
     {
         if (index > widgets.Count || index < 0)
         {

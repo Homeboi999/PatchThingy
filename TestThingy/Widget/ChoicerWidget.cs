@@ -1,13 +1,12 @@
 namespace TestThingy.Widget;
 
-class ChoicerWidget : IWidget
+class ChoicerWidget : Widget
 {
     ChoicerType type;
     IReadOnlyList<string> choices = [];
 
     public int curSelection = 0;
     public bool chosen = false;
-    public bool focused = true;
     public bool visible = true;
 
     public ChoicerWidget (IReadOnlyList<string> choices, ChoicerType type = ChoicerType.Grid)
@@ -18,7 +17,7 @@ class ChoicerWidget : IWidget
 
     // LineCount changes based on the
     // # of choices and the ChoicerType
-    public int LineCount
+    public override int LineCount
     {
         get
         {
@@ -41,7 +40,7 @@ class ChoicerWidget : IWidget
         }
     }
 
-    public void Draw(DrawContext box, int line)
+    public override void Draw(DrawContext box, int line)
     {
         if (!visible)
         {
@@ -76,6 +75,7 @@ class ChoicerWidget : IWidget
             // Confirm
             case ConsoleKey.Z:
             case ConsoleKey.Enter:
+                chosen = true;
                 return ChoicerResult.Confirm;
 
             // Cancel
@@ -99,7 +99,7 @@ class ChoicerWidget : IWidget
 
     void WriteChoice (string text, int x, int y, bool selected)
     {
-        if (focused && !chosen && selected)
+        if (focused && selected)
         {
             // move heart
             DrawContext.MoveCursor(x - 3, y);

@@ -1,6 +1,6 @@
 namespace TestThingy.Widget;
 
-class SeparatorWidget : IWidget
+class SeparatorWidget : Widget
 {
     bool visible;
 
@@ -9,9 +9,9 @@ class SeparatorWidget : IWidget
         this.visible = visible;
     }
 
-    public int LineCount => 1;
+    public override int LineCount => 1;
 
-    public void Draw(DrawContext box, int line)
+    public override void Draw(DrawContext box, int line)
     {
         if (visible)
         {

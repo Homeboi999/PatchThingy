@@ -19,6 +19,7 @@ class TestPage : Page
         AddWidget(new SeparatorWidget(visible: true));
         AddWidget(new SeparatorWidget(visible: false));
         AddWidget(testChoicer);
+        SetFocusedWidget(testChoicer);
         AddWidget(new SeparatorWidget(visible: false));
         AddWidget(bottomText);
         AddWidget(new SeparatorWidget(visible: false));

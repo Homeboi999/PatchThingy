@@ -1,6 +1,6 @@
 namespace TestThingy.Widget;
 
-class TextWidget : IWidget
+class TextWidget : Widget
 {
     public string content;
     public ConsoleColor? color;
@@ -13,9 +13,9 @@ class TextWidget : IWidget
         this.align = align;
     }
 
-    public int LineCount => 1;
+    public override int LineCount => 1;
 
-    public void Draw(DrawContext box, int line)
+    public override void Draw(DrawContext box, int line)
     {
         int x = 0;
         int y = box.y + line;

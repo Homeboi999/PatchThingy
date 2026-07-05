@@ -45,6 +45,7 @@ class ActionPage : Page
         AddWidget(new SeparatorWidget(visible: false));
         AddWidget(actionChoicer);
         AddWidget(new SeparatorWidget(visible: false));
+        SetFocusedWidget(actionChoicer);
 
         // confirm choicer
         confirmGroup.AddWidget(new SeparatorWidget(visible: true));
@@ -79,6 +80,7 @@ class ActionPage : Page
                                 confirmPrompt.content = "This will overwrite local patches. Continue?";
                                 actionChoicer.chosen = true;
                                 confirmGroup.visible = true;
+                                SetFocusedWidget(confirmChoicer);
                             }
                             break;
 
@@ -87,12 +89,14 @@ class ActionPage : Page
                             confirmPrompt.content = "Unsaved changes to Active Data will be lost. Continue?";
                             actionChoicer.chosen = true;
                             confirmGroup.visible = true;
+                            SetFocusedWidget(confirmChoicer);
                             break;
 
                         // Manage Data
                         case 2:
                             ManageDataPage dataPage = new ManageDataPage(chapter);
                             result = SwitchPage(dataPage);
+                            actionChoicer.chosen = false;
                             break;
                     }
                     break;
@@ -132,12 +136,14 @@ class ActionPage : Page
                     confirmChoicer.curSelection = 0;
                     actionChoicer.chosen = false;
                     confirmGroup.visible = false;
+                    SetFocusedWidget(actionChoicer);
                     break;
                     
                 case ChoicerResult.Cancel:
                     confirmChoicer.curSelection = 0;
                     actionChoicer.chosen = false;
                     confirmGroup.visible = false;
+                    SetFocusedWidget(actionChoicer);
                     break;
             }
         }
