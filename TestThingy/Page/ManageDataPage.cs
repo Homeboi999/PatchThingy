@@ -47,27 +47,17 @@ class ManageDataPage : Page
     {
         PageControl result = PageControl.Continue;
 
-        switch (inputKey)
+        switch (actionChoicer.OnKeyInput(inputKey))
         {
-            // Choicer Selection
-            case ConsoleKey.LeftArrow:
-            case ConsoleKey.RightArrow:
-            case ConsoleKey.UpArrow:
-            case ConsoleKey.DownArrow:
-                actionChoicer.ChangeSelection(inputKey);
-                break;
-
             // Confirm
-            case ConsoleKey.Z:
-            case ConsoleKey.Enter:
+            case ChoicerResult.Confirm:
                 TestPage newPage = new TestPage();
                 newPage.bottomText.content = "(Don't feel like coding placeholders for each option here yet)";
                 result = SwitchPage(newPage);
                 break;
 
             // Cancel
-            case ConsoleKey.X:
-            case ConsoleKey.Escape:
+            case ChoicerResult.Cancel:
                 result = PageControl.GoToPrevious;
                 break;
         }

@@ -69,6 +69,34 @@ class ChoicerWidget : IWidget
         }
     }
 
+    public ChoicerResult OnKeyInput(ConsoleKey inputKey)
+    {
+        switch (inputKey)
+        {
+            // Confirm
+            case ConsoleKey.Z:
+            case ConsoleKey.Enter:
+                return ChoicerResult.Confirm;
+
+            // Cancel
+            case ConsoleKey.X:
+            case ConsoleKey.Escape:
+                return ChoicerResult.Cancel;
+
+            // Move cursor
+            case ConsoleKey.LeftArrow:
+            case ConsoleKey.RightArrow:
+            case ConsoleKey.UpArrow:
+            case ConsoleKey.DownArrow:
+                ChangeSelection(inputKey);
+                return ChoicerResult.Waiting;
+            
+            // Do nothing
+            default:
+                return ChoicerResult.Waiting;
+        }
+    }
+
     void WriteChoice (string text, int x, int y, bool selected)
     {
         if (focused && !chosen && selected)
@@ -100,7 +128,7 @@ class ChoicerWidget : IWidget
         Console.ResetColor();
     }
 
-    public void ChangeSelection(ConsoleKey directionKey)
+    void ChangeSelection(ConsoleKey directionKey)
     {
         switch (directionKey)
         {

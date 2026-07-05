@@ -9,18 +9,22 @@ class ActionPage : Page
     int chapter = 0;
     bool allChapters => chapter == 0;
 
-    string actionPrompt = "Please select an action for ";
-    string singleChapterText = "Deltarune Chapter ";
-    string allChapterText = "all chapters of Deltarune";
-
     ChoicerWidget actionChoicer = new ChoicerWidget(["Generate new patches", "Apply existing patches", "Manage Data Files"], ChoicerType.List);
+    WidgetGroup confirmGroup = new WidgetGroup();
+    TextWidget confirmPrompt = new TextWidget("Are you sure?", Alignment.Center);
+    ChoicerWidget confirmChoicer = new ChoicerWidget(["Confirm", "Cancel"]);
 
     public ActionPage(int chapter)
     {
         // check chapter number
         this.chapter = chapter;
 
-        // change prompt accordingly
+        // init prompt strings
+        string actionPrompt = "Please select an action for ";
+        string singleChapterText = "Deltarune Chapter ";
+        string allChapterText = "all chapters of Deltarune";
+
+        // assemble prompt
         if (allChapters)
         {
             actionPrompt = actionPrompt + allChapterText;
@@ -41,62 +45,101 @@ class ActionPage : Page
         AddWidget(new SeparatorWidget(visible: false));
         AddWidget(actionChoicer);
         AddWidget(new SeparatorWidget(visible: false));
+
+        // confirm choicer
+        confirmGroup.AddWidget(new SeparatorWidget(visible: true));
+        confirmGroup.AddWidget(new SeparatorWidget(visible: false));
+        confirmGroup.AddWidget(confirmPrompt);
+        confirmGroup.AddWidget(confirmChoicer);
+        confirmGroup.AddWidget(new SeparatorWidget(visible: false));
+        AddWidget(confirmGroup);
     }
 
     override public PageControl OnKeyInput(ConsoleKey inputKey)
     {
         PageControl result = PageControl.Continue;
 
-        switch (inputKey)
+        if (!confirmGroup.visible)
         {
-            // Choicer Selection
-            case ConsoleKey.LeftArrow:
-            case ConsoleKey.RightArrow:
-            case ConsoleKey.UpArrow:
-            case ConsoleKey.DownArrow:
-                actionChoicer.ChangeSelection(inputKey);
-                break;
+            switch (actionChoicer.OnKeyInput(inputKey))
+            {
+                // Confirm
+                case ChoicerResult.Confirm:
+                    switch(actionChoicer.curSelection)
+                    {
+                        // Generate
+                        case 0:
+                            if (allChapters)
+                            {
+                                GlobalChapterPage newPage = new GlobalChapterPage();
+                                result = SwitchPage(newPage);
+                            }
+                            else
+                            {
+                                confirmPrompt.content = "This will overwrite local patches. Continue?";
+                                actionChoicer.chosen = true;
+                                confirmGroup.visible = true;
+                            }
+                            break;
 
-            // Confirm
-            case ConsoleKey.Z:
-            case ConsoleKey.Enter:
-                switch(actionChoicer.curSelection)
-                {
-                    // Generate
-                    case 0:
-                        if (allChapters)
+                        // Apply
+                        case 1:
+                            confirmPrompt.content = "Unsaved changes to Active Data will be lost. Continue?";
+                            actionChoicer.chosen = true;
+                            confirmGroup.visible = true;
+                            break;
+
+                        // Manage Data
+                        case 2:
+                            ManageDataPage dataPage = new ManageDataPage(chapter);
+                            result = SwitchPage(dataPage);
+                            break;
+                    }
+                    break;
+
+                // Cancel
+                case ChoicerResult.Cancel:
+                    result = PageControl.GoToPrevious;
+                    break;
+            }
+        }
+        else
+        {
+            switch (confirmChoicer.OnKeyInput(inputKey))
+            {
+                case ChoicerResult.Confirm:
+
+                    if (confirmChoicer.curSelection == 0)
+                    {
+                        switch (actionChoicer.curSelection)
                         {
-                            GlobalChapterPage newPage = new GlobalChapterPage();
-                            result = SwitchPage(newPage);
+                            // Generate
+                            case 0:
+                                TestPage newPage = new TestPage();
+                                newPage.bottomText.content = $"(Will start generating patches for Ch. {chapter})";
+                                result = SwitchPage(newPage);
+                                break;
+
+                            // Apply
+                            case 1:
+                                TestPage newPage2 = new TestPage();
+                                newPage2.bottomText.content = $"(Will apply patches to Ch. {chapter})";
+                                result = SwitchPage(newPage2);
+                                break;
                         }
-                        else
-                        {
-                            TestPage newPage = new TestPage();
-                            newPage.bottomText.content = $"(Will start generating patches for Ch. {chapter})";
-                            result = SwitchPage(newPage);
-                        }
-                        break;
+                    }
 
-                    // Apply
-                    case 1:
-                        TestPage newPage2 = new TestPage();
-                        newPage2.bottomText.content = $"(Will apply patches to Ch. {chapter})";
-                        result = SwitchPage(newPage2);
-                        break;
-
-                    // Manage Data
-                    case 2:
-                        ManageDataPage dataPage = new ManageDataPage(chapter);
-                        result = SwitchPage(dataPage);
-                        break;
-                }
-                break;
-
-            // Cancel
-            case ConsoleKey.X:
-            case ConsoleKey.Escape:
-                result = PageControl.GoToPrevious;
-                break;
+                    confirmChoicer.curSelection = 0;
+                    actionChoicer.chosen = false;
+                    confirmGroup.visible = false;
+                    break;
+                    
+                case ChoicerResult.Cancel:
+                    confirmChoicer.curSelection = 0;
+                    actionChoicer.chosen = false;
+                    confirmGroup.visible = false;
+                    break;
+            }
         }
 
         return result;

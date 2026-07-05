@@ -28,19 +28,10 @@ class TestPage : Page
     {
         PageControl result = PageControl.Continue;
 
-        switch (inputKey)
+        switch (testChoicer.OnKeyInput(inputKey))
         {
-            // Choicer Selection
-            case ConsoleKey.LeftArrow:
-            case ConsoleKey.RightArrow:
-            case ConsoleKey.UpArrow:
-            case ConsoleKey.DownArrow:
-                testChoicer.ChangeSelection(inputKey);
-                break;
-
             // Confirm
-            case ConsoleKey.Z:
-            case ConsoleKey.Enter:
+            case ChoicerResult.Confirm:
                 switch(testChoicer.curSelection)
                 {
                     // "Yes"
@@ -65,8 +56,7 @@ class TestPage : Page
                 break;
 
             // Cancel
-            case ConsoleKey.X:
-            case ConsoleKey.Escape:
+            case ChoicerResult.Cancel:
                 result = PageControl.GoToPrevious;
                 break;
         }

@@ -41,25 +41,15 @@ abstract class ChapterPage : Page
     {
         PageControl result = PageControl.Continue;
 
-        switch (inputKey)
+        switch (chapterChoicer.OnKeyInput(inputKey))
         {
-            // Choicer Selection
-            case ConsoleKey.LeftArrow:
-            case ConsoleKey.RightArrow:
-            case ConsoleKey.UpArrow:
-            case ConsoleKey.DownArrow:
-                chapterChoicer.ChangeSelection(inputKey);
-                break;
-
             // Confirm
-            case ConsoleKey.Z:
-            case ConsoleKey.Enter:
+            case ChoicerResult.Confirm:
                 result = OnChapterSelected(chapterChoicer.curSelection + (onlyChapters ? 1 : 0));
                 break;
 
             // Cancel
-            case ConsoleKey.X:
-            case ConsoleKey.Escape:
+            case ChoicerResult.Cancel:
                 result = PageControl.GoToPrevious;
                 break;
         }
