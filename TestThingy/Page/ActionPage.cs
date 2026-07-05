@@ -54,100 +54,92 @@ class ActionPage : Page
         confirmGroup.AddWidget(confirmChoicer);
         confirmGroup.AddWidget(new SeparatorWidget(visible: false));
         AddWidget(confirmGroup);
+
+        // event setup
+        actionChoicer.Confirmed += OnChosen;
+        actionChoicer.Cancelled += OnCancelled;
+        confirmChoicer.Confirmed += OnConfirmed;
+        confirmChoicer.Cancelled += OnConfirmCancelled;
     }
 
-    override public PageControl OnKeyInput(ConsoleKey inputKey)
+    private void OnChosen(object? sender, ChoicerEventArgs e)
     {
-        PageControl result = PageControl.Continue;
-
-        if (!confirmGroup.visible)
+        switch (e.choice)
         {
-            switch (actionChoicer.OnKeyInput(inputKey))
-            {
-                // Confirm
-                case ChoicerResult.Confirm:
-                    switch(actionChoicer.curSelection)
-                    {
-                        // Generate
-                        case 0:
-                            if (allChapters)
-                            {
-                                GlobalChapterPage newPage = new GlobalChapterPage();
-                                result = SwitchPage(newPage);
-                            }
-                            else
-                            {
-                                confirmPrompt.content = "This will overwrite local patches. Continue?";
-                                actionChoicer.chosen = true;
-                                confirmGroup.visible = true;
-                                SetFocusedWidget(confirmChoicer);
-                            }
-                            break;
+            // Generate
+            case 0:
+                if (allChapters)
+                {
+                    GlobalChapterPage newPage = new GlobalChapterPage();
+                    SwitchPage(newPage);
+                    actionChoicer.chosen = false;
+                }
+                else
+                {
+                    confirmPrompt.content = "This will overwrite local patches. Continue?";
+                    confirmGroup.visible = true;
+                    SetFocusedWidget(confirmChoicer);
+                }
+                break;
 
-                        // Apply
-                        case 1:
-                            confirmPrompt.content = "Unsaved changes to Active Data will be lost. Continue?";
-                            actionChoicer.chosen = true;
-                            confirmGroup.visible = true;
-                            SetFocusedWidget(confirmChoicer);
-                            break;
+            // Apply
+            case 1:
+                confirmPrompt.content = "Unsaved changes to Active Data will be lost. Continue?";
+                confirmGroup.visible = true;
+                SetFocusedWidget(confirmChoicer);
+                break;
 
-                        // Manage Data
-                        case 2:
-                            ManageDataPage dataPage = new ManageDataPage(chapter);
-                            result = SwitchPage(dataPage);
-                            actionChoicer.chosen = false;
-                            break;
-                    }
-                    break;
-
-                // Cancel
-                case ChoicerResult.Cancel:
-                    result = PageControl.GoToPrevious;
-                    break;
-            }
+            // Manage Data
+            case 2:
+                ManageDataPage dataPage = new ManageDataPage(chapter);
+                SwitchPage(dataPage);
+                actionChoicer.chosen = false;
+                break;
         }
-        else
+    }
+
+    private void OnCancelled(object? sender, EventArgs e)
+    {
+        GoToPrevious();
+    }
+
+    private void OnConfirmed(object? sender, ChoicerEventArgs e)
+    {
+        if (e.choice != 0)
         {
-            switch (confirmChoicer.OnKeyInput(inputKey))
-            {
-                case ChoicerResult.Confirm:
-
-                    if (confirmChoicer.curSelection == 0)
-                    {
-                        switch (actionChoicer.curSelection)
-                        {
-                            // Generate
-                            case 0:
-                                TestPage newPage = new TestPage();
-                                newPage.bottomText.content = $"(Will start generating patches for Ch. {chapter})";
-                                result = SwitchPage(newPage);
-                                break;
-
-                            // Apply
-                            case 1:
-                                TestPage newPage2 = new TestPage();
-                                newPage2.bottomText.content = $"(Will apply patches to Ch. {chapter})";
-                                result = SwitchPage(newPage2);
-                                break;
-                        }
-                    }
-
-                    confirmChoicer.curSelection = 0;
-                    actionChoicer.chosen = false;
-                    confirmGroup.visible = false;
-                    SetFocusedWidget(actionChoicer);
-                    break;
-                    
-                case ChoicerResult.Cancel:
-                    confirmChoicer.curSelection = 0;
-                    actionChoicer.chosen = false;
-                    confirmGroup.visible = false;
-                    SetFocusedWidget(actionChoicer);
-                    break;
-            }
+            OnConfirmCancelled(this, new());
+            return;
         }
 
-        return result;
+        // runs when action is confirmed
+        switch (actionChoicer.curSelection)
+        {
+            // Generate
+            case 0:
+                TestPage newPage = new TestPage();
+                newPage.bottomText.content = $"(Will start generating patches for Ch. {chapter})";
+                SwitchPage(newPage);
+                break;
+
+            // Apply
+            case 1:
+                TestPage newPage2 = new TestPage();
+                newPage2.bottomText.content = $"(Will apply patches to Ch. {chapter})";
+                SwitchPage(newPage2);
+                break;
+        }
+
+        confirmChoicer.curSelection = 0;
+        actionChoicer.chosen = false;
+        confirmGroup.visible = false;
+        SetFocusedWidget(actionChoicer);
+    }
+
+    private void OnConfirmCancelled(object? sender, EventArgs e)
+    {
+        confirmChoicer.curSelection = 0;
+        actionChoicer.chosen = false;
+        confirmGroup.visible = false;
+        SetFocusedWidget(actionChoicer);
     }
 }

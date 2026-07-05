@@ -23,45 +23,38 @@ class TestPage : Page
         AddWidget(new SeparatorWidget(visible: false));
         AddWidget(bottomText);
         AddWidget(new SeparatorWidget(visible: false));
+
+        testChoicer.Confirmed += OnChosen;
+        testChoicer.Cancelled += OnCancelled;
     }
 
-    override public PageControl OnKeyInput(ConsoleKey inputKey)
+    private void OnChosen(object? sender, ChoicerEventArgs e)
     {
-        PageControl result = PageControl.Continue;
-
-        switch (testChoicer.OnKeyInput(inputKey))
+        switch(e.choice)
         {
-            // Confirm
-            case ChoicerResult.Confirm:
-                switch(testChoicer.curSelection)
-                {
-                    // "Yes"
-                    case 0:
-                    case 1:
-                        TestPage newPage = new TestPage();
-                        newPage.pageNum = pageNum + 1;
-                        newPage.bottomText.content = "Page: " + newPage.pageNum.ToString();
-                        result = SwitchPage(newPage);
-                        break;
-
-                    // "No"
-                    case 2:
-                        result = PageControl.GoToFirst;
-                        break;
-
-                    // "Fuck You!!!!"
-                    case 3:
-                        result = PageControl.ExitAll;
-                        break;
-                }
+            // "Yes"
+            case 0:
+            case 1:
+                TestPage newPage = new TestPage();
+                newPage.pageNum = pageNum + 1;
+                newPage.bottomText.content = "Page: " + newPage.pageNum.ToString();
+                SwitchPage(newPage);
                 break;
 
-            // Cancel
-            case ChoicerResult.Cancel:
-                result = PageControl.GoToPrevious;
+            // "No"
+            case 2:
+                GoToFirst();
+                break;
+
+            // "Fuck You!!!!"
+            case 3:
+                ExitAll();
                 break;
         }
+    }
 
-        return result;
+    private void OnCancelled(object? sender, EventArgs e)
+    {
+        GoToPrevious();
     }
 }

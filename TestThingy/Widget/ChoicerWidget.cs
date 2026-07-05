@@ -1,6 +1,6 @@
 namespace TestThingy.Widget;
 
-class ChoicerWidget : Widget
+public class ChoicerWidget : Widget
 {
     ChoicerType type;
     IReadOnlyList<string> choices = [];
@@ -14,6 +14,9 @@ class ChoicerWidget : Widget
         this.choices = choices;
         this.type = type;
     }
+
+    public event ChoicerEventHandler? Confirmed = null;
+    public event EventHandler? Cancelled = null;
 
     // LineCount changes based on the
     // # of choices and the ChoicerType
@@ -68,7 +71,7 @@ class ChoicerWidget : Widget
         }
     }
 
-    public ChoicerResult OnKeyInput(ConsoleKey inputKey)
+    public void OnKeyInput(ConsoleKey inputKey)
     {
         switch (inputKey)
         {
@@ -76,12 +79,14 @@ class ChoicerWidget : Widget
             case ConsoleKey.Z:
             case ConsoleKey.Enter:
                 chosen = true;
-                return ChoicerResult.Confirm;
+                Confirmed?.Invoke(this, new() { choice = curSelection });
+                break;
 
             // Cancel
             case ConsoleKey.X:
             case ConsoleKey.Escape:
-                return ChoicerResult.Cancel;
+                Cancelled?.Invoke(this, new());
+                break;
 
             // Move cursor
             case ConsoleKey.LeftArrow:
@@ -89,11 +94,11 @@ class ChoicerWidget : Widget
             case ConsoleKey.UpArrow:
             case ConsoleKey.DownArrow:
                 ChangeSelection(inputKey);
-                return ChoicerResult.Waiting;
+                break;
             
             // Do nothing
             default:
-                return ChoicerResult.Waiting;
+                break;
         }
     }
 

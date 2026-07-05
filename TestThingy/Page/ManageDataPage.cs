@@ -42,27 +42,30 @@ class ManageDataPage : Page
         AddWidget(actionChoicer);
         AddWidget(new SeparatorWidget(visible: false));
         SetFocusedWidget(actionChoicer);
+
+        // event setup
+        actionChoicer.Confirmed += OnChosen;
+        actionChoicer.Cancelled += OnCancelled;
     }
 
-    override public PageControl OnKeyInput(ConsoleKey inputKey)
+    private void OnChosen(object? sender, ChoicerEventArgs e)
     {
-        PageControl result = PageControl.Continue;
+        // lazy placeholder
+        TestPage newPage = new TestPage();
+        newPage.bottomText.content = "(Don't feel like coding placeholders for each option here yet)";
+        SwitchPage(newPage);
+        actionChoicer.chosen = false;
 
-        switch (actionChoicer.OnKeyInput(inputKey))
-        {
-            // Confirm
-            case ChoicerResult.Confirm:
-                TestPage newPage = new TestPage();
-                newPage.bottomText.content = "(Don't feel like coding placeholders for each option here yet)";
-                result = SwitchPage(newPage);
-                break;
+        // // full structure
+        // switch (e.choice)
+        // {
+        //     case 0:
+        //         break;
+        // }
+    }
 
-            // Cancel
-            case ChoicerResult.Cancel:
-                result = PageControl.GoToPrevious;
-                break;
-        }
-
-        return result;
+    private void OnCancelled(object? sender, EventArgs e)
+    {
+        GoToPrevious();
     }
 }

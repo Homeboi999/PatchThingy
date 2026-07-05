@@ -10,10 +10,10 @@ class GlobalChapterPage : ChapterPage
     {
     }
 
-    protected override PageControl OnChapterSelected(int chapter)
+    protected override void OnChapterSelected(int chapter)
     {
         TestPage newPage = new TestPage();
         newPage.bottomText.content = "(Will start generating patches for all chapters)";
-        return SwitchPage(newPage);
+        SwitchPage(newPage);
     }
 }

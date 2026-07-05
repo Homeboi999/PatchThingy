@@ -12,8 +12,10 @@ abstract class Page
 
     // Variables that each page will need
     List<Widget.Widget> widgets = [];
-    Widget.Widget? focusedWidget = null;
+    // TODO: base type for focusable widgets
+    protected ChoicerWidget? FocusedWidget { get; private set; } = null;
     Page? lastPage;
+    PageControl nextPageControl = PageControl.Continue;
 
     public Page(Page? lastPage = null)
     {
@@ -29,7 +31,10 @@ abstract class Page
             Draw();
 
             ConsoleKeyInfo input = Console.ReadKey(true);    
-            PageControl result = OnKeyInput(input.Key);
+            OnKeyInput(input.Key);
+
+            PageControl result = nextPageControl;
+            nextPageControl = PageControl.Continue;
 
             switch(result)
             {
@@ -49,24 +54,39 @@ abstract class Page
         }
     }
 
-    public abstract PageControl OnKeyInput(ConsoleKey inputKey);
-
-    public void SetFocusedWidget(Widget.Widget newWidget)
+    public virtual void OnKeyInput(ConsoleKey inputKey)
     {
-        if (focusedWidget is not null)
-        {
-            focusedWidget.focused = false;
-        }
-
-        focusedWidget = newWidget;
-        focusedWidget.focused = true;
+        FocusedWidget?.OnKeyInput(inputKey);
     }
 
-    public PageControl SwitchPage(Page nextPage)
+    public void SetFocusedWidget(ChoicerWidget newWidget)
+    {
+        if (FocusedWidget is not null)
+        {
+            FocusedWidget.focused = false;
+        }
+
+        FocusedWidget = newWidget;
+        FocusedWidget.focused = true;
+    }
+
+    protected void SwitchPage(Page nextPage)
     {
         nextPage.lastPage = this;
-        PageControl result = nextPage.RunLoop();
-        return result;
+        nextPageControl = nextPage.RunLoop();
+    }
+
+    protected void GoToPrevious()
+    {
+        nextPageControl = PageControl.GoToPrevious;
+    }
+    protected void GoToFirst()
+    {
+        nextPageControl = PageControl.GoToFirst;
+    }
+    protected void ExitAll()
+    {
+        nextPageControl = PageControl.ExitAll;
     }
     
     public void Draw()

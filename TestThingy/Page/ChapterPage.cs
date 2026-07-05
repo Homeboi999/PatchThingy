@@ -36,28 +36,22 @@ abstract class ChapterPage : Page
         AddWidget(chapterChoicer);
         AddWidget(new SeparatorWidget(visible: false));
         SetFocusedWidget(chapterChoicer);
+
+        // event setup
+        chapterChoicer.Confirmed += OnChosen;
+        chapterChoicer.Cancelled += OnCancelled;
     }
 
-    override public PageControl OnKeyInput(ConsoleKey inputKey)
+    private void OnChosen(object? sender, ChoicerEventArgs e)
     {
-        PageControl result = PageControl.Continue;
-
-        switch (chapterChoicer.OnKeyInput(inputKey))
-        {
-            // Confirm
-            case ChoicerResult.Confirm:
-                result = OnChapterSelected(chapterChoicer.curSelection + (onlyChapters ? 1 : 0));
-                chapterChoicer.chosen = false;
-                break;
-
-            // Cancel
-            case ChoicerResult.Cancel:
-                result = PageControl.GoToPrevious;
-                break;
-        }
-
-        return result;
+        OnChapterSelected(chapterChoicer.curSelection + (onlyChapters ? 1 : 0));
+        chapterChoicer.chosen = false;
     }
 
-    protected abstract PageControl OnChapterSelected(int chapter);
+    private void OnCancelled(object? sender, EventArgs e)
+    {
+        GoToPrevious();
+    }
+
+    protected abstract void OnChapterSelected(int chapter);
 }

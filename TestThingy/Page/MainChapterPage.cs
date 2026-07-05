@@ -8,8 +8,8 @@ class MainChapterPage : ChapterPage
     {
     }
 
-    protected override PageControl OnChapterSelected(int chapter)
+    protected override void OnChapterSelected(int chapter)
     {
-        return SwitchPage(new ActionPage(chapter));
+        SwitchPage(new ActionPage(chapter));
     }
 }
