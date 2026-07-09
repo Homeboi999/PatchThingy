@@ -16,6 +16,7 @@ abstract class Page
     protected ChoicerWidget? FocusedWidget { get; private set; } = null;
     Page? lastPage;
     PageControl nextPageControl = PageControl.Continue;
+    bool canSwitch => nextPageControl == PageControl.Continue || nextPageControl == PageControl.GoToPrevious;
 
     public Page(Page? lastPage = null)
     {
@@ -72,8 +73,11 @@ abstract class Page
 
     protected void SwitchPage(Page nextPage)
     {
-        nextPage.lastPage = this;
-        nextPageControl = nextPage.RunLoop();
+        if (canSwitch)
+        {
+            nextPage.lastPage = this;
+            nextPageControl = nextPage.RunLoop();
+        }
     }
 
     protected void GoToPrevious()

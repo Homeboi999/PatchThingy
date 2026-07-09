@@ -13,30 +13,7 @@ class DataFile
     public UndertaleData Data;
 
     // find the relevant versions of data.win
-    string fileName
-    {
-        get
-        {
-            switch (this.type)
-            {
-                // Active Data
-                case DataType.Active:
-                    return "data.win";
-
-                // Vanilla Data
-                case DataType.Vanilla:
-                    return "data-vanilla.win";
-
-                // Backup Data
-                case DataType.Backup:
-                    return "data-backup.win";
-
-                // For compiler
-                default:
-                    return "";
-            }
-        }
-    }
+    string fileName => GetFileName(type);
 
     GlobalDecompileContext globalDecompileContext;
     IDecompileSettings decompilerSettings;
@@ -72,7 +49,6 @@ class DataFile
             .ToList();
     }
 
-
     // Write the file to disk
     public void SaveChanges()
     {
@@ -94,11 +70,33 @@ class DataFile
             // if it somehow tries finding Chapter 58
             //
             // itll prob crash anyway later
-            throw new Exception($"Attempted to load nonexistent Chapter {chapter}.");
+            throw new FileNotFoundException($"Attempted to load nonexistent Chapter {chapter}.");
         }
 
         // TODO: support other versions of Deltarune.
         // ex. MacOS, Chapters 1&2, SURVEY_PROGRAM
         return path;
+    }
+
+    public static string GetFileName(DataType type)
+    {
+        switch (type)
+        {
+            // Active Data
+            case DataType.Active:
+                return "data.win";
+
+            // Vanilla Data
+            case DataType.Vanilla:
+                return "data-vanilla.win";
+
+            // Backup Data
+            case DataType.Backup:
+                return "data-backup.win";
+
+            // For compiler
+            default:
+                throw new ArgumentException($"Invalid DataType ({type})", paramName: nameof(type));
+        }
     }
 }

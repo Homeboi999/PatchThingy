@@ -1,4 +1,5 @@
 using TestThingy.Widget;
+using TestThingy.Data;
 
 namespace TestThingy.Page;
 
@@ -116,13 +117,54 @@ class ActionPage : Page
         {
             // Generate
             case 0:
+                // Load Active Data
+                DataLoadPage activeLoad = new DataLoadPage(DataType.Active, chapter);
+                SwitchPage(activeLoad);
+                
+                // If failed to load, immediately exit.
+                if (activeLoad.data is null)
+                {
+                    break;
+                }
+
+                // Load Vanilla Data
+                DataLoadPage vanillaLoad = new DataLoadPage(DataType.Vanilla, chapter);
+                SwitchPage(vanillaLoad);
+                
+                // If failed to load, immediately exit.
+                if (vanillaLoad.data is null)
+                {
+                    break;
+                }
+
+                // Create TestPage as placeholder
                 TestPage newPage = new TestPage();
-                newPage.bottomText.content = $"(Will start generating patches for Ch. {chapter})";
+                newPage.bottomText.content = $"(Will generate patches from data.win for Ch. {chapter})";
                 SwitchPage(newPage);
                 break;
 
             // Apply
             case 1:
+                // Load Active Data
+                DataLoadPage vanillaLoad2 = new DataLoadPage(DataType.Vanilla, chapter, false);
+                string failPrompt = $"Create Vanilla Data from Active Data? (data.win)";
+                vanillaLoad2.messageGroup.AddWidget(new TextWidget(failPrompt, Alignment.Center));
+                SwitchPage(vanillaLoad2);
+                
+                // If failed to load, try again with Active Data.
+                if (vanillaLoad2.data is null)
+                {
+                    vanillaLoad2 = new DataLoadPage(DataType.Active, chapter);
+                    SwitchPage(vanillaLoad2);
+
+                    // If still failed to load, immediately exit
+                    if (vanillaLoad2.data is null)
+                    {
+                        break;
+                    }
+                }
+
+                // Create TestPage as placeholder
                 TestPage newPage2 = new TestPage();
                 newPage2.bottomText.content = $"(Will apply patches to Ch. {chapter})";
                 SwitchPage(newPage2);

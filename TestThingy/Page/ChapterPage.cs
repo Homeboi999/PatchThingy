@@ -21,6 +21,10 @@ abstract class ChapterPage : Page
         {
             chapterList.Insert(0, "All Chapters");
         }
+
+        #if DEBUG
+        chapterList.Add("Fail Test");
+        #endif
         
         chapterChoicer = new ChoicerWidget(chapterList);
 

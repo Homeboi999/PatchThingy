@@ -1,7 +1,7 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using System.Diagnostics;
 using System.Text.Json;
-using TestThingy;
+using TestThingy.Data;
 using TestThingy.Page;
 
 // ────────────────────────────────────────────────────────────
@@ -51,6 +51,7 @@ catch (Exception error) // show crashes in main terminal output
     #endif
 
     WriteException(error);
+    ExitMenu(2);
 }
 
 // after exiting, exit (lmao)
@@ -60,11 +61,11 @@ ExitMenu();
 // Exit Functions
 // ────────────────────────────────────────────────────────────
 
-void ExitMenu()
+void ExitMenu(int exitCode = 0)
 {
     Console.Write("\x1b[?1049l"); // main screen
     Console.CursorVisible = true;
-    Environment.Exit(0);
+    Environment.Exit(exitCode);
 }
 
 void WriteException(Exception error)
@@ -81,6 +82,4 @@ void WriteException(Exception error)
     }
 
     Console.ResetColor();
-    Console.CursorVisible = true;
-    Environment.Exit(2);
 }
