@@ -5,7 +5,22 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <RootNamespace>TestThingy</RootNamespace>
   </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../UndertaleModTool/UndertaleModLib/UndertaleModLib.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CodeChicken.DiffPatch" Version="1.1.0" />
+    <PackageReference Include="RectpackSharp" Version="1.2.0" />
+    <PackageReference Include="xdelta3.net" Version="1.0.1" />
+    <PackageReference Include="GitVersion.MsBuild" Version="6.0.0">
+      <PrivateAssets>All</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
 
 </Project>

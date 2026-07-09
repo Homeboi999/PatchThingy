@@ -1,12 +1,86 @@
 ﻿// See https://aka.ms/new-console-template for more information
+using System.Diagnostics;
+using System.Text.Json;
 using TestThingy;
 using TestThingy.Page;
 
+// ────────────────────────────────────────────────────────────
+// Misc. Setup
+// ────────────────────────────────────────────────────────────
+
+// Bind Ctrl+C to ExitMenu so it
+// doesn't fuck up the console.
+Console.CancelKeyPress += (sender, eventArgs) => ExitMenu();
+
+// Load the script configs from the .json file next to the .csproj file
+string configPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+#if DEBUG
+Config.current = JsonSerializer.Deserialize<Config>(File.ReadAllText(Path.Combine(configPath, "PatchThingy/config-debug.json")))!;
+#else
+Config.current = JsonSerializer.Deserialize<Config>(File.ReadAllText(Path.Combine(configPath, "PatchThingy/config.json")))!;
+#endif
+
+// if it failed to load for whatever reason, panic
+if (Config.current is null)
+{
+    Console.WriteLine("ERROR: Failed to load script config.");
+    Environment.Exit(2);
+    return; // for compiler
+}
+
+// ────────────────────────────────────────────────────────────
+// Main Functionality
+// ────────────────────────────────────────────────────────────
+
 Console.Write("\x1b[?1049h"); // Enable Alternate Buffer
-Console.Write("\x1b[?25l"); // Hide Cursor
+Console.CursorVisible = false;
 
-MainChapterPage startPage = new MainChapterPage();
-startPage.RunLoop();
+try
+{
+    MainChapterPage startPage = new MainChapterPage();
+    startPage.RunLoop();
+}
+catch (Exception error) // show crashes in main terminal output
+{
+    #if DEBUG
+    if (Debugger.IsAttached)
+    {
+        // just throw so i can use debugger on it
+        throw;
+    }
+    #endif
 
-Console.Write("\x1b[?1049l"); // Disable Alternate Buffer
-Console.Write("\x1b[?25h"); // Show Cursor
+    WriteException(error);
+}
+
+// after exiting, exit (lmao)
+ExitMenu();
+
+// ────────────────────────────────────────────────────────────
+// Exit Functions
+// ────────────────────────────────────────────────────────────
+
+void ExitMenu()
+{
+    Console.Write("\x1b[?1049l"); // main screen
+    Console.CursorVisible = true;
+    Environment.Exit(0);
+}
+
+void WriteException(Exception error)
+{
+    Console.Write("\x1b[?1049l"); // main screen
+    Console.ForegroundColor = ConsoleColor.Red;
+
+    Console.WriteLine($"   PatchThingy v{Page.versionNum}");
+    
+    foreach (string line in error.ToString().Split("\n"))
+    {
+        Console.WriteLine(line);
+        Console.ForegroundColor = ConsoleColor.DarkGray;
+    }
+
+    Console.ResetColor();
+    Console.CursorVisible = true;
+    Environment.Exit(2);
+}

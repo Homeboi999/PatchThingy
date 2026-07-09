@@ -39,6 +39,7 @@ class TestPage : Page
                 newPage.pageNum = pageNum + 1;
                 newPage.bottomText.content = "Page: " + newPage.pageNum.ToString();
                 SwitchPage(newPage);
+                testChoicer.chosen = false;
                 break;
 
             // "No"

@@ -1,4 +1,4 @@
-namespace TestThingy;
+namespace TestThingy.Widget;
 
 public enum ChoicerType
 {

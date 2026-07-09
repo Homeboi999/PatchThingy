@@ -7,7 +7,7 @@ abstract class Page
 {
     // Title bar that's the same for
     // no matter what page we're on
-    readonly static string versionNum = typeof(Program).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "??";
+    public readonly static string versionNum = typeof(Program).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "??";
     public readonly string mainTitle = $"╾─╴╴╴  PatchThingy Rewrite Test  ╶╶╶─╼";
 
     // Variables that each page will need
