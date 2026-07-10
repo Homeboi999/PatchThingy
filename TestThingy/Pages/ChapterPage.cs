@@ -1,6 +1,6 @@
 using TestThingy.Widget;
 
-namespace TestThingy.Page;
+namespace TestThingy.Pages;
 
 abstract class ChapterPage : Page
 {
@@ -9,13 +9,16 @@ abstract class ChapterPage : Page
     protected virtual string chapterPrompt => "Select a Deltarune chapter to patch";
     readonly bool onlyChapters;
     
-    ChoicerWidget chapterChoicer;
+    protected ChoicerWidget chapterChoicer;
+    public int chapterCount;
 
     public ChapterPage(bool onlyChapters = false)
     {
         this.onlyChapters = onlyChapters;
 
         List<string> chapterList = ["Chapter 1", "Chapter 2", "Chapter 3", "Chapter 4", "Chapter 5"];
+        // save total # of chapters so i only need to change the list
+        chapterCount = chapterList.Count();
 
         if (!onlyChapters)
         {

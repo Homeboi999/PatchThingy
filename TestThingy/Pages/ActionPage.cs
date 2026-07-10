@@ -1,7 +1,7 @@
 using TestThingy.Widget;
 using TestThingy.Data;
 
-namespace TestThingy.Page;
+namespace TestThingy.Pages;
 
 class ActionPage : Page
 {

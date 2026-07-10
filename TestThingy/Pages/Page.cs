@@ -1,7 +1,7 @@
 using System.Reflection;
 using TestThingy.Widget;
 
-namespace TestThingy.Page;
+namespace TestThingy.Pages;
 
 abstract class Page
 {

@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.Text.Json;
 using TestThingy.Data;
-using TestThingy.Page;
+using TestThingy.Pages;
 
 // ────────────────────────────────────────────────────────────
 // Misc. Setup

@@ -1,6 +1,6 @@
 using TestThingy.Widget;
 
-namespace TestThingy.Page;
+namespace TestThingy.Pages;
 
 class ManageDataPage : Page
 {

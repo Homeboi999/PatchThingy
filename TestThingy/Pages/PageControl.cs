@@ -1,4 +1,4 @@
-namespace TestThingy.Page;
+namespace TestThingy.Pages;
 
 public enum PageControl
 {
