@@ -12,7 +12,7 @@ class ActionPage : Page
 
     ChoicerWidget actionChoicer = new ChoicerWidget(["Generate new patches", "Apply existing patches", "Manage Data Files"], ChoicerType.List);
     WidgetGroup confirmGroup = new WidgetGroup();
-    TextWidget confirmPrompt = new TextWidget("Are you sure?", Alignment.Center);
+    TextWidget confirmPrompt = new TextWidget(["Are you sure?"], Alignment.Center);
     ChoicerWidget confirmChoicer = new ChoicerWidget(["Confirm", "Cancel"]);
 
     public ActionPage(int chapter)
@@ -37,7 +37,7 @@ class ActionPage : Page
 
         // main prompt
         AddWidget(new SeparatorWidget(visible: false));
-        AddWidget(new TextWidget(actionPrompt, Alignment.Center));
+        AddWidget(new TextWidget([actionPrompt], Alignment.Center));
         AddWidget(new SeparatorWidget(visible: false));
         
         AddWidget(new SeparatorWidget(visible: true));
@@ -77,7 +77,7 @@ class ActionPage : Page
                 }
                 else
                 {
-                    confirmPrompt.content = "This will overwrite local patches. Continue?";
+                    confirmPrompt.AddLine("This will overwrite local patches. Continue?");
                     confirmGroup.visible = true;
                     SetFocusedWidget(confirmChoicer);
                 }
@@ -85,7 +85,7 @@ class ActionPage : Page
 
             // Apply
             case 1:
-                confirmPrompt.content = "Unsaved changes to Active Data will be lost. Continue?";
+                confirmPrompt.AddLine("Unsaved changes to Active Data will be lost. Continue?");
                 confirmGroup.visible = true;
                 SetFocusedWidget(confirmChoicer);
                 break;
@@ -139,7 +139,7 @@ class ActionPage : Page
 
                 // Create TestPage as placeholder
                 TestPage newPage = new TestPage();
-                newPage.bottomText.content = $"(Will generate patches from data.win for Ch. {chapter})";
+                newPage.bottomText.AddLine($"(Will generate patches from data.win for Ch. {chapter})");
                 SwitchPage(newPage);
                 break;
 
@@ -148,7 +148,7 @@ class ActionPage : Page
                 // Load Active Data
                 DataLoadPage vanillaLoad2 = new DataLoadPage(DataType.Vanilla, chapter, false);
                 string failPrompt = $"Create Vanilla Data from Active Data? (data.win)";
-                vanillaLoad2.messageGroup.AddWidget(new TextWidget(failPrompt, Alignment.Center));
+                vanillaLoad2.messageGroup.AddWidget(new TextWidget([failPrompt], Alignment.Center));
                 SwitchPage(vanillaLoad2);
                 
                 // If failed to load, try again with Active Data.
@@ -166,7 +166,7 @@ class ActionPage : Page
 
                 // Create TestPage as placeholder
                 TestPage newPage2 = new TestPage();
-                newPage2.bottomText.content = $"(Will apply patches to Ch. {chapter})";
+                newPage2.bottomText.AddLine($"(Will apply patches to Ch. {chapter})");
                 SwitchPage(newPage2);
                 break;
         }

@@ -32,7 +32,7 @@ class ManageDataPage : Page
 
         // main prompt
         AddWidget(new SeparatorWidget(visible: false));
-        AddWidget(new TextWidget(actionPrompt, Alignment.Center));
+        AddWidget(new TextWidget([actionPrompt], Alignment.Center));
         AddWidget(new SeparatorWidget(visible: false));
         
         AddWidget(new SeparatorWidget(visible: true));
@@ -52,7 +52,7 @@ class ManageDataPage : Page
     {
         // lazy placeholder
         TestPage newPage = new TestPage();
-        newPage.bottomText.content = "(Don't feel like coding placeholders for each option here yet)";
+        newPage.bottomText.AddLine("(Don't feel like coding placeholders for each option here yet)");
         SwitchPage(newPage);
         actionChoicer.chosen = false;
 

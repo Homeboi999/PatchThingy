@@ -33,7 +33,7 @@ abstract class ChapterPage : Page
 
         // main label
         AddWidget(new SeparatorWidget(visible: false));
-        AddWidget(new TextWidget(chapterPrompt, Alignment.Center));
+        AddWidget(new TextWidget([chapterPrompt], Alignment.Center));
         AddWidget(new SeparatorWidget(visible: false));
         
         AddWidget(new SeparatorWidget(visible: true));

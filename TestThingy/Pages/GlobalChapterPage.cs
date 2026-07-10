@@ -7,7 +7,7 @@ class GlobalChapterPage : ChapterPage
 {
     protected override string chapterPrompt => "Which chapter should Global Patches be generated from?";
     WidgetGroup confirmGroup = new WidgetGroup();
-    TextWidget confirmPrompt = new TextWidget("Are you sure?", Alignment.Center);
+    TextWidget confirmPrompt = new TextWidget(["Are you sure?"], Alignment.Center);
     ChoicerWidget confirmChoicer = new ChoicerWidget(["Confirm", "Cancel"]);
 
     public GlobalChapterPage() : base(onlyChapters: true)
@@ -26,7 +26,7 @@ class GlobalChapterPage : ChapterPage
 
     protected override void OnChapterSelected(int chapter)
     {
-        confirmPrompt.content = "This will overwrite local patches. Continue?";
+        confirmPrompt.AddLine("This will overwrite local patches. Continue?");
         confirmGroup.visible = true;
         SetFocusedWidget(confirmChoicer);
     }
@@ -64,7 +64,7 @@ class GlobalChapterPage : ChapterPage
 
         // Make TestPage as placeholder
         TestPage newPage = new TestPage();
-        newPage.bottomText.content = "(Will start generating patches for all chapters)";
+        newPage.bottomText.AddLine("(Will start generating patches for all chapters)");
         SwitchPage(newPage);
 
         OnConfirmCancelled(this, new());

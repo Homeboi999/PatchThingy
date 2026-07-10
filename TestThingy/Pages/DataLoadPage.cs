@@ -12,7 +12,7 @@ class DataLoadPage : Page
     WidgetGroup choicerGroup = new WidgetGroup();
 
     ChoicerWidget missingChoicer;
-    public TextWidget missingMessage = new TextWidget("", Alignment.Center);
+    public TextWidget missingMessage = new TextWidget([""], Alignment.Center);
 
     public DataFile? data;
     int chapter;
@@ -26,7 +26,7 @@ class DataLoadPage : Page
         this.required = required;
 
         loadingGroup.AddWidget(new SeparatorWidget(visible: false));
-        loadingGroup.AddWidget(new TextWidget($"Loading {DataFile.GetFileName(type)} for Chapter {chapter}...", Alignment.Center));
+        loadingGroup.AddWidget(new TextWidget([$"Loading {DataFile.GetFileName(type)} for Chapter {chapter}..."], Alignment.Center));
         loadingGroup.AddWidget(new SeparatorWidget(visible: false));
         loadingGroup.visible = true;
         AddWidget(loadingGroup);
@@ -36,14 +36,14 @@ class DataLoadPage : Page
         
         if (required)
         {
-            messageGroup.AddWidget(new TextWidget("! ERROR !", Alignment.Center, ConsoleColor.Red));
+            messageGroup.AddWidget(new TextWidget(["! ERROR !"], Alignment.Center, ConsoleColor.Red));
         }
         else
         {
-            messageGroup.AddWidget(new TextWidget("! WARNING !", Alignment.Center, ConsoleColor.Yellow));
+            messageGroup.AddWidget(new TextWidget(["! WARNING !"], Alignment.Center, ConsoleColor.Yellow));
         }
 
-        missingMessage.content = $"Unable to locate {DataFile.GetFileName(type)} for Chapter {chapter}.";
+        missingMessage.AddLine($"Unable to locate {DataFile.GetFileName(type)} for Chapter {chapter}.");
         messageGroup.AddWidget(missingMessage);
         AddWidget(messageGroup);
 

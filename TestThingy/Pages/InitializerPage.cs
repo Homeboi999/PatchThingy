@@ -59,7 +59,7 @@ class InitializerPage : Page
 
             // Create TestPage as placeholder
             TestPage newPage = new TestPage();
-            newPage.bottomText.content = $"(Will generate patches from data.win for Ch. {chapter})";
+            newPage.bottomText.AddLine($"(Will generate patches from data.win for Ch. {chapter})");
             SwitchPage(newPage);
         }
     }

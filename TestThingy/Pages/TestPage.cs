@@ -7,9 +7,9 @@ class TestPage : Page
     override public int MaxWidth => 60;
     public int pageNum = 1;
 
-    TextWidget topText = new TextWidget("Test Page!!", Alignment.Center);
+    TextWidget topText = new TextWidget(["Test Page!!"], Alignment.Center);
     ChoicerWidget testChoicer = new ChoicerWidget(["Yes", "Also Yes", "No", "Fuck You!!!!"]);
-    public TextWidget bottomText = new TextWidget("wowie!!", Alignment.Center);
+    public TextWidget bottomText = new TextWidget(["wowie!!"], Alignment.Center);
 
     public TestPage()
     {
@@ -37,7 +37,7 @@ class TestPage : Page
             case 1:
                 TestPage newPage = new TestPage();
                 newPage.pageNum = pageNum + 1;
-                newPage.bottomText.content = "Page: " + newPage.pageNum.ToString();
+                newPage.bottomText.AddLine("Page: " + newPage.pageNum.ToString());
                 SwitchPage(newPage);
                 testChoicer.chosen = false;
                 break;
