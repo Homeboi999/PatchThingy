@@ -120,35 +120,14 @@ class ActionPage : Page
         {
             // Generate
             case 0:
-                GeneratePatchesPage genPage = new(chapter);
+                GeneratePatchesPage genPage = new(chapter, allChapters);
                 SwitchPage(genPage);
                 break;
 
             // Apply
             case 1:
-                // // Load Active Data
-                // DataLoadPage vanillaLoad2 = new DataLoadPage(DataType.Vanilla, chapter, false);
-                // string failPrompt = $"Create Vanilla Data from Active Data? (data.win)";
-                // vanillaLoad2.messageGroup.AddWidget(new TextWidget([failPrompt], Alignment.Center));
-                // SwitchPage(vanillaLoad2);
-                
-                // // If failed to load, try again with Active Data.
-                // if (vanillaLoad2.data is null)
-                // {
-                //     vanillaLoad2 = new DataLoadPage(DataType.Active, chapter);
-                //     SwitchPage(vanillaLoad2);
-
-                //     // If still failed to load, immediately exit
-                //     if (vanillaLoad2.data is null)
-                //     {
-                //         break;
-                //     }
-                // }
-
-                // // Create TestPage as placeholder
-                // MessagePage newPage2 = new MessagePage();
-                // newPage2.bottomText.AddLine($"(Will apply patches to Ch. {chapter})");
-                // SwitchPage(newPage2);
+                ApplyPatchesPage applyPage = new(chapter, allChapters);
+                SwitchPage(applyPage);
                 break;
         }
 

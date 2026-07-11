@@ -4,9 +4,7 @@ using TestThingy.Data;
 namespace TestThingy.Pages.Operations;
 
 class GeneratePatchesPage : OperationPage
-{
-    override public int MaxWidth => 80;
-    
+{    
     DataFile? active;
     DataFile? vanilla;
 
@@ -20,6 +18,10 @@ class GeneratePatchesPage : OperationPage
         if (allChapters)
         {
             // TODO: this
+            // Create MessagePage as placeholder
+            string placeholderMessage = $"(Will generate patches for All Chapters)";
+            MessagePage placeholderPage = new MessagePage(placeholderMessage);
+            SwitchPage(placeholderPage);
         }
         else
         {

@@ -8,7 +8,7 @@ class MessagePage : Page
 
     // Text
     TextWidget header = new TextWidget([], Alignment.Center);
-    TextWidget message = new TextWidget([], Alignment.Center);
+    public TextWidget message = new TextWidget([], Alignment.Center);
 
     // Choicer
     WidgetGroup confirmGroup = new WidgetGroup();
@@ -18,30 +18,26 @@ class MessagePage : Page
 
     public MessagePage(string message, MessageType type = MessageType.None)
     {
-        // Header Setup
+        // Header + Choicer Setup
         SetHeaderType(type);
+        SetConfirmChoices(GetDefaultChoicesByType(type));
 
-        // Default Choicer Setup
         switch (type)
         {
             case MessageType.Error:
-                SetConfirmChoices(["Return to Start", "Exit PatchThingy"], [PageControl.GoToFirst, PageControl.ExitAll]);
                 SetCancelResult(PageControl.GoToFirst);
                 break;
 
             case MessageType.Warning:
-                SetConfirmChoices(["Confirm", "Cancel"], [PageControl.GoToPrevious, PageControl.GoToFirst]);
                 SetCancelResult(PageControl.GoToFirst);
                 break;
 
             case MessageType.Success:
-                SetConfirmChoices(["Return to Start", "Exit PatchThingy"], [PageControl.GoToFirst, PageControl.ExitAll]);
                 SetCancelResult(PageControl.GoToFirst);
                 break;
 
             // None
             default:
-                SetConfirmChoices(["Return to Start", "Exit PatchThingy"], [PageControl.GoToFirst, PageControl.ExitAll]);
                 SetCancelResult(PageControl.GoToFirst);
                 break;
         }
@@ -98,15 +94,35 @@ class MessagePage : Page
 
     // Functions for changing the choices in the
     // confirmChoicer and setting PageControl
-    public void SetConfirmChoices(IReadOnlyList<string> choices, IReadOnlyList<PageControl> results)
+    public void SetConfirmChoices(IReadOnlyList<(string text, PageControl result)> choices)
     {
-        confirmChoicer = new ChoicerWidget(choices);
-        choiceResults = results.ToList();
+        List<string> texts = [];
+        List<PageControl> results = [];
+
+        foreach ((string text, PageControl result) choice in choices)
+        {
+            texts.Add(choice.text);
+            results.Add(choice.result);
+        }
+
+        confirmChoicer = new ChoicerWidget(texts);
+        choiceResults = results;
     }
-    public void SetConfirmChoices(IReadOnlyList<string> choices, PageControl result)
+    IReadOnlyList<(string text, PageControl result)> GetDefaultChoicesByType(MessageType type)
     {
-        confirmChoicer = new ChoicerWidget(choices);
-        choiceResults = [result];
+        switch (type)
+        {
+            case MessageType.Success:
+            case MessageType.Error:
+                return [("Return to Start", PageControl.GoToFirst), ("Exit PatchThingy", PageControl.ExitAll)];
+
+            case MessageType.Warning:
+                return [("Confirm", PageControl.GoToPrevious), ("Cancel", PageControl.GoToFirst)];
+
+            // None
+            default:
+                return [("Return to Start", PageControl.GoToFirst), ("Exit PatchThingy", PageControl.ExitAll)];
+        }
     }
 
     // Same as above but for cancelling the Choicer.

@@ -114,6 +114,10 @@ abstract class Page
         }
     }
 
+    protected void Continue()
+    {
+        nextPageControl = PageControl.Continue;
+    }
     protected void GoToPrevious()
     {
         nextPageControl = PageControl.GoToPrevious;
