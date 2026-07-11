@@ -1,5 +1,6 @@
 using TestThingy.Widget;
 using TestThingy.Data;
+using TestThingy.Pages.Operations;
 
 namespace TestThingy.Pages;
 
@@ -77,6 +78,7 @@ class ActionPage : Page
                 }
                 else
                 {
+                    confirmPrompt.Clear();
                     confirmPrompt.AddLine("This will overwrite local patches. Continue?");
                     confirmGroup.visible = true;
                     SetFocusedWidget(confirmChoicer);
@@ -85,6 +87,7 @@ class ActionPage : Page
 
             // Apply
             case 1:
+                confirmPrompt.Clear();
                 confirmPrompt.AddLine("Unsaved changes to Active Data will be lost. Continue?");
                 confirmGroup.visible = true;
                 SetFocusedWidget(confirmChoicer);
@@ -117,29 +120,8 @@ class ActionPage : Page
         {
             // Generate
             case 0:
-                // // Load Active Data
-                // DataLoadPage activeLoad = new DataLoadPage(DataType.Active, chapter);
-                // SwitchPage(activeLoad);
-                
-                // // If failed to load, immediately exit.
-                // if (activeLoad.data is null)
-                // {
-                //     break;
-                // }
-
-                // // Load Vanilla Data
-                // DataLoadPage vanillaLoad = new DataLoadPage(DataType.Vanilla, chapter);
-                // SwitchPage(vanillaLoad);
-                
-                // // If failed to load, immediately exit.
-                // if (vanillaLoad.data is null)
-                // {
-                //     break;
-                // }
-
-                // // Create TestPage as placeholder
-                // MessagePage newPage = new MessagePage($"(Will generate patches from data.win for Ch. {chapter})");
-                // SwitchPage(newPage);
+                GeneratePatchesPage genPage = new(chapter);
+                SwitchPage(genPage);
                 break;
 
             // Apply

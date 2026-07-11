@@ -18,29 +18,23 @@ class MessagePage : Page
 
     public MessagePage(string message, MessageType type = MessageType.None)
     {
-        // Header + Choicer Setup
+        // Header Setup
+        SetHeaderType(type);
+
+        // Default Choicer Setup
         switch (type)
         {
             case MessageType.Error:
-                header.color = ConsoleColor.Red;
-                header.AddLine("! ERROR !");
-
                 SetConfirmChoices(["Return to Start", "Exit PatchThingy"], [PageControl.GoToFirst, PageControl.ExitAll]);
                 SetCancelResult(PageControl.GoToFirst);
                 break;
 
             case MessageType.Warning:
-                header.color = ConsoleColor.Yellow;
-                header.AddLine("! WARNING !");
-
                 SetConfirmChoices(["Confirm", "Cancel"], [PageControl.GoToPrevious, PageControl.GoToFirst]);
                 SetCancelResult(PageControl.GoToFirst);
                 break;
 
             case MessageType.Success:
-                header.color = ConsoleColor.Green;
-                header.AddLine("Success!");
-
                 SetConfirmChoices(["Return to Start", "Exit PatchThingy"], [PageControl.GoToFirst, PageControl.ExitAll]);
                 SetCancelResult(PageControl.GoToFirst);
                 break;
@@ -67,8 +61,9 @@ class MessagePage : Page
         confirmGroup.AddWidget(confirmChoicer!);
         SetFocusedWidget(confirmChoicer!);
         confirmGroup.AddWidget(new SeparatorWidget(visible: false));
-
         confirmGroup.visible = true;
+        AddWidget(confirmGroup);
+
 
         confirmChoicer!.Confirmed += OnChosen;
         confirmChoicer.Cancelled += OnCancelled;
@@ -76,14 +71,14 @@ class MessagePage : Page
 
     private void OnChosen(object? sender, ChoicerEventArgs e)
     {
-        GetControlFunction(choiceResults[confirmChoicer.curSelection]);
+        CallControlFunction(choiceResults[confirmChoicer.curSelection]);
     }
     private void OnCancelled(object? sender, EventArgs e)
     {
-        GetControlFunction(cancelResult);
+        CallControlFunction(cancelResult);
     }
 
-    void GetControlFunction(PageControl control)
+    void CallControlFunction(PageControl control)
     {
         switch (control)
         {
@@ -118,5 +113,34 @@ class MessagePage : Page
     public void SetCancelResult(PageControl result)
     {
         cancelResult = result;
+    }
+
+    // Change the header based on type
+    public void SetHeaderType(MessageType type)
+    {
+        header.Clear();
+
+        switch (type)
+        {
+            case MessageType.Error:
+                header.color = ConsoleColor.Red;
+                header.AddLine("! ERROR !");
+                break;
+
+            case MessageType.Warning:
+                header.color = ConsoleColor.Yellow;
+                header.AddLine("! WARNING !");
+                break;
+
+            case MessageType.Success:
+                header.color = ConsoleColor.Green;
+                header.AddLine("Success!");
+                break;
+
+            // None
+            default:
+                header.color = ConsoleColor.White;
+                break;
+        }
     }
 }

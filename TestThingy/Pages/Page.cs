@@ -61,7 +61,7 @@ abstract class Page
         FocusedWidget?.OnKeyInput(inputKey);
     }
 
-    private bool CheckPageControl(out PageControl result)
+    protected bool CheckPageControl(out PageControl result)
     {
         PageControl thisPageControl = nextPageControl;
         nextPageControl = PageControl.Continue;

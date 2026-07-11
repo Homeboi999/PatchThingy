@@ -26,6 +26,7 @@ class GlobalChapterPage : ChapterPage
 
     protected override void OnChapterSelected(int chapter)
     {
+        confirmPrompt.Clear();
         confirmPrompt.AddLine("This will overwrite local patches. Continue?");
         confirmGroup.visible = true;
         SetFocusedWidget(confirmChoicer);
