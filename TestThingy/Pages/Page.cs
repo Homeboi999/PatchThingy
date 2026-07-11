@@ -25,8 +25,18 @@ abstract class Page
 
     abstract public int MaxWidth { get; }
 
-    public virtual PageControl RunLoop()
+    public PageControl RunLoop()
     {
+        Draw();
+        OnInitialize();
+        
+        PageControl result;
+
+        if (CheckPageControl(out result))
+        {
+            return result;
+        }
+
         while (true)
         {
             Draw();
@@ -34,30 +44,54 @@ abstract class Page
             ConsoleKeyInfo input = Console.ReadKey(true);    
             OnKeyInput(input.Key);
 
-            PageControl result = nextPageControl;
-            nextPageControl = PageControl.Continue;
-
-            switch(result)
+            if (CheckPageControl(out result))
             {
-                case PageControl.GoToPrevious:
-                    return PageControl.Continue;
-
-                case PageControl.ExitAll:
-                    return result;
-
-                case PageControl.GoToFirst:
-                    if (lastPage is not null)
-                    {
-                        return result;
-                    }
-                    break;
+                return result;
             }
         }
+    }
+
+    protected virtual void OnInitialize()
+    {
+
     }
 
     public virtual void OnKeyInput(ConsoleKey inputKey)
     {
         FocusedWidget?.OnKeyInput(inputKey);
+    }
+
+    private bool CheckPageControl(out PageControl result)
+    {
+        PageControl thisPageControl = nextPageControl;
+        nextPageControl = PageControl.Continue;
+
+        switch(thisPageControl)
+        {
+            case PageControl.GoToPrevious:
+                result = PageControl.Continue;
+                return true;
+
+            case PageControl.ExitAll:
+                result = thisPageControl;
+                return true;
+
+            case PageControl.GoToFirst:
+                if (lastPage is not null)
+                {
+                    result = thisPageControl;
+                    return true;
+                }
+                else
+                {
+                    result = PageControl.Continue;
+                    return false;
+                }
+
+            default:
+                result = PageControl.Continue;
+                return false;
+        }
     }
 
     public void SetFocusedWidget(ChoicerWidget newWidget)

@@ -42,29 +42,28 @@ class GlobalChapterPage : ChapterPage
         for (int i = 1; i < chapterCount + 1; i++)
         {
             // Load Active Data
-            DataLoadPage activeLoad = new DataLoadPage(DataType.Active, i);
-            SwitchPage(activeLoad);
+            // DataLoadPage activeLoad = new DataLoadPage(DataType.Active, i);
+            // SwitchPage(activeLoad);
             
-            // If failed to load, immediately exit.
-            if (activeLoad.data is null)
-            {
-                break;
-            }
+            // // If failed to load, immediately exit.
+            // if (activeLoad.data is null)
+            // {
+            //     break;
+            // }
 
-            // Load Vanilla Data
-            DataLoadPage vanillaLoad = new DataLoadPage(DataType.Vanilla, i);
-            SwitchPage(vanillaLoad);
+            // // Load Vanilla Data
+            // DataLoadPage vanillaLoad = new DataLoadPage(DataType.Vanilla, i);
+            // SwitchPage(vanillaLoad);
             
-            // If failed to load, immediately exit.
-            if (vanillaLoad.data is null)
-            {
-                break;
-            }
+            // // If failed to load, immediately exit.
+            // if (vanillaLoad.data is null)
+            // {
+            //     break;
+            // }
         }
 
         // Make TestPage as placeholder
-        TestPage newPage = new TestPage();
-        newPage.bottomText.AddLine("(Will start generating patches for all chapters)");
+        MessagePage newPage = new MessagePage("(Will start generating patches for all chapters)");
         SwitchPage(newPage);
 
         OnConfirmCancelled(this, new());

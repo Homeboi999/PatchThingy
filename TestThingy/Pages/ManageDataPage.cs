@@ -51,8 +51,7 @@ class ManageDataPage : Page
     private void OnChosen(object? sender, ChoicerEventArgs e)
     {
         // lazy placeholder
-        TestPage newPage = new TestPage();
-        newPage.bottomText.AddLine("(Don't feel like coding placeholders for each option here yet)");
+        MessagePage newPage = new MessagePage("(Don't feel like coding placeholders for each option here yet)");
         SwitchPage(newPage);
         actionChoicer.chosen = false;
 

@@ -37,14 +37,14 @@ class TextWidget : Widget
                     break;
             }
 
-            DrawContext.MoveCursor(x, y);
+            DrawContext.MoveCursor(x, y + curLine);
 
             if (color is not null)
             {
                 Console.ForegroundColor = color ?? ConsoleColor.White;
             }
 
-            Console.Write(content);
+            Console.Write(content[curLine]);
             Console.ResetColor();
         }
     }
@@ -59,5 +59,9 @@ class TextWidget : Widget
         {
             content.RemoveAt(index);
         }
+    }
+    public void Clear()
+    {
+        content.Clear();
     }
 }

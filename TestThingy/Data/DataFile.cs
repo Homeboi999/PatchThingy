@@ -37,6 +37,27 @@ class DataFile
         decompilerSettings = Data.ToolInfo.DecompilerSettings;
     }
 
+    // Try to load the Data file from disk,
+    // and return a boolean for if it's null.
+    public static bool TryLoad(DataType type, int chapter, out DataFile? data)
+    {
+        try
+        {
+            // Try loading the Data file, and
+            // return true if it was successful.
+            data = new DataFile(type, chapter);
+            return true;
+        }
+        catch
+        {
+            // If the file couldn't be found,
+            // or was otherwise invalid, set
+            // it to null and return false.
+            data = null;
+            return false;
+        }
+    }
+
     // Read the code from the Data file,
     // and convert it into a list of strings
     // for each line.

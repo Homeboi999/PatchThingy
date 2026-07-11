@@ -37,7 +37,8 @@ Console.CursorVisible = false;
 
 try
 {
-    MainChapterPage startPage = new MainChapterPage();
+    // MainChapterPage startPage = new MainChapterPage();
+    TestPage startPage = new TestPage();
     startPage.RunLoop();
 }
 catch (Exception error) // show crashes in main terminal output
