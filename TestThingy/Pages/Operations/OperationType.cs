@@ -1,13 +1,13 @@
-namespace TestThingy;
+namespace TestThingy.Pages.Operations;
 
-public enum ScriptMode
+public enum OperationType
 {
     Generate,
     Apply,
     LoadVanilla,
-    UpdateVanilla,
+    SaveVanilla,
     LoadBackup,
-    UpdateBackup,
+    SaveBackup,
     ConvertPatches,
     ImportSource,
     BuildRelease,

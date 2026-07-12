@@ -10,7 +10,7 @@ abstract class ChapterPage : Page
     readonly bool onlyChapters;
     
     protected ChoicerWidget chapterChoicer;
-    public int chapterCount;
+    public static int chapterCount;
 
     public ChapterPage(bool onlyChapters = false)
     {

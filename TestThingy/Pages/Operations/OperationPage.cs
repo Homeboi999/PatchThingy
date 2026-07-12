@@ -16,7 +16,7 @@ abstract class OperationPage : Page
 
     // DataFile loading screen
     protected WidgetGroup loadingGroup = new WidgetGroup(visible: true);
-    protected TextWidget loadingText = new TextWidget(["Loading..."], Alignment.Center);
+    protected TextWidget loadingText = new TextWidget(["Initializing..."], Alignment.Center);
 
     // Output Log
     protected WidgetGroup mainGroup = new WidgetGroup(visible: false);

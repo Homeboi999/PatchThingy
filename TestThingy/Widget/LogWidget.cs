@@ -7,7 +7,7 @@ class LogWidget : Widget
     List<(string text, MessageType type)> content = [];
     public int logLines => content.Count;
     int scrollAmount = 0;
-    int height;
+    public int height;
 
     public LogWidget (int height)
     {

@@ -21,29 +21,13 @@ class MessagePage : Page
         // Header + Choicer Setup
         SetHeaderType(type);
         SetConfirmChoices(GetDefaultChoicesByType(type));
-
-        switch (type)
-        {
-            case MessageType.Error:
-                SetCancelResult(PageControl.GoToFirst);
-                break;
-
-            case MessageType.Warning:
-                SetCancelResult(PageControl.GoToFirst);
-                break;
-
-            case MessageType.Success:
-                SetCancelResult(PageControl.GoToFirst);
-                break;
-
-            // None
-            default:
-                SetCancelResult(PageControl.GoToFirst);
-                break;
-        }
+        SetCancelResult(PageControl.GoToFirst);
 
         // Message Setup
-        this.message.AddLine(message);
+        if (message.Length > 0)
+        {
+            this.message.AddLine(message);
+        }
 
         // Add header + message
         AddWidget(new SeparatorWidget(visible: false));
