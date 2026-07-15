@@ -10,7 +10,7 @@ class DataFile
 {
     public int chapter;
     public DataType type;
-    public UndertaleData Data;
+    public UndertaleData data;
 
     // find the relevant versions of data.win
     string fileName => GetFileName(type);
@@ -30,16 +30,16 @@ class DataFile
         // determine the file path.
         using (Stream file = File.Open(GetFilePath(), FileMode.Open))
         {
-            Data = UndertaleIO.Read(file);
+            data = UndertaleIO.Read(file);
         }
 
-        globalDecompileContext = new(Data);
-        decompilerSettings = Data.ToolInfo.DecompilerSettings;
+        globalDecompileContext = new(data);
+        decompilerSettings = data.ToolInfo.DecompilerSettings;
     }
 
     // Try to load the Data file from disk,
     // and return a boolean for if it's null.
-    public static bool TryLoad(DataType type, int chapter, out DataFile? data)
+    public static bool TryLoad(DataType type, int chapter, out DataFile data)
     {
         try
         {
@@ -53,7 +53,7 @@ class DataFile
             // If the file couldn't be found,
             // or was otherwise invalid, set
             // it to null and return false.
-            data = null;
+            data = null!;
             return false;
         }
     }
@@ -75,7 +75,7 @@ class DataFile
     {
         using (Stream file = File.Open(GetFilePath(), FileMode.Create))
         {
-            UndertaleIO.Write(file, Data);
+            UndertaleIO.Write(file, data);
         }
     }
     

@@ -1,4 +1,5 @@
 using TestThingy.Data;
+using TestThingy.Pages.Operations;
 using TestThingy.Widget;
 
 namespace TestThingy.Pages;
@@ -9,6 +10,7 @@ class GlobalChapterPage : ChapterPage
     WidgetGroup confirmGroup = new WidgetGroup();
     TextWidget confirmPrompt = new TextWidget(["Are you sure?"], Alignment.Center);
     ChoicerWidget confirmChoicer = new ChoicerWidget(["Confirm", "Cancel"]);
+    int globalChapter => chapterChoicer.curSelection + 1;
 
     public GlobalChapterPage() : base(onlyChapters: true)
     {
@@ -40,32 +42,9 @@ class GlobalChapterPage : ChapterPage
             return;
         }
 
-        for (int i = 1; i < chapterCount + 1; i++)
-        {
-            // Load Active Data
-            // DataLoadPage activeLoad = new DataLoadPage(DataType.Active, i);
-            // SwitchPage(activeLoad);
-            
-            // // If failed to load, immediately exit.
-            // if (activeLoad.data is null)
-            // {
-            //     break;
-            // }
-
-            // // Load Vanilla Data
-            // DataLoadPage vanillaLoad = new DataLoadPage(DataType.Vanilla, i);
-            // SwitchPage(vanillaLoad);
-            
-            // // If failed to load, immediately exit.
-            // if (vanillaLoad.data is null)
-            // {
-            //     break;
-            // }
-        }
-
-        // Make TestPage as placeholder
-        MessagePage newPage = new MessagePage("(Will start generating patches for all chapters)");
-        SwitchPage(newPage);
+        // Start Generating
+        GeneratePatchesPage genPage = new(globalChapter, allChapters: true);
+        SwitchPage(genPage);
 
         OnConfirmCancelled(this, new());
     }

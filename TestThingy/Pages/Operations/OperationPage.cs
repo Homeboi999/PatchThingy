@@ -1,5 +1,6 @@
 using TestThingy.Widget;
 using TestThingy.Data;
+using TestThingy.Operations;
 
 namespace TestThingy.Pages.Operations;
 
@@ -9,10 +10,26 @@ abstract class OperationPage : Page
 
     protected int chapter;
     protected bool allChapters;
+    protected int chaptersDone;
 
     // Header
     protected WidgetGroup headerGroup = new WidgetGroup(visible: true);
-    protected TextWidget headerText = new TextWidget([], Alignment.Center);
+    protected TextWidget headerText;
+    protected virtual string modeText => "MODE TEXT";
+    protected string fullHeader
+    {
+        get
+        {
+            if (allChapters)
+            {
+                return $"Deltarune - {modeText}... ({chaptersDone}/{ChapterPage.chapterCount} Complete)";
+            }
+            else
+            {
+                return $"Deltarune Chapter {chapter} - {modeText}...";
+            }
+        }
+    }
 
     // DataFile loading screen
     protected WidgetGroup loadingGroup = new WidgetGroup(visible: true);
@@ -31,22 +48,30 @@ abstract class OperationPage : Page
         this.chapter = chapter;
         this.allChapters = allChapters;
 
-        // Header
-        headerGroup.AddWidget(new SeparatorWidget(visible: false));
-        headerGroup.AddWidget(headerText);
-        headerGroup.AddWidget(new SeparatorWidget(visible: false));
-        headerGroup.AddWidget(new SeparatorWidget(visible: true));
-        AddWidget(headerGroup);
+        if (allChapters)
+        {
+            loadingGroup.visible = false;
+            mainGroup.visible = true;
+        }
 
         // Loading screen
         loadingGroup.AddWidget(new SeparatorWidget(visible: false));
         loadingGroup.AddWidget(loadingText);
         loadingGroup.AddWidget(new SeparatorWidget(visible: false));
+        loadingGroup.AddWidget(new SeparatorWidget(visible: true));
         AddWidget(loadingGroup);
 
         // Loading screen
         mainGroup.AddWidget(mainLog);
+        mainGroup.AddWidget(new SeparatorWidget(visible: true));
         AddWidget(mainGroup);
+
+        // Header
+        // headerGroup.AddWidget(new SeparatorWidget(visible: false));
+        headerText = new TextWidget([fullHeader], Alignment.Center);
+        headerGroup.AddWidget(headerText);
+        // headerGroup.AddWidget(new SeparatorWidget(visible: false));
+        AddWidget(headerGroup);
 
         // Results Choicer
         resultGroup.AddWidget(new SeparatorWidget(visible: true));
@@ -59,6 +84,28 @@ abstract class OperationPage : Page
         // Event Setup
         resultChoicer.Confirmed += OnConfirm;
         resultChoicer.Cancelled += OnCancelled;
+    }
+
+    // Allow scrolling the log while choicer
+    // is focused
+    public override void OnKeyInput(ConsoleKey inputKey)
+    {
+        switch(inputKey)
+        {
+            case ConsoleKey.UpArrow:
+                mainLog.Scroll(1);
+                Draw();
+                break;
+
+            case ConsoleKey.DownArrow:
+                mainLog.Scroll(-1);
+                Draw();
+                break;
+                
+            default:
+                base.OnKeyInput(inputKey);
+                break;
+        }
     }
 
     // basic resultChoicer functions to be
@@ -81,22 +128,27 @@ abstract class OperationPage : Page
         GoToFirst();
     }
 
-    protected bool TryLoadData(DataType type, int chapter, out DataFile? data, bool customMessage = false)
+    // Convenient MessagePage creator
+    // to help with error/warning popups
+    protected bool CreateMessage(IReadOnlyList<string> messages, MessageType type)
     {
-        loadingText.Clear();
-        loadingText.AddLine($"Loading {DataFile.GetFileName(type)} for Chapter {chapter}...");
-        Draw();
+        // Make Message Page
+        MessagePage messagePage = new MessagePage("", type);
 
-        bool loaded = DataFile.TryLoad(type, chapter, out data);
-
-        if (!loaded && !customMessage)
+        // Add message lines
+        foreach (string message in messages)
         {
-            // Make Error Page
-            string errorMessage = $"Unable to locate {DataFile.GetFileName(type)} for Chapter {chapter}.";
-            MessagePage errorPage = new MessagePage(errorMessage, MessageType.Error);
-            SwitchPage(errorPage);
+            messagePage.message.AddLine(message);
         }
 
-        return loaded;
+        SwitchPage(messagePage);
+        return messagePage.result;
+    }
+    protected bool CreateMessage(string message, MessageType type)
+    {
+        // Make Message Page
+        MessagePage messagePage = new MessagePage(message, type);
+        SwitchPage(messagePage);
+        return messagePage.result;
     }
 }

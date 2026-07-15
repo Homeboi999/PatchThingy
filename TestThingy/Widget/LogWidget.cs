@@ -56,10 +56,6 @@ class LogWidget : Widget
                     Console.ForegroundColor = ConsoleColor.Green;
                     Console.Write("✓");
                     break;
-
-                default:
-                    Console.ForegroundColor = ConsoleColor.White;
-                    break;
             }
 
             DrawContext.MoveCursor(x, scrollPos - curLine);

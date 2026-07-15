@@ -7,48 +7,48 @@ class CopyDataPage : OperationPage
 {
     DataType sourceType;
     DataType destType;
+    protected override string modeText { get; }
 
     string confirmMessage1;
     string confirmMessage2;
 
     public CopyDataPage(OperationType mode, int chapter, bool allChapters = false) : base(chapter, allChapters)
     {
-        string modeLabel;
-
         switch (mode)
         {
             case OperationType.LoadVanilla:
                 sourceType = DataType.Vanilla;
                 destType = DataType.Active;
-                modeLabel = $"Loading {DataFile.GetFileName(sourceType)}";
+                modeText = $"Loading {DataFile.GetFileName(sourceType)}";
                 break;
 
             case OperationType.SaveVanilla:
                 sourceType = DataType.Active;
                 destType = DataType.Vanilla;
-                modeLabel = $"Saving {DataFile.GetFileName(destType)}";
+                modeText = $"Saving {DataFile.GetFileName(destType)}";
                 break;
 
             case OperationType.LoadBackup:
                 sourceType = DataType.Backup;
                 destType = DataType.Active;
-                modeLabel = $"Loading {DataFile.GetFileName(sourceType)}";
+                modeText = $"Loading {DataFile.GetFileName(sourceType)}";
                 break;
 
             case OperationType.SaveBackup:
                 sourceType = DataType.Active;
                 destType = DataType.Backup;
-                modeLabel = $"Saving {DataFile.GetFileName(destType)}";
+                modeText = $"Saving {DataFile.GetFileName(destType)}";
                 break;
 
             default:
                 sourceType = DataType.Active;
                 destType = DataType.Active;
-                modeLabel = "Failsafe";
+                modeText = "Failsafe";
                 break;
         }
-
-        headerText.AddLine($"Deltarune Chapter {chapter} - {modeLabel}...");
+        
+        headerText.Clear();
+        headerText.AddLine(fullHeader);
         headerGroup.visible = allChapters;
 
         confirmMessage1 = $"This will overwrite the {DataFile.GetFileName(destType)} with";
@@ -105,6 +105,11 @@ class CopyDataPage : OperationPage
                     mainLog.Add(message, MessageType.Error);
                     Draw();
                 }
+
+                // Update Header
+                chaptersDone++;
+                headerText.Clear();
+                headerText.AddLine($"Deltarune - {modeText}... ({chaptersDone}/{ChapterPage.chapterCount} Complete)");
             }
 
             // show resultChoicer and

@@ -15,6 +15,7 @@ class MessagePage : Page
     ChoicerWidget confirmChoicer;
     List<PageControl> choiceResults = [];
     PageControl cancelResult;
+    public bool result = false;
 
     public MessagePage(string message, MessageType type = MessageType.None)
     {
@@ -63,15 +64,22 @@ class MessagePage : Page
         switch (control)
         {
             case PageControl.GoToPrevious:
+                result = true;
                 GoToPrevious();
                 break;
 
             case PageControl.GoToFirst:
+                result = false;
                 GoToFirst();
                 break;
                 
             case PageControl.ExitAll:
+                result = false;
                 ExitAll();
+                break;
+                
+            default:
+                result = true;
                 break;
         }
     }
