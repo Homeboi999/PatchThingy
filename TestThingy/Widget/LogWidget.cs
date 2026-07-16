@@ -29,10 +29,9 @@ class LogWidget : Widget
         {
             // Read contents of the line
             int index = curLine + scrollAmount;
-            string lineText = GetLineText(index);
 
             // If there's no text, end here.
-            if (lineText.Length == 0)
+            if (!IsIndexValid(index))
             {
                 continue;
             }
@@ -58,13 +57,15 @@ class LogWidget : Widget
                     break;
             }
 
+            // Write line text
             DrawContext.MoveCursor(x, scrollPos - curLine);
+            string lineText = GetLineText(index);
             Console.Write(lineText);
             Console.ResetColor();
         }
 
         // Draw arrows if there are entries past what's shown
-        if (GetLineText(scrollAmount - 1).Length > 0)
+        if (IsIndexValid(scrollAmount - 1))
         {
             DrawContext.MoveCursor(x - 3, scrollPos);
 
@@ -73,7 +74,7 @@ class LogWidget : Widget
             Console.ResetColor();
         }
 
-        if (GetLineText(scrollAmount + height).Length > 0)
+        if (IsIndexValid(scrollAmount + height))
         {
             DrawContext.MoveCursor(x - 3, y);
 
@@ -84,6 +85,11 @@ class LogWidget : Widget
     }
 
     // Convenience
+    bool IsIndexValid(int index)
+    {
+        // Try to read content at index
+        return !(index < 0 || index >= content.Count);
+    }
     string GetLineText(int index)
     {
         try
@@ -97,8 +103,6 @@ class LogWidget : Widget
             return "";
         }
     }
-
-    // Convenience
     MessageType GetLineType(int index)
     {
         try

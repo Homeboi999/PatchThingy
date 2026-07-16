@@ -204,10 +204,8 @@ class ManageDataPage : Page
 
             // Build xdeltas
             case 4:
-                MessagePage placeholderPage = new("");
-                placeholderPage.message.AddLine($"(Will generate .xdelta files for Chapter {chapter})");
-                placeholderPage.message.AddLine($"(Using Active Data and Vanilla Data)");
-                SwitchPage(placeholderPage);
+                BuildReleasePage xdeltaPage = new(chapter, allChapters);
+                SwitchPage(xdeltaPage);
                 break;
         }
 

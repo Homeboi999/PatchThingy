@@ -11,25 +11,11 @@ class ConvertPatches(IOperation menu)
     // Output Manager
     OutputManager manager = new OutputManager();
 
-    public void AllChapters(int globalChapter)
-    {
-        // TODO: my pc fucking HATES this
-        for (int i = 1; i <= ChapterPage.chapterCount; i++)
-        {
-            SingleChapter(i, i == globalChapter);
-
-            // Add a space between chapters,
-            // excluding the final one
-            if (i < ChapterPage.chapterCount)
-            {
-                menu.AddLog("");
-            }
-        }
-    }
-
-    public void SingleChapter(int chapter, bool makeGlobal = true)
+    public void ConvertChapterPatches(int chapter, bool makeGlobal)
     {
         DataFile active;
+        int chapterCount = 0;
+        int globalCount = 0;
 
         // Load Active Data
         if (!menu.TryLoadData(DataType.Active, chapter, out active))
@@ -37,20 +23,47 @@ class ConvertPatches(IOperation menu)
             menu.ErrorMessage($"Unable to locate {DataFile.GetFileName(DataType.Active)} for Chapter {chapter}.");
             return;
         }
+        
+        // Find the folder to look in
+        string chapterFolder = Path.Combine(GetChapterPath(chapter), GetTypeFolder(FileType.Code));
+        string globalFolder = Path.Combine(GetChapterPath(0), GetTypeFolder(FileType.Code));
 
-        // Save Files
-        menu.AddLog("Saving output...");
-        manager.SaveModFiles(chapter, makeGlobal);
+        // Convert Chapter Patches
+        chapterCount = PatchesToCode(active, chapterFolder);
 
-        // Placeholder Success
-        menu.AddLog($"Successfully generated patches for Chapter {chapter}", MessageType.Success);
+        if (chapterCount > 0)
+        {
+            menu.AddLog($"Successfully converted {chapterCount} Chapter {chapter} patches!", MessageType.Success);
+        }
+
+        if (makeGlobal)
+        {
+            // Convert Global Patches
+            globalCount = PatchesToCode(active, globalFolder);
+
+            if (globalCount > 0)
+            {
+                menu.AddLog($"Successfully converted {chapterCount} Global Patches!", MessageType.Success);
+            }
+        }
+
+        if (chapterCount == 0 && globalCount == 0)
+        {
+            menu.AddLog($"Couldn't find any patches to convert!", MessageType.Warning);
+        }
+        else
+        {
+            // Save Files
+            menu.AddLog("Saving output...");
+            manager.SaveModFiles(chapter, makeGlobal);
+        }
+
         menu.OnComplete();
     }
 
-    public int PatchesToCode(DataFile data, int chapter)
+    public int PatchesToCode(DataFile data, string filePath)
     {
         int count = 0;
-        string filePath = Path.Combine(GetChapterPath(chapter), GetTypeFolder(FileType.Code));
 
         foreach(string file in Directory.EnumerateFiles(filePath))
         {
@@ -77,6 +90,7 @@ class ConvertPatches(IOperation menu)
 
             // delete old patch file
             File.Delete(file);
+            menu.AddLog($"Created {fileName} from patch");
             count++;
         }
 

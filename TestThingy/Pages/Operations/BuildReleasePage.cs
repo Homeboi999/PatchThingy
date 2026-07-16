@@ -3,14 +3,14 @@ using TestThingy.Operations;
 
 namespace TestThingy.Pages.Operations;
 
-class ConvertPatchesPage : OperationPage
+class BuildReleasePage : OperationPage
 {
-    ConvertPatches operation;
-    protected override string modeText => "Applying Patches";
+    BuildRelease operation;
+    protected override string modeText => "Building .xdelta Files";
 
-    public ConvertPatchesPage(int chapter, bool allChapters = false) : base(chapter, allChapters)
+    public BuildReleasePage(int chapter, bool allChapters = false) : base(chapter, allChapters)
     {
-        ConvertPatchesBridge operationBridge = new ConvertPatchesBridge(this);
+        BuildReleaseBridge operationBridge = new BuildReleaseBridge(this);
         operation = new(operationBridge);
     }
 
@@ -20,7 +20,7 @@ class ConvertPatchesPage : OperationPage
         {
             for (int i = 1; i <= ChapterPage.chapterCount; i++)
             {
-                operation.ConvertChapterPatches(i, i == chapter);
+                operation.SingleChapter(i);
 
                 // Add a space between chapters,
                 // excluding the final one
@@ -32,8 +32,7 @@ class ConvertPatchesPage : OperationPage
         }
         else
         {
-            operation.ConvertChapterPatches(chapter, makeGlobal: true);
-            operation.ConvertChapterPatches(chapter, makeGlobal: false);
+            operation.SingleChapter(chapter);
         }
 
         // Show the ResultGroup after everything
@@ -41,7 +40,7 @@ class ConvertPatchesPage : OperationPage
         Draw();
     }
 
-    class ConvertPatchesBridge(ConvertPatchesPage page) : IOperation
+    class BuildReleaseBridge(BuildReleasePage page) : IOperation
     {
         public bool TryLoadData(DataType type, int chapter, out DataFile dataFile)
         {
@@ -81,14 +80,14 @@ class ConvertPatchesPage : OperationPage
         public void ErrorMessage(string message)
         {
             // Make Error Page
-            page.CreateMessage(message, MessageType.Error);
             AddLog(message, MessageType.Error);
+            page.CreateMessage(message, MessageType.Error);
         }
         public void ErrorMessage(IReadOnlyList<string> messages)
         {
             // Make Error Page
-            page.CreateMessage(messages, MessageType.Error);
             AddLog(messages[0], MessageType.Error);
+            page.CreateMessage(messages, MessageType.Error);
         }
         
         public bool WarningMessage(string message)
