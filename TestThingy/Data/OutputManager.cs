@@ -102,14 +102,17 @@ public class OutputManager
             return false;
         }
 
-        string path = Path.Combine(GetChapterPath(queueFile.chapter), GetTypeFolder(queueFile.type));
-        bool isGlobal = File.Exists(Path.Combine(GetChapterPath(0), GetTypeFolder(queueFile.type))) && !File.Exists(path);
+        string fileName = queueFile.name + GetFileExtension(queueFile.type);
+        string path = Path.Combine(GetChapterPath(queueFile.chapter), GetTypeFolder(queueFile.type), fileName);
+        string globalPath = Path.Combine(GetChapterPath(0), GetTypeFolder(0), fileName);
+        bool isGlobal = File.Exists(globalPath) && !File.Exists(path);
 
         // save if the chapter is global or not
         if (isGlobal)
         {
             queueFile.chapter = 0;
-            path = Path.Combine(GetChapterPath(queueFile.chapter), GetTypeFolder(queueFile.type));
+            // // idk why i was doing this
+            // path = Path.Combine(globalPath, fileName);
         }
 
         // add to queue
@@ -117,7 +120,51 @@ public class OutputManager
         return true;
     }
 
-    void ResetFolder(int chapter, FileType type, bool keepFiles = false)
+    public void SaveModFiles(int chapter, bool skipGlobal)
+    {
+        // Reset output folder structure.
+        ResetAllFolders(chapter);
+
+        // Write file to the correct folder
+        // based on the file type.
+        foreach (TempFile queueFile in tempFiles)
+        {
+            // Skip global patches if not chosen chapter
+            if (queueFile.chapter == 0 && skipGlobal)
+            {
+                continue;
+            }
+
+            string typeFolder = Path.Combine(GetChapterPath(queueFile.chapter));
+
+            string fileName = queueFile.name + GetFileExtension(queueFile.type);
+            string path = Path.Combine(typeFolder, fileName);
+
+            // Don't replace global source code.
+            if (queueFile.type == FileType.Code && queueFile.chapter == 0 && File.Exists(path))
+            {
+                continue;
+            }
+
+            File.WriteAllText(path, queueFile.text);
+        }
+
+        // after done, clear fileQueue so it doesnt
+        // carry over to the next chapter, but keep
+        // global patches in queue maybe?
+        tempFiles.RemoveAll(file => (file.chapter != 0));
+    }
+
+    void ResetAllFolders(int chapter)
+    {
+        ResetFolder(chapter, FileType.Code, keepFiles: false);
+        ResetFolder(chapter, FileType.Script);
+        ResetFolder(chapter, FileType.Sprite);
+        ResetFolder(chapter, FileType.Patch);
+        ResetFolder(chapter, FileType.GameObject);
+    }
+
+    void ResetFolder(int chapter, FileType type, bool keepFiles = true)
     {
         string fullPath = Path.Combine(GetChapterPath(chapter), GetTypeFolder(type));
 
@@ -132,7 +179,7 @@ public class OutputManager
         {
             if (file.EndsWith(GetFileExtension(type)))
             {
-                if (keepFiles)
+                if (!keepFiles)
                 {
                     // only delete files that arent in the queue so
                     // we dont keep anything i got rid of or smthn

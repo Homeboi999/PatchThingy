@@ -1,4 +1,3 @@
-using System.Security.Cryptography;
 using System.Text.Json;
 using CodeChicken.DiffPatch;
 using TestThingy.Data;
@@ -11,8 +10,11 @@ namespace TestThingy.Operations;
 
 class ApplyPatches(IOperation menu)
 {
+    int chapter;
+
     public void SingleChapter(int chapter)
     {
+        this.chapter = chapter;
         DataFile vanilla;
         bool success = true;
 
@@ -45,33 +47,79 @@ class ApplyPatches(IOperation menu)
             File.Move(DataFile.GetFileName(DataType.Active), DataFile.GetFileName(DataType.Vanilla));
         }
 
+        // Don't try to apply patches that don't exist.
+        if (!Path.Exists(Config.current.OutputPath))
+        {
+            menu.ErrorMessage("Missing prior output in directory");
+            return;
+        }
+
+        bool chapterExists = Path.Exists(GetChapterPath(chapter)) && Directory.GetFileSystemEntries(GetChapterPath(chapter)).Length > 0;
+        bool globalExists = Path.Exists(GetChapterPath(chapter)) && Directory.GetFileSystemEntries(GetChapterPath(chapter)).Length > 0;
+        
+        if (!chapterExists && !globalExists)
+        {
+            menu.ErrorMessage([$"No patches available for Chapter {chapter}.", "(Try creating global patches)"]);
+            return;
+        }
+
         // Create ImportGroup
         CodeImportGroup importGroup = new(vanilla.data);
 
         // Start applying patches in the
         // correct order, exiting if it fails.
         #region ImportSteps
-        success = ImportSprites(vanilla);
+        menu.AddLog("Importing Sprites...");
+        success = ImportSprites(vanilla, 0);
+
+        if (!success)
+            return;
+
+        success = ImportSprites(vanilla, chapter);
 
         if (!success)
             return;
         
-        success = DefineGameObjects(vanilla);
+        menu.AddLog("Defining Game Objects...");
+        success = DefineGameObjects(vanilla, 0);
+
+        if (!success)
+            return;
+
+        success = DefineGameObjects(vanilla, chapter);
 
         if (!success)
             return;
         
-        success = ImportCode(vanilla, importGroup);
+        menu.AddLog("Importing Code...");
+        success = ImportCode(vanilla, 0, importGroup);
+
+        if (!success)
+            return;
+
+        success = ImportCode(vanilla, chapter, importGroup);
 
         if (!success)
             return;
         
-        success = DefineScripts(vanilla);
+        menu.AddLog("Defining Scripts...");
+        success = DefineScripts(vanilla, 0);
 
         if (!success)
             return;
 
-        success = PatchCode(vanilla, importGroup);
+        success = DefineScripts(vanilla, chapter);
+
+        if (!success)
+            return;
+
+        // Show patching step
+        menu.AddLog("Patching Code...");
+        success = PatchCode(vanilla, 0, importGroup);
+
+        if (!success)
+            return;
+        success = PatchCode(vanilla, chapter, importGroup);
 
         if (!success)
             return;
@@ -87,14 +135,13 @@ class ApplyPatches(IOperation menu)
 
     // Sprite Definitions
     // (must come before Game Objects so that sprite IDs exist)
-    bool ImportSprites(DataFile data)
+    bool ImportSprites(DataFile data, int chapter)
     {
-        menu.AddLog("Importing Sprites...");
         List<SpriteDefinition> spriteList = [];
         TextureAtlas atlas = new TextureAtlas();
 
         string spriteFolder = GetTypeFolder(FileType.Sprite);
-        string curPath = Path.Combine(GetChapterPath(data.chapter), spriteFolder);
+        string curPath = Path.Combine(GetChapterPath(chapter), spriteFolder);
 
         if (!Path.Exists(curPath))
         {
@@ -120,7 +167,7 @@ class ApplyPatches(IOperation menu)
                 return false; // stop trying to import
             }
 
-            string imagePath = Path.Combine(GetChapterPath(data.chapter), spriteFolder, spriteDef.ImageFile);
+            string imagePath = Path.Combine(GetChapterPath(chapter), spriteFolder, spriteDef.ImageFile);
 
             // check if the image exists
             if (!File.Exists(imagePath))
@@ -167,11 +214,10 @@ class ApplyPatches(IOperation menu)
 
     // Game Object Definitions
     // (must come before code definitions so we dont make them from code files)
-    bool DefineGameObjects(DataFile data)
+    bool DefineGameObjects(DataFile data, int chapter)
     {
-        menu.AddLog("Defining Game Objects...");
         string objectFolder = GetTypeFolder(FileType.GameObject);
-        string curPath = Path.Combine(GetChapterPath(data.chapter), objectFolder);
+        string curPath = Path.Combine(GetChapterPath(chapter), objectFolder);
 
         if (!Path.Exists(curPath))
         {
@@ -203,12 +249,11 @@ class ApplyPatches(IOperation menu)
         return true;
     }
 
-    bool ImportCode(DataFile data, CodeImportGroup importGroup)
+    // Newly Added Code
+    bool ImportCode(DataFile data, int chapter, CodeImportGroup importGroup)
     {
-        menu.AddLog("Importing Code...");
-        // Newly added code files
         string codeFolder = GetTypeFolder(FileType.Code);
-        string curPath = Path.Combine(GetChapterPath(data.chapter), codeFolder);
+        string curPath = Path.Combine(GetChapterPath(chapter), codeFolder);
         
         if (!Path.Exists(curPath))
         {
@@ -242,12 +287,11 @@ class ApplyPatches(IOperation menu)
         return true;
     }
 
-    bool DefineScripts(DataFile data)
+    // Script Definitions
+    bool DefineScripts(DataFile data, int chapter)
     {
-        menu.AddLog("Defining Scripts...");
-        // Script Definitions
         string scriptFolder = GetTypeFolder(FileType.Script);
-        string curPath = Path.Combine(GetChapterPath(data.chapter), scriptFolder);
+        string curPath = Path.Combine(GetChapterPath(chapter), scriptFolder);
 
         if (!Path.Exists(curPath))
         {
@@ -279,12 +323,11 @@ class ApplyPatches(IOperation menu)
         return true;
     }
 
-    bool PatchCode(DataFile data, CodeImportGroup importGroup)
+    // Patch Files for Existing Code
+    bool PatchCode(DataFile data, int chapter, CodeImportGroup importGroup)
     {
-        menu.AddLog("Patching Code...");
-        // Patch files for code existing in vanilla
         string patchFolder = GetTypeFolder(FileType.Patch);
-        string curPath = Path.Combine(GetChapterPath(data.chapter), patchFolder);
+        string curPath = Path.Combine(GetChapterPath(chapter), patchFolder);
         
         if (!Path.Exists(curPath))
         {
@@ -316,36 +359,51 @@ class ApplyPatches(IOperation menu)
             }
 
             // find and decompile the associated code
-            var patchDest = data.data.Code.ByName(Path.GetFileNameWithoutExtension(patchFile.basePath));
+            string fileName = Path.GetFileNameWithoutExtension(patchFile.basePath);
+            var patchDest = data.data.Code.ByName(fileName);
 
-            if (patchDest is not null)
+            if (patchDest is null)
             {
-                var vanillaCode = data.DecompileCode(patchDest);
+                continue;
+            }
 
-                // apply patches to vanilla code
-                var patcher = new Patcher(patchFile.patches, vanillaCode);
-                patcher.Patch(Patcher.Mode.FUZZY);
+            var vanillaCode = data.DecompileCode(patchDest);
 
-                // in any patches fail to apply here, print a warning.
-                if (patcher.Results.Any(result => !result.success))
+            // apply patches to vanilla code
+            var patcher = new Patcher(patchFile.patches, vanillaCode);
+            patcher.Patch(Patcher.Mode.FUZZY);
+
+            // in any patches fail to apply here, print a warning.
+            if (patcher.Results.Any(result => !result.success))
+            {
+                // Check if chapter-specific overrides for
+                // Global Patches exists before warning.
+                if (chapter == 0)
                 {
-                    // give option to continue anyway
-                    if (menu.WarningMessage($"Failed to apply patches for {patchDest}"))
+                    string globalPath = Path.Combine(GetChapterPath(0), patchFolder);
+
+                    if (File.Exists(Path.Combine(globalPath, fileName + GetFileExtension(FileType.Patch))))
                     {
-                        continue; // keep importing
-                    }
-                    else
-                    {
-                        return false; // stop trying to import
+                        continue;
                     }
                 }
 
-                // write patched code to file and show progress
-                importGroup.QueueReplace(patchDest, string.Join("\n", patcher.ResultLines));
-
-                // scroll log output in menu
-                menu.AddLog($"Patched code {Path.GetFileName(patchFile.basePath)}");
+                // Give option to continue anyway
+                if (menu.WarningMessage($"Failed to apply patches for {patchDest}"))
+                {
+                    continue; // keep importing
+                }
+                else
+                {
+                    return false; // stop trying to import
+                }
             }
+
+            // write patched code to file and show progress
+            importGroup.QueueReplace(patchDest, string.Join("\n", patcher.ResultLines));
+
+            // scroll log output in menu
+            menu.AddLog($"Patched code {Path.GetFileName(patchFile.basePath)}");
         }
 
         return true;

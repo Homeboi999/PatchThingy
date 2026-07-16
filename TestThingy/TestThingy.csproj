@@ -8,6 +8,8 @@
     <PublishSingleFile>true</PublishSingleFile>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <RootNamespace>TestThingy</RootNamespace>
+    <!-- Ignore xdelta3 warnings -->
+    <NoWarn>NU1701</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

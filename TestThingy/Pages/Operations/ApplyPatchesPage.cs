@@ -56,6 +56,7 @@ class ApplyPatchesPage : OperationPage
                 page.Draw();
 
                 // Show MainLog
+                page.mainLog.Add(loadText);
                 page.mainGroup.visible = true;
                 page.loadingGroup.visible = false;
             }
