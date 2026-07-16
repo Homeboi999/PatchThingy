@@ -17,6 +17,10 @@ class ManageDataPage : Page
 
     ChoicerWidget actionChoicer = new ChoicerWidget(["Vanilla Data", "Backup Data", "Convert Patch to Source", "Update Source Code", "Build xdeltas"]);
 
+    WidgetGroup confirmGroup = new WidgetGroup();
+    ChoicerWidget confirmChoicer = new ChoicerWidget(["Confirm", "Cancel"]);
+    TextWidget confirmPrompt = new TextWidget([], Alignment.Center);
+
     WidgetGroup dataGroup = new WidgetGroup();
     ChoicerWidget dataChoicer = new ChoicerWidget(["Save", "Load"]);
     TextWidget dataPrompt = new TextWidget([], Alignment.Center);
@@ -68,6 +72,14 @@ class ManageDataPage : Page
         SetFocusedWidget(actionChoicer);
 
         // data choicer (for save/load)
+        confirmGroup.AddWidget(new SeparatorWidget(visible: true));
+        confirmGroup.AddWidget(new SeparatorWidget(visible: false));
+        confirmGroup.AddWidget(confirmPrompt);
+        confirmGroup.AddWidget(confirmChoicer);
+        confirmGroup.AddWidget(new SeparatorWidget(visible: false));
+        AddWidget(confirmGroup);
+
+        // data choicer (for save/load)
         dataGroup.AddWidget(new SeparatorWidget(visible: true));
         dataGroup.AddWidget(new SeparatorWidget(visible: false));
         dataGroup.AddWidget(dataPrompt);
@@ -80,8 +92,12 @@ class ManageDataPage : Page
         actionChoicer.Cancelled += OnCancelled;
 
         // event setup
-        dataChoicer.Confirmed += OnConfirmed;
-        dataChoicer.Cancelled += OnConfirmCancelled;
+        confirmChoicer.Confirmed += OnConfirmed;
+        confirmChoicer.Cancelled += OnConfirmCancelled;
+
+        // event setup
+        dataChoicer.Confirmed += OnChosenDataMode;
+        dataChoicer.Cancelled += OnCancelDataMode;
     }
 
     public override void OnKeyInput(ConsoleKey inputKey)
@@ -102,8 +118,6 @@ class ManageDataPage : Page
 
     private void OnChosen(object? sender, ChoicerEventArgs e)
     {
-        MessagePage placeholderPage = new("");
-
         // full structure
         switch (e.choice)
         {
@@ -116,22 +130,29 @@ class ManageDataPage : Page
 
             // Convert Patch to Source
             case 2:
-                placeholderPage.message.AddLine($"(Will convert .patches in Chapter{chapter}/Source)");
-                placeholderPage.message.AddLine($"(Into the full .gml file)");
-                SwitchPage(placeholderPage);
+                confirmPrompt.Clear();
+                confirmPrompt.AddLine("Converts .patch files placed in the chapter's Code folder");
+                confirmPrompt.AddLine("into the full .gml code. (Directly from Active Data)");
+                confirmGroup.visible = true;
+                SetFocusedWidget(confirmChoicer);
                 break;
 
             // Update Source Code
             case 3:
-                placeholderPage.message.AddLine($"(Will apply only the Source Code patches to Chapter {chapter})");
-                SwitchPage(placeholderPage);
+                confirmGroup.visible = true;
+                confirmPrompt.Clear();
+                confirmPrompt.AddLine($"Updates the .gml code present in the Active Data");
+                confirmPrompt.AddLine($"without interfering with the rest of the game.");
+                SetFocusedWidget(confirmChoicer);
                 break;
 
             // Build xdeltas
             case 4:
-                placeholderPage.message.AddLine($"(Will generate .xdelta files for Chapter {chapter})");
-                placeholderPage.message.AddLine($"(Using Active Data and Vanilla Data)");
-                SwitchPage(placeholderPage);
+                confirmGroup.visible = true;
+                confirmPrompt.Clear();
+                confirmPrompt.AddLine($"Creates .xdelta patches using Active Data and Vanilla Data");
+                confirmPrompt.AddLine($"Compiles the changes into the format used by mod managers.");
+                SetFocusedWidget(confirmChoicer);
                 break;
         }
     }
@@ -142,6 +163,67 @@ class ManageDataPage : Page
     }
 
     private void OnConfirmed(object? sender, ChoicerEventArgs e)
+    {
+        // Exit on cancel
+        if (e.choice != 0)
+        {
+            OnConfirmCancelled(this, new());
+        }
+
+        switch (actionChoicer.curSelection)
+        {
+            // Convert Patches to Source
+            case 2:
+                if (allChapters)
+                {
+                    GlobalChapterPage chapterPage = new GlobalChapterPage();
+                    chapterPage.confirmPrompt.Clear();
+                    chapterPage.confirmPrompt.AddLine("Convert Global Patches using the selected chapter?");
+                    SwitchPage(chapterPage);
+
+                    if (chapterPage.TryGetChapter(out int globalChapter))
+                    {
+                        // Start Converting Patches
+                        ConvertPatchesPage genPage = new(globalChapter, allChapters: true);
+                        SwitchPage(genPage);
+                    }
+                }
+                else
+                {
+                    // Start Converting Patches
+                    ConvertPatchesPage genPage = new(chapter, allChapters: false);
+                    SwitchPage(genPage);
+                }
+                break;
+
+            // Update Source Code
+            case 3:
+                ImportCodePage importPage = new(chapter, allChapters);
+                SwitchPage(importPage);
+                break;
+
+            // Build xdeltas
+            case 4:
+                MessagePage placeholderPage = new("");
+                placeholderPage.message.AddLine($"(Will generate .xdelta files for Chapter {chapter})");
+                placeholderPage.message.AddLine($"(Using Active Data and Vanilla Data)");
+                SwitchPage(placeholderPage);
+                break;
+        }
+
+        OnConfirmCancelled(this, new());
+    }
+
+    private void OnConfirmCancelled(object? sender, EventArgs e)
+    {
+        confirmChoicer.curSelection = 0;
+        confirmChoicer.chosen = false;
+        actionChoicer.chosen = false;
+        confirmGroup.visible = false;
+        SetFocusedWidget(actionChoicer);
+    }
+
+    private void OnChosenDataMode(object? sender, ChoicerEventArgs e)
     {
         switch (e.choice)
         {
@@ -171,14 +253,11 @@ class ManageDataPage : Page
                 }
                 break;
         }
-
-        dataChoicer.curSelection = 0;
-        actionChoicer.chosen = false;
-        dataGroup.visible = false;
-        SetFocusedWidget(actionChoicer);
+        
+        OnCancelDataMode(this, new());
     }
 
-    private void OnConfirmCancelled(object? sender, EventArgs e)
+    private void OnCancelDataMode(object? sender, EventArgs e)
     {
         dataChoicer.curSelection = 0;
         actionChoicer.chosen = false;

@@ -1,7 +1,5 @@
-using TestThingy.Widget;
 using TestThingy.Data;
 using TestThingy.Operations;
-using Underanalyzer.Decompiler.AST;
 
 namespace TestThingy.Pages.Operations;
 
@@ -22,7 +20,7 @@ class ApplyPatchesPage : OperationPage
         {
             for (int i = 1; i <= ChapterPage.chapterCount; i++)
             {
-                operation.SingleChapter(i);
+                operation.ApplyAllToChapter(i);
 
                 // Add a space between chapters,
                 // excluding the final one
@@ -34,7 +32,7 @@ class ApplyPatchesPage : OperationPage
         }
         else
         {
-            operation.SingleChapter(chapter);
+            operation.ApplyAllToChapter(chapter);
         }
 
         // Show the ResultGroup after everything

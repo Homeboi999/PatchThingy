@@ -2,6 +2,7 @@ using System.Text.Json;
 using CodeChicken.DiffPatch;
 using TestThingy.Data;
 using TestThingy.Data.Sources;
+using TestThingy.Pages;
 using UndertaleModLib;
 using UndertaleModLib.Models;
 using static TestThingy.Data.OutputManager;
@@ -10,11 +11,27 @@ namespace TestThingy.Operations;
 
 class GeneratePatches(IOperation menu)
 {
-    int chapter;
+    // Output Manager
+    OutputManager manager = new OutputManager();
 
-    public void SingleChapter(int chapter, bool globalPatches = true)
+    public void AllChapters(int globalChapter)
     {
-        this.chapter = chapter;
+        // TODO: my pc fucking HATES this
+        for (int i = 1; i <= ChapterPage.chapterCount; i++)
+        {
+            SingleChapter(i, i == globalChapter);
+
+            // Add a space between chapters,
+            // excluding the final one
+            if (i < ChapterPage.chapterCount)
+            {
+                menu.AddLog("");
+            }
+        }
+    }
+
+    public void SingleChapter(int chapter, bool makeGlobal = true)
+    {
         DataFile active;
         DataFile vanilla;
 
@@ -36,18 +53,15 @@ class GeneratePatches(IOperation menu)
         JsonSerializerOptions defOptions = new JsonSerializerOptions();
         defOptions.WriteIndented = true;
 
-        // Output Manager
-        OutputManager manager = new OutputManager();
-
         // Export Changes
-        ExportCode(vanilla, active, manager);
-        DefineGameObjects(vanilla, active, manager, defOptions);
-        DefineScripts(vanilla, active, manager, defOptions);
-        DefineSprites(vanilla, active, manager, defOptions);
+        ExportCode(vanilla, active, chapter);
+        DefineGameObjects(vanilla, active, chapter, defOptions);
+        DefineScripts(vanilla, active, chapter, defOptions);
+        DefineSprites(vanilla, active, chapter, defOptions);
 
         // Save Files
         menu.AddLog("Saving output...");
-        manager.SaveModFiles(chapter, !globalPatches);
+        manager.SaveModFiles(chapter, makeGlobal);
 
         // Placeholder Success
         menu.AddLog($"Successfully generated patches for Chapter {chapter}", MessageType.Success);
@@ -55,7 +69,7 @@ class GeneratePatches(IOperation menu)
     }
 
     // code files
-    void ExportCode(DataFile vanilla, DataFile modded, OutputManager manager)
+    void ExportCode(DataFile vanilla, DataFile modded, int chapter)
     {
         foreach (UndertaleCode modCode in modded.data.Code)
         {
@@ -110,7 +124,7 @@ class GeneratePatches(IOperation menu)
     }
 
     // game object definitions
-    void DefineGameObjects(DataFile vanilla, DataFile modded, OutputManager manager, JsonSerializerOptions defOptions)
+    void DefineGameObjects(DataFile vanilla, DataFile modded, int chapter, JsonSerializerOptions defOptions)
     {
         foreach (UndertaleGameObject modObject in modded.data.GameObjects)
         {
@@ -136,7 +150,7 @@ class GeneratePatches(IOperation menu)
         }
     }
     
-    void DefineScripts(DataFile vanilla, DataFile modded, OutputManager manager, JsonSerializerOptions defOptions)
+    void DefineScripts(DataFile vanilla, DataFile modded, int chapter, JsonSerializerOptions defOptions)
     {
         // script definitions
         foreach (UndertaleScript modScript in modded.data.Scripts)
@@ -177,7 +191,7 @@ class GeneratePatches(IOperation menu)
         }
     }
 
-    void DefineSprites(DataFile vanilla, DataFile modded, OutputManager manager, JsonSerializerOptions defOptions)
+    void DefineSprites(DataFile vanilla, DataFile modded, int chapter, JsonSerializerOptions defOptions)
     {
         // sprite definitions
         foreach (UndertaleSprite modSprite in modded.data.Sprites)

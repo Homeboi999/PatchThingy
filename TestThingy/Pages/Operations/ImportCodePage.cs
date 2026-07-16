@@ -1,31 +1,38 @@
-using TestThingy.Widget;
 using TestThingy.Data;
 using TestThingy.Operations;
 
 namespace TestThingy.Pages.Operations;
 
-class GeneratePatchesPage : OperationPage
+class ImportCodePage : OperationPage
 {
-    protected override string modeText => "Generating Patches";
-    GeneratePatches operation;
+    ApplyPatches operation;
+    protected override string modeText => "Applying Patches";
 
-    public GeneratePatchesPage(int chapter, bool allChapters = false) : base(chapter, allChapters)
+    public ImportCodePage(int chapter, bool allChapters = false) : base(chapter, allChapters)
     {
-        GeneratePatchesBridge bridge = new(this);
-        operation = new(bridge);
+        ImportCodeBridge operationBridge = new ImportCodeBridge(this);
+        operation = new(operationBridge);
     }
 
     protected override void OnInitialize()
     {
         if (allChapters)
         {
-            // for loop is handled by the operation
-            // so that the list of things carries over
-            operation.AllChapters(globalChapter: chapter);
+            for (int i = 1; i <= ChapterPage.chapterCount; i++)
+            {
+                operation.ImportCodeForChapter(i);
+
+                // Add a space between chapters,
+                // excluding the final one
+                if (i < ChapterPage.chapterCount)
+                {
+                    mainLog.Add("");
+                }
+            }
         }
         else
         {
-            operation.SingleChapter(chapter);
+            operation.ImportCodeForChapter(chapter);
         }
 
         // Show the ResultGroup after everything
@@ -33,7 +40,7 @@ class GeneratePatchesPage : OperationPage
         Draw();
     }
 
-    class GeneratePatchesBridge(GeneratePatchesPage page) : IOperation
+    class ImportCodeBridge(ImportCodePage page) : IOperation
     {
         public bool TryLoadData(DataType type, int chapter, out DataFile dataFile)
         {
@@ -72,24 +79,14 @@ class GeneratePatchesPage : OperationPage
         
         public void ErrorMessage(string message)
         {
-            if (!page.allChapters)
-            {
-                // Make Error Page
-                page.CreateMessage(message, MessageType.Error);
-            }
-
-            // Add to log
+            // Make Error Page
+            page.CreateMessage(message, MessageType.Error);
             AddLog(message, MessageType.Error);
         }
         public void ErrorMessage(IReadOnlyList<string> messages)
         {
-            if (!page.allChapters)
-            {
-                // Make Error Page
-                page.CreateMessage(messages, MessageType.Error);
-            }
-
-            // Add to log
+            // Make Error Page
+            page.CreateMessage(messages, MessageType.Error);
             AddLog(messages[0], MessageType.Error);
         }
         
@@ -137,4 +134,5 @@ class GeneratePatchesPage : OperationPage
             }
         }
     }
+
 }

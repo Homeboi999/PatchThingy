@@ -8,9 +8,8 @@ class GlobalChapterPage : ChapterPage
 {
     protected override string chapterPrompt => "Which chapter should Global Patches be generated from?";
     WidgetGroup confirmGroup = new WidgetGroup();
-    TextWidget confirmPrompt = new TextWidget(["Are you sure?"], Alignment.Center);
+    public TextWidget confirmPrompt = new TextWidget(["Are you sure?"], Alignment.Center);
     ChoicerWidget confirmChoicer = new ChoicerWidget(["Confirm", "Cancel"]);
-    int globalChapter => chapterChoicer.curSelection + 1;
 
     public GlobalChapterPage() : base(onlyChapters: true)
     {
@@ -28,8 +27,6 @@ class GlobalChapterPage : ChapterPage
 
     protected override void OnChapterSelected(int chapter)
     {
-        confirmPrompt.Clear();
-        confirmPrompt.AddLine("This will overwrite local patches. Continue?");
         confirmGroup.visible = true;
         SetFocusedWidget(confirmChoicer);
     }
@@ -42,18 +39,24 @@ class GlobalChapterPage : ChapterPage
             return;
         }
 
-        // Start Generating
-        GeneratePatchesPage genPage = new(globalChapter, allChapters: true);
-        SwitchPage(genPage);
-
-        OnConfirmCancelled(this, new());
+        confirmChoicer.curSelection = 0;
+        confirmGroup.visible = false;
+        SetFocusedWidget(chapterChoicer);
+        GoToPrevious();
     }
 
     private void OnConfirmCancelled(object? sender, EventArgs e)
     {
         confirmChoicer.curSelection = 0;
+        confirmChoicer.chosen = false;
         chapterChoicer.chosen = false;
         confirmGroup.visible = false;
         SetFocusedWidget(chapterChoicer);
+    }
+
+    public bool TryGetChapter(out int globalChapter)
+    {
+        globalChapter = chapterChoicer.curSelection + 1;
+        return confirmChoicer.chosen;
     }
 }

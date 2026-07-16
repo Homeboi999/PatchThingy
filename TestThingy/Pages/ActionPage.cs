@@ -70,19 +70,10 @@ class ActionPage : Page
         {
             // Generate
             case 0:
-                if (allChapters)
-                {
-                    GlobalChapterPage newPage = new GlobalChapterPage();
-                    SwitchPage(newPage);
-                    actionChoicer.chosen = false;
-                }
-                else
-                {
-                    confirmPrompt.Clear();
-                    confirmPrompt.AddLine("This will overwrite local patches. Continue?");
-                    confirmGroup.visible = true;
-                    SetFocusedWidget(confirmChoicer);
-                }
+                confirmPrompt.Clear();
+                confirmPrompt.AddLine("This will overwrite local patches. Continue?");
+                confirmGroup.visible = true;
+                SetFocusedWidget(confirmChoicer);
                 break;
 
             // Apply
@@ -120,8 +111,25 @@ class ActionPage : Page
         {
             // Generate
             case 0:
-                GeneratePatchesPage genPage = new(chapter, allChapters);
-                SwitchPage(genPage);
+                if (allChapters)
+                {
+                    GlobalChapterPage chapterPage = new GlobalChapterPage();
+                    chapterPage.confirmPrompt.Clear();
+                    chapterPage.confirmPrompt.AddLine("Generate Global Patches from the selected chapter?");
+                    SwitchPage(chapterPage);
+
+                    if (chapterPage.TryGetChapter(out int globalChapter))
+                    {
+                        // Start Generating
+                        GeneratePatchesPage genPage = new(globalChapter, allChapters: true);
+                        SwitchPage(genPage);
+                    }
+                }
+                else
+                {
+                    GeneratePatchesPage genPage = new(chapter, allChapters: false);
+                    SwitchPage(genPage);
+                }
                 break;
 
             // Apply
@@ -132,6 +140,7 @@ class ActionPage : Page
         }
 
         confirmChoicer.curSelection = 0;
+        confirmChoicer.chosen = false;
         actionChoicer.chosen = false;
         confirmGroup.visible = false;
         SetFocusedWidget(actionChoicer);

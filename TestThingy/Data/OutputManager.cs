@@ -105,6 +105,7 @@ public class OutputManager
         string fileName = queueFile.name + GetFileExtension(queueFile.type);
         string path = Path.Combine(GetChapterPath(queueFile.chapter), GetTypeFolder(queueFile.type), fileName);
         string globalPath = Path.Combine(GetChapterPath(0), GetTypeFolder(0), fileName);
+        
         bool isGlobal = File.Exists(globalPath) && !File.Exists(path);
 
         // save if the chapter is global or not
@@ -120,7 +121,7 @@ public class OutputManager
         return true;
     }
 
-    public void SaveModFiles(int chapter, bool skipGlobal)
+    public void SaveModFiles(int chapter, bool makeGlobal)
     {
         // Reset output folder structure.
         ResetAllFolders(chapter);
@@ -130,15 +131,16 @@ public class OutputManager
         foreach (TempFile queueFile in tempFiles)
         {
             // Skip global patches if not chosen chapter
-            if (queueFile.chapter == 0 && skipGlobal)
+            if (queueFile.chapter == 0 && !makeGlobal)
             {
                 continue;
             }
 
-            string typeFolder = Path.Combine(GetChapterPath(queueFile.chapter));
-
+            string chapterPath = GetChapterPath(queueFile.chapter);
+            string typeFolder = GetTypeFolder(queueFile.type);
             string fileName = queueFile.name + GetFileExtension(queueFile.type);
-            string path = Path.Combine(typeFolder, fileName);
+
+            string path = Path.Combine(chapterPath, typeFolder, fileName);
 
             // Don't replace global source code.
             if (queueFile.type == FileType.Code && queueFile.chapter == 0 && File.Exists(path))

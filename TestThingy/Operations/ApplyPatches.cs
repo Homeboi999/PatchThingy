@@ -12,7 +12,7 @@ class ApplyPatches(IOperation menu)
 {
     int chapter;
 
-    public void SingleChapter(int chapter)
+    public void ApplyAllToChapter(int chapter)
     {
         this.chapter = chapter;
         DataFile vanilla;
@@ -55,7 +55,7 @@ class ApplyPatches(IOperation menu)
         }
 
         bool chapterExists = Path.Exists(GetChapterPath(chapter)) && Directory.GetFileSystemEntries(GetChapterPath(chapter)).Length > 0;
-        bool globalExists = Path.Exists(GetChapterPath(chapter)) && Directory.GetFileSystemEntries(GetChapterPath(chapter)).Length > 0;
+        bool globalExists = Path.Exists(GetChapterPath(0)) && Directory.GetFileSystemEntries(GetChapterPath(0)).Length > 0;
         
         if (!chapterExists && !globalExists)
         {
@@ -130,6 +130,58 @@ class ApplyPatches(IOperation menu)
         vanilla.type = DataType.Active;
         vanilla.SaveChanges();
         menu.AddLog($"Successfully applied patches to Chapter {chapter}!", MessageType.Success);
+        menu.OnComplete();
+    }
+
+    public void ImportCodeForChapter(int chapter)
+    {
+        this.chapter = chapter;
+        DataFile active;
+        bool success = true;
+
+        // Load Active Data
+        if (!menu.TryLoadData(DataType.Active, chapter, out active))
+        {
+            string errorMessage = $"Unable to locate {DataFile.GetFileName(DataType.Active)} for Chapter {chapter}.";
+            menu.AddLog(errorMessage, MessageType.Error);
+            return;
+        }
+
+        // Don't try to apply patches that don't exist.
+        if (!Path.Exists(Config.current.OutputPath))
+        {
+            menu.ErrorMessage("Missing prior output in directory");
+            return;
+        }
+
+        bool chapterExists = Path.Exists(GetChapterPath(chapter)) && Directory.GetFileSystemEntries(GetChapterPath(chapter)).Length > 0;
+        bool globalExists = Path.Exists(GetChapterPath(0)) && Directory.GetFileSystemEntries(GetChapterPath(0)).Length > 0;
+        
+        if (!chapterExists && !globalExists)
+        {
+            menu.ErrorMessage([$"No patches available for Chapter {chapter}.", "(Try creating global patches)"]);
+            return;
+        }
+
+        // Create ImportGroup
+        CodeImportGroup importGroup = new(active.data);
+
+        // Start importing code, exiting if it fails.
+        menu.AddLog("Importing Code...");
+        success = ImportCode(active, 0, importGroup);
+
+        if (!success)
+            return;
+
+        success = ImportCode(active, chapter, importGroup);
+
+        if (!success)
+            return;
+
+        // Save File
+        importGroup.Import();
+        active.SaveChanges();
+        menu.AddLog($"Successfully updated source code for Chapter {chapter}!", MessageType.Success);
         menu.OnComplete();
     }
 
