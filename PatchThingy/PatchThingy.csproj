@@ -8,6 +8,8 @@
     <PublishSingleFile>true</PublishSingleFile>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <RootNamespace>PatchThingy</RootNamespace>
+    <!-- Ignore xdelta3 warnings -->
+    <NoWarn>NU1701</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,6 +24,5 @@
       <PrivateAssets>All</PrivateAssets>
     </PackageReference>
   </ItemGroup>
-
 
 </Project>
