@@ -39,15 +39,17 @@ Console.CursorVisible = false;
 
 try
 {
-    # if DEBUG
-    GeneratePatchesPage startPage = new GeneratePatchesPage(2, true);
-    startPage.RunLoop();
-    ExitMenu();
-    # else
-    MainChapterPage startPage = new MainChapterPage();
-    // TestPage startPage = new TestPage();
-    startPage.RunLoop();
-    # endif
+    if (Debugger.IsAttached)
+    {
+        GeneratePatchesPage startPage = new GeneratePatchesPage(2, true);
+        startPage.RunLoop();
+    }
+    else
+    {
+        MainChapterPage startPage = new MainChapterPage();
+        // TestPage startPage = new TestPage();
+        startPage.RunLoop();
+    }
 }
 # if DEBUG
 catch (InvalidOperationException)

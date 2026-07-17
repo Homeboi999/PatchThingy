@@ -19,7 +19,8 @@ abstract class ChapterPage : Page
     {
         this.onlyChapters = onlyChapters;
 
-        List<string> options = chapterList;
+        List<string> options = [];
+        options.AddRange(chapterList);
 
         if (!onlyChapters)
         {
@@ -27,7 +28,7 @@ abstract class ChapterPage : Page
         }
 
         #if DEBUG
-        chapterList.Add("Fail Test");
+        options.Add("Fail Test");
         #endif
         
         chapterChoicer = new ChoicerWidget(options);

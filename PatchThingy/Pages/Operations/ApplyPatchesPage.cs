@@ -79,27 +79,30 @@ class ApplyPatchesPage : OperationPage
         public void AddLog(string message, MessageType type = MessageType.None)
         {
             # if DEBUG
-            switch (type)
+            if (Debugger.IsAttached)
             {
-                case MessageType.Warning:
-                    Console.ForegroundColor = ConsoleColor.Yellow;
-                    break;
+                switch (type)
+                {
+                    case MessageType.Warning:
+                        Console.ForegroundColor = ConsoleColor.Yellow;
+                        break;
 
-                case MessageType.Error:
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    break;
+                    case MessageType.Error:
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        break;
 
-                case MessageType.Success:
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    break;
+                    case MessageType.Success:
+                        Console.ForegroundColor = ConsoleColor.Green;
+                        break;
 
-                default:
-                    Console.ResetColor();
-                    break;
+                    default:
+                        Console.ResetColor();
+                        break;
+                }
+
+                Console.WriteLine(message);
+                return;
             }
-
-            Console.WriteLine(message);
-            return;
             # endif
 
             page.mainLog.Add(message, type);
@@ -109,8 +112,11 @@ class ApplyPatchesPage : OperationPage
         public void ErrorMessage(string message)
         {
             # if DEBUG
-            AddLog(message, MessageType.Error);
-            return;
+            if (Debugger.IsAttached)
+            {
+                AddLog(message, MessageType.Error);
+                return;
+            }
             # endif
 
             // Make Error Page
@@ -120,8 +126,11 @@ class ApplyPatchesPage : OperationPage
         public void ErrorMessage(IReadOnlyList<string> messages)
         {
             # if DEBUG
-            AddLog(messages[0], MessageType.Error);
-            return;
+            if (Debugger.IsAttached)
+            {
+                AddLog(messages[0], MessageType.Error);
+                return;
+            }
             # endif
 
             // Make Error Page
@@ -132,8 +141,11 @@ class ApplyPatchesPage : OperationPage
         public bool WarningMessage(string message)
         {
             # if DEBUG
-            AddLog(message, MessageType.Warning);
-            return true;
+            if (Debugger.IsAttached)
+            {
+                AddLog(message, MessageType.Warning);
+                return true;
+            }
             # endif
 
             // Make Warning Page
@@ -153,8 +165,11 @@ class ApplyPatchesPage : OperationPage
         public bool WarningMessage(IReadOnlyList<string> messages)
         {
             # if DEBUG
-            AddLog(messages[0], MessageType.Warning);
-            return true;
+            if (Debugger.IsAttached)
+            {
+                AddLog(messages[0], MessageType.Warning);
+                return true;
+            }
             # endif
 
             // Make Warning Page
@@ -175,7 +190,10 @@ class ApplyPatchesPage : OperationPage
         public void OnComplete()
         {
             # if DEBUG
-            return;
+            if (Debugger.IsAttached)
+            {
+                return;
+            }
             # endif
 
             if (page.allChapters)
