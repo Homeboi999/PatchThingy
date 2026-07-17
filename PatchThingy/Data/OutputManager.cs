@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace PatchThingy.Data;
 
 public class OutputManager
@@ -92,16 +94,15 @@ public class OutputManager
             this.chapter = chapter;
             this.type = type;
         }
+
+        public override string ToString()
+        {
+            return $"[CH{chapter}] {type} - {name}";
+        }
     }
 
-    public bool QueueFile(TempFile queueFile)
+    public bool QueueFile(bool makeGlobal, TempFile queueFile)
     {
-        // check for duplicate entries
-        if (tempFiles.Exists(file => (file.name == queueFile.name && file.type == queueFile.type)))
-        {
-            return false;
-        }
-
         string fileName = queueFile.name + GetFileExtension(queueFile.type);
         string path = Path.Combine(GetChapterPath(queueFile.chapter), GetTypeFolder(queueFile.type), fileName);
         string globalPath = Path.Combine(GetChapterPath(0), GetTypeFolder(queueFile.type), fileName);
@@ -112,6 +113,11 @@ public class OutputManager
         if (isGlobal)
         {
             queueFile.chapter = 0;
+            
+            if (!makeGlobal)
+            {
+                return false;
+            }
             // // idk why i was doing this
             // path = Path.Combine(globalPath, fileName);
         }
@@ -152,8 +158,8 @@ public class OutputManager
         }
 
         // after done, clear fileQueue so it doesnt
-        // carry over to the next chapter, but keep
-        // global patches in queue maybe?
+        // carry over to the next chapter
+        // keep global patches in queue maybe?
         tempFiles.RemoveAll(file => (file.chapter != 0));
     }
 

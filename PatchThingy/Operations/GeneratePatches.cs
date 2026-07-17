@@ -54,10 +54,10 @@ class GeneratePatches(IOperation menu)
         defOptions.WriteIndented = true;
 
         // Export Changes
-        ExportCode(vanilla, active, chapter);
-        DefineGameObjects(vanilla, active, chapter, defOptions);
-        DefineScripts(vanilla, active, chapter, defOptions);
-        DefineSprites(vanilla, active, chapter, defOptions);
+        ExportCode(vanilla, active, chapter, makeGlobal);
+        DefineGameObjects(vanilla, active, chapter, makeGlobal, defOptions);
+        DefineScripts(vanilla, active, chapter, makeGlobal, defOptions);
+        DefineSprites(vanilla, active, chapter, makeGlobal, defOptions);
 
         // Save Files
         menu.AddLog("Saving output...");
@@ -69,7 +69,7 @@ class GeneratePatches(IOperation menu)
     }
 
     // code files
-    void ExportCode(DataFile vanilla, DataFile modded, int chapter)
+    void ExportCode(DataFile vanilla, DataFile modded, int chapter, bool makeGlobal)
     {
         foreach (UndertaleCode modCode in modded.data.Code)
         {
@@ -96,7 +96,7 @@ class GeneratePatches(IOperation menu)
                 }
 
                 // Add TempFile to queue
-                if (manager.QueueFile(new TempFile(modCode.Name.Content, modChanges.ToString(), chapter, FileType.Patch)))
+                if (manager.QueueFile(makeGlobal, new TempFile(modCode.Name.Content, modChanges.ToString(), chapter, FileType.Patch)))
                 {
                     // scroll log output in menu if patched
                     menu.AddLog($"Generated patches for {modCode.Name.Content}.gml");
@@ -108,7 +108,7 @@ class GeneratePatches(IOperation menu)
                 string fileText = string.Join("\n", modded.DecompileCode(modCode));
 
                 // add to queue
-                if (manager.QueueFile(new TempFile(modCode.Name.Content, fileText, chapter, FileType.Code)))
+                if (manager.QueueFile(makeGlobal, new TempFile(modCode.Name.Content, fileText, chapter, FileType.Code)))
                 {
                     // scroll log output in menu if patched
                     menu.AddLog($"Created source code for {modCode.Name.Content}.gml");
@@ -118,7 +118,7 @@ class GeneratePatches(IOperation menu)
     }
 
     // game object definitions
-    void DefineGameObjects(DataFile vanilla, DataFile modded, int chapter, JsonSerializerOptions defOptions)
+    void DefineGameObjects(DataFile vanilla, DataFile modded, int chapter, bool makeGlobal, JsonSerializerOptions defOptions)
     {
         foreach (UndertaleGameObject modObject in modded.data.GameObjects)
         {
@@ -134,7 +134,7 @@ class GeneratePatches(IOperation menu)
                 // Make TempFile
 
                 // add to queue
-                if (manager.QueueFile(new TempFile(objectDef.Name, jsonText, chapter, FileType.GameObject)))
+                if (manager.QueueFile(makeGlobal, new TempFile(objectDef.Name, jsonText, chapter, FileType.GameObject)))
                 {
                     // scroll log output in menu if patched
                     menu.AddLog($"Created game object definition for {objectDef.Name}");
@@ -143,7 +143,7 @@ class GeneratePatches(IOperation menu)
         }
     }
     
-    void DefineScripts(DataFile vanilla, DataFile modded, int chapter, JsonSerializerOptions defOptions)
+    void DefineScripts(DataFile vanilla, DataFile modded, int chapter, bool makeGlobal, JsonSerializerOptions defOptions)
     {
         // script definitions
         foreach (UndertaleScript modScript in modded.data.Scripts)
@@ -173,7 +173,7 @@ class GeneratePatches(IOperation menu)
                 string jsonText = JsonSerializer.Serialize(scriptDef, defOptions);
 
                 // add to queue
-                if (manager.QueueFile(new TempFile(scriptDef.Name, jsonText, chapter, FileType.Script)))
+                if (manager.QueueFile(makeGlobal, new TempFile(scriptDef.Name, jsonText, chapter, FileType.Script)))
                 {
                     // scroll log output in menu if patched
                     menu.AddLog($"Created script definition for {scriptDef.Name}");
@@ -182,7 +182,7 @@ class GeneratePatches(IOperation menu)
         }
     }
 
-    void DefineSprites(DataFile vanilla, DataFile modded, int chapter, JsonSerializerOptions defOptions)
+    void DefineSprites(DataFile vanilla, DataFile modded, int chapter, bool makeGlobal, JsonSerializerOptions defOptions)
     {
         // sprite definitions
         foreach (UndertaleSprite modSprite in modded.data.Sprites)
@@ -201,7 +201,7 @@ class GeneratePatches(IOperation menu)
                 string jsonText = JsonSerializer.Serialize(spriteDef, defOptions);
 
                 // add to queue
-                if (manager.QueueFile(new TempFile(spriteDef.Name, jsonText, chapter, FileType.Sprite)))
+                if (manager.QueueFile(makeGlobal, new TempFile(spriteDef.Name, jsonText, chapter, FileType.Sprite)))
                 {
                     // scroll log output in menu if patched
                     menu.AddLog($"Created sprite definition for {spriteDef.Name}");
