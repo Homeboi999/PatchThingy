@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using PatchThingy.Widgets;
 using PatchThingy.Data;
 using PatchThingy.Operations;
@@ -132,6 +133,12 @@ abstract class OperationPage : Page
     // to help with error/warning popups
     protected bool CreateMessage(IReadOnlyList<string> messages, MessageType type)
     {
+        // if debugger, don't
+        if (Debugger.IsAttached)
+        {
+            return true;
+        }
+
         // Make Message Page
         MessagePage messagePage = new MessagePage("", type);
 
@@ -146,6 +153,12 @@ abstract class OperationPage : Page
     }
     protected bool CreateMessage(string message, MessageType type)
     {
+        // if debugger, don't
+        if (Debugger.IsAttached)
+        {
+            return true;
+        }
+
         // Make Message Page
         MessagePage messagePage = new MessagePage(message, type);
         SwitchPage(messagePage);

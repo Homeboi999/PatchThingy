@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using PatchThingy.Data;
 using PatchThingy.Operations;
 
@@ -46,7 +47,11 @@ class ApplyPatchesPage : OperationPage
         {
             string loadText = $"Loading {DataFile.GetFileName(type)} for Chapter {chapter}...";
 
-            if (page.loadingGroup.visible)
+            if (Debugger.IsAttached)
+            {
+                AddLog(loadText);
+            }
+            else if (page.loadingGroup.visible)
             {
                 // Change Loading Text
                 page.loadingText.Clear();
@@ -73,18 +78,52 @@ class ApplyPatchesPage : OperationPage
         
         public void AddLog(string message, MessageType type = MessageType.None)
         {
+            # if DEBUG
+            switch (type)
+            {
+                case MessageType.Warning:
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    break;
+
+                case MessageType.Error:
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    break;
+
+                case MessageType.Success:
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    break;
+
+                default:
+                    Console.ResetColor();
+                    break;
+            }
+
+            Console.WriteLine(message);
+            return;
+            # endif
+
             page.mainLog.Add(message, type);
             page.Draw();
         }
         
         public void ErrorMessage(string message)
         {
+            # if DEBUG
+            AddLog(message, MessageType.Error);
+            return;
+            # endif
+
             // Make Error Page
             page.CreateMessage(message, MessageType.Error);
             AddLog(message, MessageType.Error);
         }
         public void ErrorMessage(IReadOnlyList<string> messages)
         {
+            # if DEBUG
+            AddLog(messages[0], MessageType.Error);
+            return;
+            # endif
+
             // Make Error Page
             page.CreateMessage(messages, MessageType.Error);
             AddLog(messages[0], MessageType.Error);
@@ -92,6 +131,11 @@ class ApplyPatchesPage : OperationPage
         
         public bool WarningMessage(string message)
         {
+            # if DEBUG
+            AddLog(message, MessageType.Warning);
+            return true;
+            # endif
+
             // Make Warning Page
             page.mainLog.Add(message, MessageType.Warning);
             bool result = page.CreateMessage(message, MessageType.Warning);
@@ -108,6 +152,11 @@ class ApplyPatchesPage : OperationPage
         }
         public bool WarningMessage(IReadOnlyList<string> messages)
         {
+            # if DEBUG
+            AddLog(messages[0], MessageType.Warning);
+            return true;
+            # endif
+
             // Make Warning Page
             bool result = page.CreateMessage(messages, MessageType.Warning);
             AddLog(messages[0], MessageType.Warning);
@@ -125,6 +174,10 @@ class ApplyPatchesPage : OperationPage
         
         public void OnComplete()
         {
+            # if DEBUG
+            return;
+            # endif
+
             if (page.allChapters)
             {
                 // Update Header

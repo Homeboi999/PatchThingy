@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using PatchThingy.Widgets;
 
 namespace PatchThingy.Pages;
@@ -9,27 +10,27 @@ abstract class ChapterPage : Page
     protected virtual string chapterPrompt => "Select a Deltarune chapter to patch";
     readonly bool onlyChapters;
     
+    // Main chapter list independant of available options
+    static List<string> chapterList = ["Chapter 1", "Chapter 2", "Chapter 3", "Chapter 4", "Chapter 5"];
     protected ChoicerWidget chapterChoicer;
-    public static int chapterCount;
+    public static int chapterCount => chapterList.Count;
 
     public ChapterPage(bool onlyChapters = false)
     {
         this.onlyChapters = onlyChapters;
 
-        List<string> chapterList = ["Chapter 1", "Chapter 2", "Chapter 3", "Chapter 4", "Chapter 5"];
-        // save total # of chapters so i only need to change the list
-        chapterCount = chapterList.Count();
+        List<string> options = chapterList;
 
         if (!onlyChapters)
         {
-            chapterList.Insert(0, "All Chapters");
+            options.Insert(0, "All Chapters");
         }
 
         #if DEBUG
         chapterList.Add("Fail Test");
         #endif
         
-        chapterChoicer = new ChoicerWidget(chapterList);
+        chapterChoicer = new ChoicerWidget(options);
 
         // main label
         AddWidget(new SeparatorWidget(visible: false));

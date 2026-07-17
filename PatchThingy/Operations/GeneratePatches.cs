@@ -95,14 +95,11 @@ class GeneratePatches(IOperation menu)
                     continue;
                 }
 
-                // Make TempFile
-                OutputManager.TempFile tempFile = new(modCode.Name.Content, modChanges.ToString(), chapter, FileType.Patch);
-
                 // Add TempFile to queue
-                if (manager.QueueFile(tempFile))
+                if (manager.QueueFile(new TempFile(modCode.Name.Content, modChanges.ToString(), chapter, FileType.Patch)))
                 {
                     // scroll log output in menu if patched
-                    menu.AddLog($"Generated patches for {tempFile.name}.gml");
+                    menu.AddLog($"Generated patches for {modCode.Name.Content}.gml");
                 }
             }
             // if it's a new file, export entire file to the Source folder
@@ -110,14 +107,11 @@ class GeneratePatches(IOperation menu)
             {
                 string fileText = string.Join("\n", modded.DecompileCode(modCode));
 
-                // Make TempFile
-                OutputManager.TempFile tempFile = new(modCode.Name.Content, fileText, chapter, FileType.Code);
-
                 // add to queue
-                if (manager.QueueFile(tempFile))
+                if (manager.QueueFile(new TempFile(modCode.Name.Content, fileText, chapter, FileType.Code)))
                 {
                     // scroll log output in menu if patched
-                    menu.AddLog($"Created source code for {tempFile.name}.gml");
+                    menu.AddLog($"Created source code for {modCode.Name.Content}.gml");
                 }
             }
         }
@@ -138,10 +132,9 @@ class GeneratePatches(IOperation menu)
                 string jsonText = JsonSerializer.Serialize(objectDef, defOptions);
 
                 // Make TempFile
-                OutputManager.TempFile tempFile = new(objectDef.Name, jsonText, chapter, FileType.GameObject);
 
                 // add to queue
-                if (manager.QueueFile(tempFile))
+                if (manager.QueueFile(new TempFile(objectDef.Name, jsonText, chapter, FileType.GameObject)))
                 {
                     // scroll log output in menu if patched
                     menu.AddLog($"Created game object definition for {objectDef.Name}");
@@ -179,10 +172,8 @@ class GeneratePatches(IOperation menu)
                 scriptDef = ScriptDefinition.Load(modScript);
                 string jsonText = JsonSerializer.Serialize(scriptDef, defOptions);
 
-                OutputManager.TempFile tempFile = new(scriptDef.Name, jsonText, chapter, FileType.Script);
-
                 // add to queue
-                if (manager.QueueFile(tempFile))
+                if (manager.QueueFile(new TempFile(scriptDef.Name, jsonText, chapter, FileType.Script)))
                 {
                     // scroll log output in menu if patched
                     menu.AddLog($"Created script definition for {scriptDef.Name}");
@@ -209,11 +200,8 @@ class GeneratePatches(IOperation menu)
                 spriteDef = SpriteDefinition.Load(modSprite, spriteIndex);
                 string jsonText = JsonSerializer.Serialize(spriteDef, defOptions);
 
-                // Create TempFile
-                OutputManager.TempFile tempFile = new(spriteDef.Name, jsonText, chapter, FileType.Sprite);
-
                 // add to queue
-                if (manager.QueueFile(tempFile))
+                if (manager.QueueFile(new TempFile(spriteDef.Name, jsonText, chapter, FileType.Sprite)))
                 {
                     // scroll log output in menu if patched
                     menu.AddLog($"Created sprite definition for {spriteDef.Name}");

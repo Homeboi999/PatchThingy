@@ -181,7 +181,7 @@ public class OutputManager
         {
             if (file.EndsWith(GetFileExtension(type)))
             {
-                if (!keepFiles)
+                if (keepFiles)
                 {
                     // only delete files that arent in the queue so
                     // we dont keep anything i got rid of or smthn

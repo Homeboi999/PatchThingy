@@ -1,8 +1,10 @@
 ﻿// See https://aka.ms/new-console-template for more information
+using System;
 using System.Diagnostics;
 using System.Text.Json;
 using PatchThingy.Data;
 using PatchThingy.Pages;
+using PatchThingy.Pages.Operations;
 
 // ────────────────────────────────────────────────────────────
 // Misc. Setup
@@ -37,10 +39,23 @@ Console.CursorVisible = false;
 
 try
 {
+    # if DEBUG
+    GeneratePatchesPage startPage = new GeneratePatchesPage(2, true);
+    startPage.RunLoop();
+    ExitMenu();
+    # else
     MainChapterPage startPage = new MainChapterPage();
     // TestPage startPage = new TestPage();
     startPage.RunLoop();
+    # endif
 }
+# if DEBUG
+catch (InvalidOperationException)
+{
+    Console.WriteLine("Tried to ReadKey, Exiting...");
+    ExitMenu(2);
+}
+#endif
 catch (Exception error) // show crashes in main terminal output
 {
     #if DEBUG

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Reflection;
 using PatchThingy.Widgets;
 
@@ -133,6 +134,11 @@ abstract class Page
     
     public void Draw()
     {
+        if (Debugger.IsAttached)
+        {
+            return;
+        }
+        
         Console.Write("\x1b[?2026h"); // stop display
         Console.Clear();
         var boxWidth = Math.Min(MaxWidth, Console.BufferWidth - 2);
