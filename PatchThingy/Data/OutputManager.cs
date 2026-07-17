@@ -104,7 +104,7 @@ public class OutputManager
 
         string fileName = queueFile.name + GetFileExtension(queueFile.type);
         string path = Path.Combine(GetChapterPath(queueFile.chapter), GetTypeFolder(queueFile.type), fileName);
-        string globalPath = Path.Combine(GetChapterPath(0), GetTypeFolder(0), fileName);
+        string globalPath = Path.Combine(GetChapterPath(0), GetTypeFolder(queueFile.type), fileName);
         
         bool isGlobal = File.Exists(globalPath) && !File.Exists(path);
 
